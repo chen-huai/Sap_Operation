@@ -323,6 +323,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         guiData['distributionChannels'] = self.lineEdit_12.text()
         guiData['salesOffice'] = self.lineEdit_13.text()
         guiData['salesGroup'] = self.lineEdit_14.text()
+        guiData['csCostCenter'] = self.lineEdit_18.text()
+        guiData['chmCostCenter'] = self.lineEdit_19.text()
+        guiData['phyCostCenter'] = self.lineEdit_20.text()
         return guiData
 
     def getAdminGuiData(self):
@@ -333,6 +336,106 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         guiAdminData['orderBits'] = int(self.spinBox_4.text())
         guiAdminData['pdfName'] = self.lineEdit_17.text()
         return guiAdminData
+
+    def getRevenueData(self, guiData):
+        # 计算金额
+        # revenue,planCost,revenueForCny,chmCost,phyCost,chmRe,phyRe,chmCsCostAccounting,chmLabCostAccounting,phyCsCostAccounting
+        revenueData = {}
+        revenueData['revenue'] = guiData['amountVat'] / 1.06
+        # plan cost
+        # planCost = revenueData['revenue'] * guiData['exchangeRate'] * 0.9 - guiData['cost']
+        revenueData['planCost'] = revenueData['revenue'] * guiData['exchangeRate']
+        revenueData['revenueForCny'] = revenueData['revenue'] * guiData['exchangeRate']
+        if ('405' in guiData['materialCode']) and (
+                ("A2" in guiData['materialCode']) or ("D2" in guiData['materialCode']) or (
+                "D3" in guiData['materialCode'])):
+            # DataB-CHM成本
+            revenueData['chmCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['chmCostRate'] * 0.5, '.2f')
+            # DataB-PHY成本
+            revenueData['phyCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['phyCostRate'] * 0.5, '.2f')
+            # Item1000 的revenue
+            revenueData['chmRe'] = format(revenueData['revenue'] * 0.5, '.2f')
+            # Item2000 的revenue
+            revenueData['phyRe'] = format(revenueData['revenue'] * 0.5, '.2f')
+            # plan cost总算法
+            # revenueData['chmCsCostAccounting'] = format(revenueData['planCost'] * 0.5 * (1 - 0.3  - (1 - guiData['planCostRate'] )) / guiData['csHourlyRate'], '.%sf' % guiData['significantDigits'])
+            # revenueData['chmLabCostAccounting'] = format(revenueData['planCost'] * 0.5 * 0.3 / guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
+            # revenueData['phyCsCostAccounting'] = format(revenueData['planCost'] * 0.5 * (1 - 0.3  - (1 - guiData['planCostRate'] )) / guiData['csHourlyRate'], '.%sf' % guiData['significantDigits'])
+            # revenueData['phyLabCostAccounting'] = format(revenueData['planCost'] * 0.5 * 0.3 / guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
+
+            # plan cost，理论上（revenue-total cost）*0.9*0.5，实际上SFL省略了0.9的计算（金额不大）
+
+            # CS的Item1000-Cost
+            revenueData['chmCsCostAccounting'] = format((revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * (
+                    1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
+                                         '.%sf' % guiData['significantDigits'])
+            # CHM的Item1000-Cost
+            revenueData['chmLabCostAccounting'] = format(
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * guiData['chmCostRate'] /
+                guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
+            # CS的Item2000-Cost
+            revenueData['phyCsCostAccounting'] = format((revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * (
+                    1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
+                                         '.%sf' % guiData['significantDigits'])
+            # PHY的Item2000-Cost
+            revenueData['phyLabCostAccounting'] = format(
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * guiData['phyCostRate'] /
+                guiData['phyHourlyRate'], '.%sf' % guiData['significantDigits'])
+        elif ('441' in guiData['materialCode']) and ((
+                "A2" in guiData['materialCode'] or ("D2" in guiData['materialCode']) or (
+                "D3" in guiData['materialCode']))):
+            # DataB-CHM成本
+            revenueData['chmCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['chmCostRate'] * 0.8, '.2f')
+            # DataB-PHY成本
+            revenueData['phyCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['phyCostRate'] * 0.2, '.2f')
+            # Item1000 的revenue
+            revenueData['chmRe'] = format(revenueData['revenue'] * 0.8, '.2f')
+            # Item2000 的revenue
+            revenueData['phyRe'] = format(revenueData['revenue'] * 0.2, '.2f')
+            # plan cost总算法
+            # revenueData['chmCsCostAccounting'] = format(revenueData['planCost'] * 0.8 * (1 - 0.3  - (1 - guiData['planCostRate'] )) / guiData['csHourlyRate'], '.%sf' % guiData['significantDigits'])
+            # revenueData['chmLabCostAccounting'] = format(revenueData['planCost'] * 0.8 * 0.3 / guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
+            # revenueData['phyCsCostAccounting'] = format(revenueData['planCost'] * 0.2 * (1 - 0.3  - (1 - guiData['planCostRate'] )) / guiData['csHourlyRate'], '.%sf' % guiData['significantDigits'])
+            # revenueData['phyLabCostAccounting'] = format(revenueData['planCost'] * 0.2 * 0.3 / guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
+
+            # CS的Item1000-Cost
+            revenueData['chmCsCostAccounting'] = format((revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.8 * (
+                    1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
+                                         '.%sf' % guiData['significantDigits'])
+            # CHM的Item1000-Cost
+            revenueData['chmLabCostAccounting'] = format(
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.8 * guiData['chmCostRate'] /
+                guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
+            # CS的Item2000-Cost
+            revenueData['phyCsCostAccounting'] = format((revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.2 * (
+                    1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
+                                         '.%sf' % guiData['significantDigits'])
+            # PHY的Item2000-Cost
+            revenueData['phyLabCostAccounting'] = format(
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.2 * guiData['phyCostRate'] /
+                guiData['phyHourlyRate'], '.%sf' % guiData['significantDigits'])
+        else:
+            revenueData['chmCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['chmCostRate'], '.2f')
+            revenueData['phyCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['phyCostRate'], '.2f')
+            revenueData['chmRe'] = format(revenueData['revenue'], '.2f')
+            revenueData['phyRe'] = format(revenueData['revenue'], '.2f')
+            # plan cost总算法
+            # csCostAccounting = format(planCost * (1 - 0.3  - (1 - guiData['planCostRate'] )) / guiData['csHourlyRate'], '.%sf' % guiData['significantDigits'])
+            # labCostAccounting = format(planCost * 0.3 / guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
+            if 'T75' in guiData['materialCode']:
+                revenueData['labCostRate'] = guiData['chmCostRate']
+                revenueData['labHourlyRate'] = guiData['chmHourlyRate']
+            else:
+                revenueData['labCostRate'] = guiData['phyCostRate']
+                revenueData['labHourlyRate'] = guiData['phyHourlyRate']
+
+            revenueData['csCostAccounting'] = format(
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * (1 - revenueData['labCostRate']) / guiData[
+                    'csHourlyRate'], '.%sf' % guiData['significantDigits'])
+            revenueData['labCostAccounting'] = format(
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * revenueData['labCostRate'] / revenueData['labHourlyRate'],
+                '.%sf' % guiData['significantDigits'])
+        return revenueData
 
     def sapOperate(self):
         logMsg = {}
@@ -408,7 +511,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
                     # CS的Item1000-Cost
                     chmCsCostAccounting = format((revenueForCny * guiData['planCostRate'] - guiData['cost']) * 0.5 * (
-                                1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
+                            1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
                                                  '.%sf' % guiData['significantDigits'])
                     # CHM的Item1000-Cost
                     chmLabCostAccounting = format(
@@ -416,7 +519,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
                     # CS的Item2000-Cost
                     phyCsCostAccounting = format((revenueForCny * guiData['planCostRate'] - guiData['cost']) * 0.5 * (
-                                1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
+                            1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
                                                  '.%sf' % guiData['significantDigits'])
                     # PHY的Item2000-Cost
                     phyLabCostAccounting = format(
@@ -441,7 +544,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
                     # CS的Item1000-Cost
                     chmCsCostAccounting = format((revenueForCny * guiData['planCostRate'] - guiData['cost']) * 0.8 * (
-                                1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
+                            1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
                                                  '.%sf' % guiData['significantDigits'])
                     # CHM的Item1000-Cost
                     chmLabCostAccounting = format(
@@ -449,7 +552,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
                     # CS的Item2000-Cost
                     phyCsCostAccounting = format((revenueForCny * guiData['planCostRate'] - guiData['cost']) * 0.2 * (
-                                1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
+                            1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
                                                  '.%sf' % guiData['significantDigits'])
                     # PHY的Item2000-Cost
                     phyLabCostAccounting = format(
@@ -520,7 +623,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         session.findById("wnd[0]").sendVKey(0)
                         session.findById(
                             "wnd[0]/usr/subSUBSCREEN_HEADER:SAPMV45A:4021/subPART-SUB:SAPMV45A:4701/ctxtKUAGV-KUNNR").text = \
-                        guiData['sapNo']
+                            guiData['sapNo']
                         session.findById(
                             "wnd[0]/usr/subSUBSCREEN_HEADER:SAPMV45A:4021/subPART-SUB:SAPMV45A:4701/ctxtKUAGV-KUNNR").caretPosition = 6
                         session.findById("wnd[0]").sendVKey(0)
@@ -538,7 +641,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         session.findById("wnd[0]/usr/subSUBSCREEN_HEADER:SAPMV45A:4021/btnBT_HEAD").press()
                         session.findById(
                             "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\01/ssubSUBSCREEN_BODY:SAPMV45A:4301/ctxtVBAK-WAERK").text = \
-                        guiData['currencyType']
+                            guiData['currencyType']
 
                         session.findById(
                             "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\01/ssubSUBSCREEN_BODY:SAPMV45A:4301/ctxtVBAK-WAERK").setFocus()
@@ -554,7 +657,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         if guiData['currencyType'] != "CNY":
                             session.findById(
                                 "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\01/ssubSUBSCREEN_BODY:SAPMV45A:4301/ctxtVBKD-KURSK").text = \
-                            guiData['exchangeRate']
+                                guiData['exchangeRate']
                             session.findById(
                                 "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\01/ssubSUBSCREEN_BODY:SAPMV45A:4301/ctxtVBKD-KURSK").setFocus()
                             session.findById(
@@ -597,7 +700,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/cmbGVS_TC_DATA-REC-PARVW[0,%s]" % gNum).key = "ZG"
                         session.findById(
                             "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,%s]" % gNum).text = \
-                        guiData['globalPartnerCode']
+                            guiData['globalPartnerCode']
                         session.findById(
                             "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,%s]" % gNum).setFocus()
                         session.findById(
@@ -643,7 +746,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10").select()
                         session.findById(
                             "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cntlSPLITTER_CONTAINER/shellcont/shellcont/shell/shellcont[1]/shell").text = \
-                        guiData['shortText']
+                            guiData['shortText']
                         session.findById(
                             "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cntlSPLITTER_CONTAINER/shellcont/shellcont/shell/shellcont[1]/shell").setSelectionIndexes(
                             11, 11)
@@ -940,7 +1043,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         else:
                             session.findById(
                                 "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").text = \
-                            guiData['materialCode']
+                                guiData['materialCode']
                             session.findById(
                                 "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/txtVBAP-ZMENG[2,0]").text = "1"
                             session.findById(
@@ -1045,7 +1148,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\09").select()
                             session.findById(
                                 "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cntlSPLITTER_CONTAINER/shellcont/shellcont/shell/shellcont[1]/shell").text = \
-                            guiData['longText']
+                                guiData['longText']
                             session.findById(
                                 "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cntlSPLITTER_CONTAINER/shellcont/shellcont/shell/shellcont[1]/shell").setSelectionIndexes(
                                 4, 4)
