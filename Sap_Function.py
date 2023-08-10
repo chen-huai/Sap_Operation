@@ -60,11 +60,10 @@ class Sap(MyMainWindow):
 
     # TODO csCode和salesCode需要添加进guiData中
 
-    @initializationLogMsg
     def va01_operate(self, guiData, revenueData):
         try:
-            # # 初始化数据
-            # Sap.initializationLogMsg()
+            # 初始化数据
+            Sap.initializationLogMsg()
             # 相当于VA01操作
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/nva01"
             # 回车键功能
@@ -227,9 +226,10 @@ class Sap(MyMainWindow):
             self.res['msg'] = 'Order No未创建成功'
             myWin.textBrowser.append("Order No未创建成功")
 
-    @initializationMsg
     def lab_cost(self, guiData, revenueData):
         try:
+            # 初始化数据
+            Sap.initializationMsg()
             # Data B是否要添加cost
             # revenuedata包含revenue,planCost,revenueForCny,chmCost,phyCost,chmRe,phyRe,chmCsCostAccounting,chmLabCostAccounting,phyCsCostAccounting
             if 'A2' in guiData['materialCode'] or 'D2' in guiData['materialCode'] or 'D3' in guiData['materialCode']:
@@ -276,10 +276,11 @@ class Sap(MyMainWindow):
             self.res['msg'] = 'Data B未填写'
             myWin.textBrowser.append("Data B未填写")
 
-    @initializationMsg
     def save_sap(self):
         # 保存操作
         try:
+            # 初始化数据
+            Sap.initializationMsg()
             self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
             self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
             self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
@@ -298,9 +299,10 @@ class Sap(MyMainWindow):
         else:
             pass
 
-    @initializationMsg
     def va02_operate(self, guiData, revenueData):
         try:
+            # 初始化数据
+            Sap.initializationMsg()
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/NVA02"
             self.session.findById("wnd[0]").sendVKey(0)
             orderNo = self.session.findById("wnd[0]/usr/ctxtVBAK-VBELN").text
@@ -447,9 +449,10 @@ class Sap(MyMainWindow):
             self.res['msg'] = 'Order添加Item失败'
             myWin.textBrowser.append("编辑order失败")
 
-    @initializationMsg
     def plan_cost(self, guiData, revenueData):
         try:
+            # 初始化数据
+            Sap.initializationMsg()
             if myWin.checkBox_8.isChecked() or revenueData['revenueForCny'] >= 35000:
                 if 'A2' in guiData['materialCode']:
                     self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
@@ -644,9 +647,10 @@ class Sap(MyMainWindow):
             self.res['flag'] = 0
             self.res['msg'] = 'plan cost未添加'
 
-    @initializationMsg
     def open_va02(self, guiData, revenueData, orderNo):
         try:
+            # 初始化数据
+            Sap.initializationMsg()
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/NVA02"
             self.session.findById("wnd[0]").sendVKey(0)
             self.session.findById("wnd[0]/usr/ctxtVBAK-VBELN").text = orderNo
