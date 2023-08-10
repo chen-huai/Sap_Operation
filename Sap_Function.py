@@ -53,6 +53,11 @@ class Sap(MyMainWindow):
         self.logMsg['orderNo'] = ''
         self.logMsg['Proforma No.'] = ''
 
+    def initializationMsg(self):
+        self.res = {}
+        self.res['flag'] = 1
+        self.res['msg'] = '可以操作SAP'
+
     # TODO csCode和salesCode需要添加进guiData中
 
     @initializationLogMsg
@@ -149,7 +154,7 @@ class Sap(MyMainWindow):
                 "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,%s]" % gNum).caretPosition = 8
             self.session.findById(
                 "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,%s]" % eNum).text = \
-            guiData['csCode']
+                guiData['csCode']
             self.session.findById("wnd[0]").sendVKey(0)
 
             # 联系人
@@ -168,7 +173,7 @@ class Sap(MyMainWindow):
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/cmbGVS_TC_DATA-REC-PARVW[0,7]").key = "VE"
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,7]").text = \
-                guiData['salesCode']
+                    guiData['salesCode']
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,7]").setFocus()
                 self.session.findById(
@@ -220,7 +225,9 @@ class Sap(MyMainWindow):
         except:
             self.res['flag'] = 0
             self.res['msg'] = 'Order No未创建成功'
+            myWin.textBrowser.append("Order No未创建成功")
 
+    @initializationMsg
     def lab_cost(self, guiData, revenueData):
         try:
             # Data B是否要添加cost
@@ -228,46 +235,48 @@ class Sap(MyMainWindow):
             if 'A2' in guiData['materialCode'] or 'D2' in guiData['materialCode'] or 'D3' in guiData['materialCode']:
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AZULEISTENDE/ctxtTABL-KOSTL[0,0]").text = \
-                guiData['chmCostCenter']
+                    guiData['chmCostCenter']
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AZULEISTENDE/ctxtTABL-KOSTL[0,1]").text = \
-                guiData['phyCostCenter']
+                    guiData['phyCostCenter']
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/ctxtTABD-KOSTL[0,0]").text = \
-                guiData['chmCostCenter']
+                    guiData['chmCostCenter']
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/ctxtTABD-KOSTL[0,1]").text = \
-                guiData['phyCostCenter']
+                    guiData['phyCostCenter']
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/txtTABD-FESTPREIS[5,0]").text = \
-                revenueData['chmCost']
+                    revenueData['chmCost']
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/txtTABD-FESTPREIS[5,1]").text = \
-                revenueData['phyCost']
+                    revenueData['phyCost']
             elif 'T20' in guiData['materialCode']:
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AZULEISTENDE/ctxtTABL-KOSTL[0,0]").text = \
-                guiData['phyCostCenter']
+                    guiData['phyCostCenter']
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/ctxtTABD-KOSTL[0,0]").text = \
-                guiData['phyCostCenter']
+                    guiData['phyCostCenter']
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/txtTABD-FESTPREIS[5,0]").text = \
-                revenueData['phyCost']
+                    revenueData['phyCost']
             else:
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AZULEISTENDE/ctxtTABL-KOSTL[0,0]").text = \
-                guiData['chmCostCenter']
+                    guiData['chmCostCenter']
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/ctxtTABD-KOSTL[0,0]").text = \
-                guiData['chmCostCenter']
+                    guiData['chmCostCenter']
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/txtTABD-FESTPREIS[5,0]").text = \
-                revenueData['chmCost']
+                    revenueData['chmCost']
         except:
             self.res['flag'] = 0
             self.res['msg'] = 'Data B未填写'
+            myWin.textBrowser.append("Data B未填写")
 
+    @initializationMsg
     def save_sap(self):
         # 保存操作
         try:
@@ -281,12 +290,15 @@ class Sap(MyMainWindow):
                 self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
                 self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
             except:
-                myWin.textBrowser.append("跳过保存")
+                self.res['flag'] = 0
+                self.res['msg'] = 'Order添加Item失败'
+                myWin.textBrowser.append("Order添加Item失败")
             else:
                 pass
         else:
             pass
 
+    @initializationMsg
     def va02_operate(self, guiData, revenueData):
         try:
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/NVA02"
@@ -325,7 +337,7 @@ class Sap(MyMainWindow):
                 self.session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06").select()
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").text = \
-                revenueData['phyRe']
+                    revenueData['phyRe']
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").setFocus()
                 self.session.findById(
@@ -345,7 +357,7 @@ class Sap(MyMainWindow):
                 self.session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06").select()
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").text = \
-                revenueData['chmRe']
+                    revenueData['chmRe']
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").setFocus()
                 self.session.findById(
@@ -433,7 +445,9 @@ class Sap(MyMainWindow):
         except:
             self.res['flag'] = 0
             self.res['msg'] = 'Order添加Item失败'
+            myWin.textBrowser.append("编辑order失败")
 
+    @initializationMsg
     def plan_cost(self, guiData, revenueData):
         try:
             if myWin.checkBox_8.isChecked() or revenueData['revenueForCny'] >= 35000:
@@ -536,7 +550,8 @@ class Sap(MyMainWindow):
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,%s]" % n).text = "E"
                             self.session.findById(
-                                "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,%s]" % n).text = guiData['csCostCenter']
+                                "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,%s]" % n).text = guiData[
+                                'csCostCenter']
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,%s]" % n).text = "FREMDL"
                             self.session.findById(
@@ -593,11 +608,13 @@ class Sap(MyMainWindow):
                         if 'T75' in guiData['materialCode']:
                             if myWin.checkBox_14.isChecked():
                                 self.session.findById(
-                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,1]").text = guiData['chmCostCenter']
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,1]").text = guiData[
+                                    'chmCostCenter']
                         else:
                             if myWin.checkBox_15.isChecked():
                                 self.session.findById(
-                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,1]").text = guiData['phyCostCenter']
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,1]").text = guiData[
+                                    'phyCostCenter']
 
                         if guiData['cost'] > 0:
                             if myWin.checkBox_14.isChecked() or myWin.checkBox_15.isChecked():
@@ -607,7 +624,8 @@ class Sap(MyMainWindow):
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,%s]" % n).text = "E"
                             self.session.findById(
-                                "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,%s]" % n).text = guiData['csCostCenter']
+                                "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,%s]" % n).text = guiData[
+                                'csCostCenter']
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,%s]" % n).text = "FREMDL"
                             self.session.findById(
@@ -626,6 +644,17 @@ class Sap(MyMainWindow):
             self.res['flag'] = 0
             self.res['msg'] = 'plan cost未添加'
 
+    @initializationMsg
+    def open_va02(self, guiData, revenueData, orderNo):
+        try:
+            self.session.findById("wnd[0]/tbar[0]/okcd").text = "/NVA02"
+            self.session.findById("wnd[0]").sendVKey(0)
+            self.session.findById("wnd[0]/usr/ctxtVBAK-VBELN").text = orderNo
+            self.session.findById("wnd[0]").sendVKey(0)
+        except:
+            self.res['flag'] = 0
+            self.res['msg'] = "该Order No %s 未开启" % orderNo
+            myWin.textBrowser.append("该Order No %s 未开启" % orderNo)
 
 
 if __name__ == "__main__":
