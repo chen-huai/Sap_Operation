@@ -16,6 +16,7 @@ from Sap_Operate_Ui import *
 from Get_Data import *
 from File_Operate import *
 from PDF_Operate import *
+from Sap_Function import *
 from Sap_Operate_Ui import Ui_MainWindow
 
 
@@ -298,7 +299,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         guiData['exchangeRate'] = float(self.doubleSpinBox.text())
         guiData['globalPartnerCode'] = self.lineEdit_3.text()
         guiData['csName'] = self.comboBox_2.currentText()
+        if guiData['csName'] != '':
+            guiData['csCode'] == configContent[guiData['csName']]
         guiData['salesName'] = self.comboBox_3.currentText()
+        if guiData['salesName'] != '':
+            guiData['salesCode'] == configContent[guiData['salesName']]
         guiData['amount'] = float(self.doubleSpinBox_2.text())
         guiData['cost'] = float(self.doubleSpinBox_3.text())
         guiData['amountVat'] = float(self.doubleSpinBox_4.text())
@@ -326,6 +331,60 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         guiData['csCostCenter'] = self.lineEdit_18.text()
         guiData['chmCostCenter'] = self.lineEdit_19.text()
         guiData['phyCostCenter'] = self.lineEdit_20.text()
+        if self.checkBox.isChecked():
+            guiData['va01Check'] = True
+        else:
+            guiData['va01Check'] = False
+
+        if self.checkBox_2.isChecked():
+            guiData['va02Check'] = True
+        else:
+            guiData['va02Check'] = False
+
+        if self.checkBox_3.isChecked():
+            guiData['vf01Check'] = True
+        else:
+            guiData['vf01Check'] = False
+
+        if self.checkBox_4.isChecked():
+            guiData['vf03Check'] = True
+        else:
+            guiData['vf03Check'] = False
+
+        if self.checkBox_6.isChecked():
+            guiData['saveCheck'] = True
+        else:
+            guiData['saveCheck'] = False
+
+
+        if self.checkBox_7.isChecked():
+            guiData['labCostCheck'] = True
+        else:
+            guiData['labCostCheck'] = False
+
+        if self.checkBox_8.isChecked():
+            guiData['planCostCheck'] = True
+        else:
+            guiData['planCostCheck'] = False
+
+
+
+
+
+        if self.checkBox_13.isChecked():
+            guiData['csCheck'] = True
+        else:
+            guiData['csCheck'] = False
+
+        if self.checkBox_14.isChecked():
+            guiData['chmCheck'] = True
+        else:
+            guiData['chmCheck'] = False
+
+        if self.checkBox_15.isChecked():
+            guiData['phyCheck'] = True
+        else:
+            guiData['phyCheck'] = False
         return guiData
 
     def getAdminGuiData(self):
@@ -350,9 +409,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 ("A2" in guiData['materialCode']) or ("D2" in guiData['materialCode']) or (
                 "D3" in guiData['materialCode'])):
             # DataB-CHM成本
-            revenueData['chmCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['chmCostRate'] * 0.5, '.2f')
+            revenueData['chmCost'] = format(
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['chmCostRate'] * 0.5, '.2f')
             # DataB-PHY成本
-            revenueData['phyCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['phyCostRate'] * 0.5, '.2f')
+            revenueData['phyCost'] = format(
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['phyCostRate'] * 0.5, '.2f')
             # Item1000 的revenue
             revenueData['chmRe'] = format(revenueData['revenue'] * 0.5, '.2f')
             # Item2000 的revenue
@@ -366,28 +427,34 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             # plan cost，理论上（revenue-total cost）*0.9*0.5，实际上SFL省略了0.9的计算（金额不大）
 
             # CS的Item1000-Cost
-            revenueData['chmCsCostAccounting'] = format((revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * (
-                    1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
-                                         '.%sf' % guiData['significantDigits'])
+            revenueData['chmCsCostAccounting'] = format(
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * (
+                        1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
+                '.%sf' % guiData['significantDigits'])
             # CHM的Item1000-Cost
             revenueData['chmLabCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * guiData['chmCostRate'] /
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * guiData[
+                    'chmCostRate'] /
                 guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
             # CS的Item2000-Cost
-            revenueData['phyCsCostAccounting'] = format((revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * (
-                    1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
-                                         '.%sf' % guiData['significantDigits'])
+            revenueData['phyCsCostAccounting'] = format(
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * (
+                        1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
+                '.%sf' % guiData['significantDigits'])
             # PHY的Item2000-Cost
             revenueData['phyLabCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * guiData['phyCostRate'] /
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * guiData[
+                    'phyCostRate'] /
                 guiData['phyHourlyRate'], '.%sf' % guiData['significantDigits'])
         elif ('441' in guiData['materialCode']) and ((
                 "A2" in guiData['materialCode'] or ("D2" in guiData['materialCode']) or (
                 "D3" in guiData['materialCode']))):
             # DataB-CHM成本
-            revenueData['chmCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['chmCostRate'] * 0.8, '.2f')
+            revenueData['chmCost'] = format(
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['chmCostRate'] * 0.8, '.2f')
             # DataB-PHY成本
-            revenueData['phyCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['phyCostRate'] * 0.2, '.2f')
+            revenueData['phyCost'] = format(
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['phyCostRate'] * 0.2, '.2f')
             # Item1000 的revenue
             revenueData['chmRe'] = format(revenueData['revenue'] * 0.8, '.2f')
             # Item2000 的revenue
@@ -399,24 +466,30 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             # revenueData['phyLabCostAccounting'] = format(revenueData['planCost'] * 0.2 * 0.3 / guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
 
             # CS的Item1000-Cost
-            revenueData['chmCsCostAccounting'] = format((revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.8 * (
-                    1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
-                                         '.%sf' % guiData['significantDigits'])
+            revenueData['chmCsCostAccounting'] = format(
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.8 * (
+                        1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
+                '.%sf' % guiData['significantDigits'])
             # CHM的Item1000-Cost
             revenueData['chmLabCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.8 * guiData['chmCostRate'] /
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.8 * guiData[
+                    'chmCostRate'] /
                 guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
             # CS的Item2000-Cost
-            revenueData['phyCsCostAccounting'] = format((revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.2 * (
-                    1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
-                                         '.%sf' % guiData['significantDigits'])
+            revenueData['phyCsCostAccounting'] = format(
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.2 * (
+                        1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
+                '.%sf' % guiData['significantDigits'])
             # PHY的Item2000-Cost
             revenueData['phyLabCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.2 * guiData['phyCostRate'] /
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.2 * guiData[
+                    'phyCostRate'] /
                 guiData['phyHourlyRate'], '.%sf' % guiData['significantDigits'])
         else:
-            revenueData['chmCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['chmCostRate'], '.2f')
-            revenueData['phyCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['phyCostRate'], '.2f')
+            revenueData['chmCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['chmCostRate'],
+                                            '.2f')
+            revenueData['phyCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['phyCostRate'],
+                                            '.2f')
             revenueData['chmRe'] = format(revenueData['revenue'], '.2f')
             revenueData['phyRe'] = format(revenueData['revenue'], '.2f')
             # plan cost总算法
@@ -430,47 +503,25 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 revenueData['labHourlyRate'] = guiData['phyHourlyRate']
 
             revenueData['csCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * (1 - revenueData['labCostRate']) / guiData[
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * (
+                            1 - revenueData['labCostRate']) / guiData[
                     'csHourlyRate'], '.%sf' % guiData['significantDigits'])
             revenueData['labCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * revenueData['labCostRate'] / revenueData['labHourlyRate'],
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * revenueData[
+                    'labCostRate'] / revenueData['labHourlyRate'],
                 '.%sf' % guiData['significantDigits'])
         return revenueData
 
-    def sapOperate(self):
+    def sapOperate(self, sap_obj):
         logMsg = {}
         logMsg['Remark'] = ''
         logMsg['orderNo'] = ''
         logMsg['Proforma No.'] = ''
+        logMsg['sapAmountVat'] = ''
         try:
-            SapGuiAuto = win32com.client.GetObject("SAPGUI")
-            if not type(SapGuiAuto) == win32com.client.CDispatch:
-                return
-
-            application = SapGuiAuto.GetScriptingEngine
-            if not type(application) == win32com.client.CDispatch:
-                SapGuiAuto = None
-                return
-
-            connection = application.Children(0)
-            if not type(connection) == win32com.client.CDispatch:
-                application = None
-                SapGuiAuto = None
-                return
-
-            session = connection.Children(0)
-            if not type(session) == win32com.client.CDispatch:
-                connection = None
-                application = None
-                SapGuiAuto = None
-                return
             flag = 1
+            # 获取数据
             guiData = MyMainWindow.getGuiData(self)
-            if guiData['csName'] != '':
-                csCode = configContent[guiData['csName']]
-            # guiData['salesName'] = self.comboBox_3.currentText()
-            if guiData['salesName'] != '':
-                salesCode = configContent[guiData['salesName']]
             orderNo = ''
             proformaNo = ''
             if guiData['sapNo'] == '' or guiData['projectNo'] == '' or guiData['materialCode'] == '' or guiData[
@@ -483,103 +534,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.textBrowser.append('----------------------------------')
                 app.processEvents()
                 QMessageBox.information(self, "提示信息", "有关键信息未填", QMessageBox.Yes)
-
             else:
-                revenue = guiData['amountVat'] / 1.06
-                # plan cost
-                # planCost = revenue * guiData['exchangeRate'] * 0.9 - guiData['cost']
-                planCost = revenue * guiData['exchangeRate']
-                revenueForCny = revenue * guiData['exchangeRate']
-                if ('405' in guiData['materialCode']) and (
-                        ("A2" in guiData['materialCode']) or ("D2" in guiData['materialCode']) or (
-                        "D3" in guiData['materialCode'])):
-                    # DataB-CHM成本
-                    chmCost = format((revenueForCny - guiData['cost']) * guiData['chmCostRate'] * 0.5, '.2f')
-                    # DataB-PHY成本
-                    phyCost = format((revenueForCny - guiData['cost']) * guiData['phyCostRate'] * 0.5, '.2f')
-                    # Item1000 的revenue
-                    chmRe = format(revenue * 0.5, '.2f')
-                    # Item2000 的revenue
-                    phyRe = format(revenue * 0.5, '.2f')
-                    # plan cost总算法
-                    # chmCsCostAccounting = format(planCost * 0.5 * (1 - 0.3  - (1 - guiData['planCostRate'] )) / guiData['csHourlyRate'], '.%sf' % guiData['significantDigits'])
-                    # chmLabCostAccounting = format(planCost * 0.5 * 0.3 / guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
-                    # phyCsCostAccounting = format(planCost * 0.5 * (1 - 0.3  - (1 - guiData['planCostRate'] )) / guiData['csHourlyRate'], '.%sf' % guiData['significantDigits'])
-                    # phyLabCostAccounting = format(planCost * 0.5 * 0.3 / guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
-
-                    # plan cost，理论上（revenue-total cost）*0.9*0.5，实际上SFL省略了0.9的计算（金额不大）
-
-                    # CS的Item1000-Cost
-                    chmCsCostAccounting = format((revenueForCny * guiData['planCostRate'] - guiData['cost']) * 0.5 * (
-                            1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
-                                                 '.%sf' % guiData['significantDigits'])
-                    # CHM的Item1000-Cost
-                    chmLabCostAccounting = format(
-                        (revenueForCny * guiData['planCostRate'] - guiData['cost']) * 0.5 * guiData['chmCostRate'] /
-                        guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
-                    # CS的Item2000-Cost
-                    phyCsCostAccounting = format((revenueForCny * guiData['planCostRate'] - guiData['cost']) * 0.5 * (
-                            1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
-                                                 '.%sf' % guiData['significantDigits'])
-                    # PHY的Item2000-Cost
-                    phyLabCostAccounting = format(
-                        (revenueForCny * guiData['planCostRate'] - guiData['cost']) * 0.5 * guiData['phyCostRate'] /
-                        guiData['phyHourlyRate'], '.%sf' % guiData['significantDigits'])
-                elif ('441' in guiData['materialCode']) and ((
-                        "A2" in guiData['materialCode'] or ("D2" in guiData['materialCode']) or (
-                        "D3" in guiData['materialCode']))):
-                    # DataB-CHM成本
-                    chmCost = format((revenueForCny - guiData['cost']) * guiData['chmCostRate'] * 0.8, '.2f')
-                    # DataB-PHY成本
-                    phyCost = format((revenueForCny - guiData['cost']) * guiData['phyCostRate'] * 0.2, '.2f')
-                    # Item1000 的revenue
-                    chmRe = format(revenue * 0.8, '.2f')
-                    # Item2000 的revenue
-                    phyRe = format(revenue * 0.2, '.2f')
-                    # plan cost总算法
-                    # chmCsCostAccounting = format(planCost * 0.8 * (1 - 0.3  - (1 - guiData['planCostRate'] )) / guiData['csHourlyRate'], '.%sf' % guiData['significantDigits'])
-                    # chmLabCostAccounting = format(planCost * 0.8 * 0.3 / guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
-                    # phyCsCostAccounting = format(planCost * 0.2 * (1 - 0.3  - (1 - guiData['planCostRate'] )) / guiData['csHourlyRate'], '.%sf' % guiData['significantDigits'])
-                    # phyLabCostAccounting = format(planCost * 0.2 * 0.3 / guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
-
-                    # CS的Item1000-Cost
-                    chmCsCostAccounting = format((revenueForCny * guiData['planCostRate'] - guiData['cost']) * 0.8 * (
-                            1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
-                                                 '.%sf' % guiData['significantDigits'])
-                    # CHM的Item1000-Cost
-                    chmLabCostAccounting = format(
-                        (revenueForCny * guiData['planCostRate'] - guiData['cost']) * 0.8 * guiData['chmCostRate'] /
-                        guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
-                    # CS的Item2000-Cost
-                    phyCsCostAccounting = format((revenueForCny * guiData['planCostRate'] - guiData['cost']) * 0.2 * (
-                            1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
-                                                 '.%sf' % guiData['significantDigits'])
-                    # PHY的Item2000-Cost
-                    phyLabCostAccounting = format(
-                        (revenueForCny * guiData['planCostRate'] - guiData['cost']) * 0.2 * guiData['phyCostRate'] /
-                        guiData['phyHourlyRate'], '.%sf' % guiData['significantDigits'])
-                else:
-                    chmCost = format((revenueForCny - guiData['cost']) * guiData['chmCostRate'], '.2f')
-                    phyCost = format((revenueForCny - guiData['cost']) * guiData['phyCostRate'], '.2f')
-                    chmRe = format(revenue, '.2f')
-                    phyRe = format(revenue, '.2f')
-                    # plan cost总算法
-                    # csCostAccounting = format(planCost * (1 - 0.3  - (1 - guiData['planCostRate'] )) / guiData['csHourlyRate'], '.%sf' % guiData['significantDigits'])
-                    # labCostAccounting = format(planCost * 0.3 / guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
-                    if 'T75' in guiData['materialCode']:
-                        labCostRate = guiData['chmCostRate']
-                        labHourlyRate = guiData['chmHourlyRate']
-                    else:
-                        labCostRate = guiData['phyCostRate']
-                        labHourlyRate = guiData['phyHourlyRate']
-
-                    csCostAccounting = format(
-                        (revenueForCny * guiData['planCostRate'] - guiData['cost']) * (1 - labCostRate) / guiData[
-                            'csHourlyRate'], '.%sf' % guiData['significantDigits'])
-                    labCostAccounting = format(
-                        (revenueForCny * guiData['planCostRate'] - guiData['cost']) * labCostRate / labHourlyRate,
-                        '.%sf' % guiData['significantDigits'])
-
+                revenueData = MyMainWindow.getRevenueData(guiData)
                 messageFlag = 1
                 if self.checkBox_5.isChecked():
                     if guiData['salesName'] == '':
@@ -599,631 +555,69 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     self.textBrowser.append("Amount:%s" % guiData['amount'])
                     self.textBrowser.append("Cost:%s" % guiData['cost'])
                     self.textBrowser.append("Currency Type:%s" % guiData['currencyType'])
-                    self.textBrowser.append("CHM Cost:%s" % chmCost)
-                    self.textBrowser.append("PHY Cost:%s" % phyCost)
-                    self.textBrowser.append("CHM Amount:%s" % chmRe)
-                    self.textBrowser.append("PHY Amount:%s" % phyRe)
+                    self.textBrowser.append("CHM Cost:%s" % revenueData['chmCost'])
+                    self.textBrowser.append("PHY Cost:%s" % revenueData['phyCost'])
+                    self.textBrowser.append("CHM Amount:%s" % revenueData['chmRe'])
+                    self.textBrowser.append("PHY Amount:%s" % revenueData['phyRe'])
                     app.processEvents()
-                    csCostCenter = self.lineEdit_18.text()
-                    chmCostCenter = self.lineEdit_19.text()
-                    phyCostCenter = self.lineEdit_20.text()
-                    if self.checkBox.isChecked():
-                        orderType = self.lineEdit_10.text()
-                        salesOrganization = self.lineEdit_11.text()
-                        distributionChannels = self.lineEdit_12.text()
-                        salesOffice = self.lineEdit_13.text()
-                        salesGroup = self.lineEdit_14.text()
-                        session.findById("wnd[0]/tbar[0]/okcd").text = "/nva01"
-                        session.findById("wnd[0]").sendVKey(0)
-                        session.findById("wnd[0]/usr/ctxtVBAK-AUART").text = orderType
-                        session.findById("wnd[0]/usr/ctxtVBAK-VKORG").text = salesOrganization
-                        session.findById("wnd[0]/usr/ctxtVBAK-VTWEG").text = distributionChannels
-                        session.findById("wnd[0]/usr/ctxtVBAK-VKBUR").text = salesOffice
-                        session.findById("wnd[0]/usr/ctxtVBAK-VKGRP").text = salesGroup
-                        session.findById("wnd[0]").sendVKey(0)
-                        session.findById(
-                            "wnd[0]/usr/subSUBSCREEN_HEADER:SAPMV45A:4021/subPART-SUB:SAPMV45A:4701/ctxtKUAGV-KUNNR").text = \
-                            guiData['sapNo']
-                        session.findById(
-                            "wnd[0]/usr/subSUBSCREEN_HEADER:SAPMV45A:4021/subPART-SUB:SAPMV45A:4701/ctxtKUAGV-KUNNR").caretPosition = 6
-                        session.findById("wnd[0]").sendVKey(0)
-                        session.findById("wnd[0]").sendVKey(0)
-                        session.findById("wnd[0]/usr/subSUBSCREEN_HEADER:SAPMV45A:4021/txtVBKD-BSTKD").text = guiData[
-                            'projectNo']
-                        session.findById("wnd[0]/usr/subSUBSCREEN_HEADER:SAPMV45A:4021/ctxtVBKD-BSTDK").text = today
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/ctxtVBKD-FBUDA").text = today
-                        session.findById("wnd[0]/usr/subSUBSCREEN_HEADER:SAPMV45A:4021/txtVBKD-BSTKD").setFocus()
-                        session.findById(
-                            "wnd[0]/usr/subSUBSCREEN_HEADER:SAPMV45A:4021/txtVBKD-BSTKD").caretPosition = 17
-                        session.findById("wnd[0]").sendVKey(0)
-                        session.findById("wnd[1]/tbar[0]/btn[0]").press()
-                        session.findById("wnd[0]/usr/subSUBSCREEN_HEADER:SAPMV45A:4021/btnBT_HEAD").press()
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\01/ssubSUBSCREEN_BODY:SAPMV45A:4301/ctxtVBAK-WAERK").text = \
-                            guiData['currencyType']
 
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\01/ssubSUBSCREEN_BODY:SAPMV45A:4301/ctxtVBAK-WAERK").setFocus()
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\01/ssubSUBSCREEN_BODY:SAPMV45A:4301/ctxtVBAK-WAERK").caretPosition = 3
-                        session.findById("wnd[0]").sendVKey(0)
-                        try:
-                            session.findById("wnd[1]").sendVKey(0)
-                        except:
-                            pass
+                    # VA01
+                    if guiData['va01Check']:
+                        sap_obj.va01_operate(guiData, revenueData)
+                        if sap_obj.res['flag'] == 1:
+                            # 是否要添加lab cost
+                            if guiData['labCostCheck'] and sap_obj.res['flag'] == 1:
+                                sap_obj.lab_cost(guiData, revenueData)
+                                if sap_obj.res['flag'] == 0:
+                                    logMsg['Remark'] += sap_obj.res['msg']
+                            if guiData['va02Check'] or guiData['saveCheck']:
+                                sap_obj.save_sap()
+                                if sap_obj.res['flag'] == 0:
+                                    logMsg['Remark'] += sap_obj.res['msg']
                         else:
-                            pass
-                        if guiData['currencyType'] != "CNY":
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\01/ssubSUBSCREEN_BODY:SAPMV45A:4301/ctxtVBKD-KURSK").text = \
-                                guiData['exchangeRate']
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\01/ssubSUBSCREEN_BODY:SAPMV45A:4301/ctxtVBKD-KURSK").setFocus()
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\01/ssubSUBSCREEN_BODY:SAPMV45A:4301/ctxtVBKD-KURSK").caretPosition = 8
-                            session.findById("wnd[0]").sendVKey(0)
-                        # 会计
-                        session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\06").select()
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\06/ssubSUBSCREEN_BODY:SAPMV45A:4311/txtVBAK-XBLNR").text = "*"
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\06/ssubSUBSCREEN_BODY:SAPMV45A:4311/txtVBAK-XBLNR").setFocus()
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\06/ssubSUBSCREEN_BODY:SAPMV45A:4311/txtVBAK-XBLNR").caretPosition = 1
-                        session.findById("wnd[0]").sendVKey(0)
-                        # 合作伙伴
-                        session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09").select()
-
-                        # 获取文本名称
-                        fourName = session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/cmbGVS_TC_DATA-REC-PARVW[0,4]").text
-                        fiveName = session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/cmbGVS_TC_DATA-REC-PARVW[0,5]").text
-
-                        # # eNum负责雇员位置，gNum送达方位置
-                        if fourName == '负责雇员' or fourName == 'Employee respons.':
-                            eNum = 4
-                            gNum = 5
+                            logMsg['Remark'] += sap_obj.res['msg']
+                    # VA02
+                    if guiData['va02Check']:
+                        sap_obj.va02_operate(guiData, revenueData)
+                        if sap_obj.res['flag'] == 1:
+                            amountVatStr = re.sub(r"(\d)(?=(\d\d\d)+(?!\d))", r"\1,",
+                                                  format(guiData['amountVat'], '.2f'))
+                            sapAmountVat = sap_obj.logMsg['sapAmountVat']
+                            self.textBrowser.append("Sap Amount Vat:%s" % sapAmountVat)
+                            self.textBrowser.append("Amount Vat:%s" % amountVatStr)
+                            app.processEvents()
+                            # sapAmountVat在A2是数字，其它为字符串
+                            if sapAmountVat.strip() != amountVatStr:
+                                flag = 0
+                                reply = QMessageBox.question(self, '信息', 'SAP数据与ODM不一致，请确认并修改后再继续！！！',
+                                                             QMessageBox.Yes | QMessageBox.No,
+                                                             QMessageBox.Yes)
+                                logMsg['Remark'] = 'SAP数据与ODM不一致，请确认并修改后再继续！！！'
+                                if reply == QMessageBox.Yes:
+                                    flag = 1
+                            if (guiData['vf01Check'] or guiData['saveCheck']) and flag == 1:
+                                sap_obj.save_sap()
+                                if sap_obj.res['flag'] == 0:
+                                    logMsg['Remark'] += sap_obj.res['msg']
                         else:
-                            eNum = 5
-                            gNum = 4
+                            logMsg['Remark'] += sap_obj.res['msg']
 
-                        # 送达方GPC
-                        # eNum负责雇员位置，gNum送达方位置
+                    if guiData['vf01Check'] and flag == 1:
+                        sap_obj.save_sap()
+                        if sap_obj.res['flag'] == 0:
+                            logMsg['Remark'] += sap_obj.res['msg']
 
-                        # if fiveName == '送达方' or fiveName == 'Global Partner':
-                        # 	gNum = 5
-                        # else:
-                        # 	gNum = 4
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/cmbGVS_TC_DATA-REC-PARVW[0,%s]" % gNum).key = "ZG"
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,%s]" % gNum).text = \
-                            guiData['globalPartnerCode']
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,%s]" % gNum).setFocus()
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,%s]" % gNum).caretPosition = 8
-                        # session.findById("wnd[0]").sendVKey(0)
+                        sap_obj.vf01_operate()
+                        if sap_obj.res['flag'] == 0:
+                            logMsg['Remark'] += sap_obj.res['msg']
 
-                        # fiveName = session.findById(
-                        # 	"wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/cmbGVS_TC_DATA-REC-PARVW[0,5]").text
-
-                        # 负责雇员cs
-                        # eNum负责雇员位置，gNum送达方位置
-                        # if fourName == '负责雇员' or fourName == 'Employee respons.':
-                        # 	eNum = 4
-                        # else:
-                        # 	eNum = 5
-
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,%s]" % eNum).text = csCode
-                        session.findById("wnd[0]").sendVKey(0)
-
-                        # 联系人
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/cmbGVS_TC_DATA-REC-PARVW[0,6]").key = "AP"
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,6]").setFocus()
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,6]").caretPosition = 0
-                        session.findById("wnd[0]").sendVKey(4)
-                        session.findById("wnd[1]/tbar[0]/btn[0]").press()
-                        session.findById("wnd[1]/tbar[0]/btn[0]").press()
-                        session.findById("wnd[0]").sendVKey(0)
-                        if guiData['salesName'] != '':
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/cmbGVS_TC_DATA-REC-PARVW[0,7]").key = "VE"
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,7]").text = salesCode
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,7]").setFocus()
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4352/subSUBSCREEN_PARTNER_OVERVIEW:SAPLV09C:1000/tblSAPLV09CGV_TC_PARTNER_OVERVIEW/ctxtGVS_TC_DATA-REC-PARTNER[1,7]").caretPosition = 4
-                            session.findById("wnd[0]").sendVKey(0)
-                        # 文本
-                        session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10").select()
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cntlSPLITTER_CONTAINER/shellcont/shellcont/shell/shellcont[1]/shell").text = \
-                            guiData['shortText']
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cntlSPLITTER_CONTAINER/shellcont/shellcont/shell/shellcont[1]/shell").setSelectionIndexes(
-                            11, 11)
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cmbLV70T-SPRAS").key = "EN"
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cmbLV70T-SPRAS").setFocus()
-                        session.findById("wnd[0]").sendVKey(0)
-                        # DATA A
-                        session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\13").select()
-                        if 'D2' in guiData['materialCode'] or 'D3' in guiData['materialCode']:
-                            if guiData['sapNo'] in guiData['dataAE1']:
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\13/ssubSUBSCREEN_BODY:SAPMV45A:4309/cmbVBAK-KVGR1").key = "E1"
-                            else:
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\13/ssubSUBSCREEN_BODY:SAPMV45A:4309/cmbVBAK-KVGR1").key = "Z0"
-                        elif guiData['sapNo'] in guiData['dataAZ2']:
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\13/ssubSUBSCREEN_BODY:SAPMV45A:4309/cmbVBAK-KVGR1").key = "Z2"
-                        else:
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\13/ssubSUBSCREEN_BODY:SAPMV45A:4309/cmbVBAK-KVGR1").key = "00"
-                        # DATA B
-                        session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14").select()
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/ctxtVBAK-ZZAUART").text = "WO"
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/ctxtVBAK-ZZUNLIMITLIAB").text = "N"
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/ctxtZAUFTD-VORAUS_AUFENDE").text = oneWeekday
-                        if revenueForCny >= 35000:
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/txtZAUFTD-AUFTRAGSWERT").text = format(
-                                revenueForCny, '.2f')
-                        # 是否要添加cost
-                        if self.checkBox_7.isChecked():
-                            if 'A2' in guiData['materialCode'] or 'D2' in guiData['materialCode'] or 'D3' in guiData[
-                                'materialCode']:
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AZULEISTENDE/ctxtTABL-KOSTL[0,0]").text = chmCostCenter
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AZULEISTENDE/ctxtTABL-KOSTL[0,1]").text = phyCostCenter
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/ctxtTABD-KOSTL[0,0]").text = chmCostCenter
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/ctxtTABD-KOSTL[0,1]").text = phyCostCenter
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/txtTABD-FESTPREIS[5,0]").text = chmCost
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/txtTABD-FESTPREIS[5,1]").text = phyCost
-                            elif 'T20' in guiData['materialCode']:
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AZULEISTENDE/ctxtTABL-KOSTL[0,0]").text = phyCostCenter
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/ctxtTABD-KOSTL[0,0]").text = phyCostCenter
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/txtTABD-FESTPREIS[5,0]").text = phyCost
-                            else:
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AZULEISTENDE/ctxtTABL-KOSTL[0,0]").text = chmCostCenter
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/ctxtTABD-KOSTL[0,0]").text = chmCostCenter
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/txtTABD-FESTPREIS[5,0]").text = chmCost
-
-                        session.findById("wnd[0]").sendVKey(0)
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AZULEISTENDE/ctxtTABL-KOSTL[0,1]").setFocus()
-                        session.findById(
-                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AZULEISTENDE/ctxtTABL-KOSTL[0,1]").caretPosition = 8
-
-                        if self.checkBox_2.isChecked() or self.checkBox_6.isChecked():
-                            try:
-                                session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                                session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                                session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                            except:
-                                try:
-                                    session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                                    session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                                    session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                                    session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                                except:
-                                    self.textBrowser.append("跳过保存")
-                                else:
-                                    pass
-                            else:
-                                pass
-                        # session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                        # session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                        # session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-
-                    if self.checkBox_2.isChecked():
-                        # try:
-                        # 	session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                        # 	session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                        # 	session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                        # except:
-                        # 	try:
-                        # 		session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                        # 		session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                        # 		session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                        # 		session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                        # 	except:
-                        # 		self.textBrowser.append("已保存")
-                        # 	else:
-                        # 		pass
-                        # else:
-                        # 	pass
-                        session.findById("wnd[0]/tbar[0]/okcd").text = "/NVA02"
-                        session.findById("wnd[0]").sendVKey(0)
-                        orderNo = session.findById("wnd[0]/usr/ctxtVBAK-VBELN").text
-                        self.textBrowser.append("Order No.:%s" % orderNo)
-                        app.processEvents()
-                        logMsg['orderNo'] = orderNo
-                        session.findById("wnd[0]").sendVKey(0)
-                        if 'A2' in guiData['materialCode']:
-                            if '405' in guiData['materialCode']:
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").text = "T75-405-00"
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,1]").text = "T20-405-00"
-                            else:
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").text = "T75-441-00"
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,1]").text = "T20-441-00"
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/txtVBAP-ZMENG[2,0]").text = "1"
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/txtVBAP-ZMENG[2,1]").text = "1"
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtVBAP-ZIEME[3,0]").text = "pu"
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtVBAP-ZIEME[3,1]").text = "pu"
-                            session.findById("wnd[0]").sendVKey(0)
-
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/txtVBAP-ZMENG[2,1]").setFocus()
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/txtVBAP-ZMENG[2,1]").caretPosition = 16
-                            session.findById("wnd[0]").sendVKey(2)
-                            session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06").select()
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").text = phyRe
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").setFocus()
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").caretPosition = 16
-                            session.findById("wnd[0]").sendVKey(0)
-                            sapAmountVatStr = session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").text
-                            sapAmountVat = float(sapAmountVatStr.replace(',', ''))
-
-                            session.findById("wnd[0]/tbar[0]/btn[3]").press()
-
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").setFocus()
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").caretPosition = 10
-                            session.findById("wnd[0]").sendVKey(2)
-                            session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06").select()
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").text = chmRe
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").setFocus()
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").caretPosition = 16
-                            session.findById("wnd[0]").sendVKey(0)
-                            sapAmountVatStr = session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").text
-
-                            sapAmountVat += float(sapAmountVatStr.replace(',', ''))
-                            sapAmountVat = format(sapAmountVat, '.2f')
-                            sapAmountVat = re.sub(r"(\d)(?=(\d\d\d)+(?!\d))", r"\1,", sapAmountVat)
-
-                            if self.checkBox_8.isChecked() or revenueForCny >= 35000:
-
-                                session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                                if revenueForCny >= 1000:
-                                    # 这个是Item2000的
-                                    session.findById(
-                                        "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,1]").setFocus()
-                                    session.findById(
-                                        "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,1]").caretPosition = 10
-                                    session.findById("wnd[0]/mbar/menu[3]/menu[7]").select()
-                                    session.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press()
-                                    session.findById("wnd[1]/tbar[0]/btn[0]").press()
-                                    # cs
-                                    if self.checkBox_13.isChecked():
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,0]").text = "E"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,0]").text = csCostCenter
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,0]").text = "T01AST"
-                                        # 录金额
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").text = round(
-                                            float(phyCsCostAccounting), 0)
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").setFocus()
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").caretPosition = 20
-                                        session.findById("wnd[0]").sendVKey(0)
-                                    # phy
-                                    if self.checkBox_15.isChecked():
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,1]").text = "E"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,1]").text = phyCostCenter
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,1]").text = "T01AST"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").text = round(
-                                            float(phyLabCostAccounting), 0)
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").setFocus()
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").caretPosition = 20
-                                    session.findById("wnd[0]").sendVKey(0)
-
-                                    # session.findById("wnd[0]").sendVKey(0)
-                                    session.findById("wnd[0]/tbar[0]/btn[3]").press()
-
-                                    # session.findById("wnd[0]/tbar[0]/btn[11]").press()
-                                    session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                                    session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-
-                                    # Items1000的plan cost
-                                    session.findById(
-                                        "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").setFocus()
-                                    session.findById(
-                                        "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").caretPosition = 10
-                                    session.findById("wnd[0]/mbar/menu[3]/menu[7]").select()
-                                    session.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press()
-                                    session.findById("wnd[1]/tbar[0]/btn[0]").press()
-                                    # cs
-                                    if self.checkBox_13.isChecked():
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,0]").text = "E"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,0]").text = csCostCenter
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,0]").text = "T01AST"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").text = round(
-                                            float(chmCsCostAccounting), 0)
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").setFocus()
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").caretPosition = 19
-                                    # 	chm
-                                    if self.checkBox_14.isChecked():
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,1]").text = "E"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,1]").text = chmCostCenter
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,1]").text = "T01AST"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").text = round(
-                                            float(chmLabCostAccounting), 0)
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").setFocus()
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").caretPosition = 20
-                                    session.findById("wnd[0]").sendVKey(0)
-                                    if guiData['cost'] > 0:
-                                        if self.checkBox_14.isChecked():
-                                            n = 2
-                                        else:
-                                            n = 1
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,%s]" % n).text = "E"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,%s]" % n).text = csCostCenter
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,%s]" % n).text = "FREMDL"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).text = format(
-                                            guiData['cost'] / 1.06, '.2f')
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).setFocus()
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).caretPosition = 20
-                                        session.findById("wnd[0]").sendVKey(0)
-
-                                    # session.findById("wnd[0]/tbar[0]/btn[11]").press()
-                                    session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                                    session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                                # session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                        else:
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").text = \
-                                guiData['materialCode']
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/txtVBAP-ZMENG[2,0]").text = "1"
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtVBAP-ZIEME[3,0]").text = "pu"
-                            session.findById("wnd[0]").sendVKey(0)
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").setFocus()
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").caretPosition = 10
-                            session.findById("wnd[0]").sendVKey(2)
-                            session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06").select()
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").text = format(
-                                revenue, '.2f')
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").setFocus()
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").caretPosition = 16
-                            session.findById("wnd[0]").sendVKey(0)
-                            sapAmountVat = session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").text
-
-                            if self.checkBox_8.isChecked() or revenueForCny >= 35000:
-                                session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                                if revenueForCny >= 1000:
-                                    session.findById(
-                                        "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").setFocus()
-                                    session.findById(
-                                        "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").caretPosition = 10
-                                    session.findById("wnd[0]/mbar/menu[3]/menu[7]").select()
-                                    session.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press()
-                                    session.findById("wnd[1]/tbar[0]/btn[0]").press()
-                                    if self.checkBox_13.isChecked():
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,0]").text = "E"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,0]").text = csCostCenter
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,0]").text = "T01AST"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").text = round(
-                                            float(csCostAccounting), 0)
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").setFocus()
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").caretPosition = 19
-
-                                    if self.checkBox_14.isChecked() or self.checkBox_15.isChecked():
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,1]").text = "E"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,1]").text = "T01AST"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").text = round(
-                                            float(labCostAccounting), 0)
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").setFocus()
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").caretPosition = 20
-
-                                    if 'T75' in guiData['materialCode']:
-                                        if self.checkBox_14.isChecked():
-                                            session.findById(
-                                                "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,1]").text = chmCostCenter
-                                    else:
-                                        if self.checkBox_15.isChecked():
-                                            session.findById(
-                                                "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,1]").text = phyCostCenter
-
-                                    if guiData['cost'] > 0:
-                                        if self.checkBox_14.isChecked() or self.checkBox_15.isChecked():
-                                            n = 2
-                                        else:
-                                            n = 1
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,%s]" % n).text = "E"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,%s]" % n).text = csCostCenter
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,%s]" % n).text = "FREMDL"
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).text = format(
-                                            guiData['cost'] / 1.06, '.2f')
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).setFocus()
-                                        session.findById(
-                                            "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).caretPosition = 20
-                                        session.findById("wnd[0]").sendVKey(0)
-                                    # 直接保存
-                                    # session.findById("wnd[0]/tbar[0]/btn[11]").press()
-                                    session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                                    session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-
-                        if guiData['longText'] != '':
-                            if self.checkBox_8.isChecked() or revenueForCny >= 35000:
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").setFocus()
-                                session.findById(
-                                    "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").caretPosition = 10
-                                session.findById("wnd[0]").sendVKey(2)
-
-                            session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\09").select()
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cntlSPLITTER_CONTAINER/shellcont/shellcont/shell/shellcont[1]/shell").text = \
-                                guiData['longText']
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cntlSPLITTER_CONTAINER/shellcont/shellcont/shell/shellcont[1]/shell").setSelectionIndexes(
-                                4, 4)
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cmbLV70T-SPRAS").key = "EN"
-                            session.findById(
-                                "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cmbLV70T-SPRAS").setFocus()
-                            session.findById("wnd[0]").sendVKey(0)
-
-                        if self.checkBox_8.isChecked() or revenueForCny >= 35000:
-                            pass
-                        else:
-                            session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                        amountVatStr = re.sub(r"(\d)(?=(\d\d\d)+(?!\d))", r"\1,", format(guiData['amountVat'], '.2f'))
-                        self.textBrowser.append("Sap Amount Vat:%s" % sapAmountVat)
-                        self.textBrowser.append("Amount Vat:%s" % amountVatStr)
-                        app.processEvents()
-                        # sapAmountVat在A2是数字，其它为字符串
-                        if sapAmountVat.strip() != amountVatStr:
-                            flag = 2
-                            reply = QMessageBox.question(self, '信息', 'SAP数据与ODM不一致，请确认并修改后再继续！！！',
-                                                         QMessageBox.Yes | QMessageBox.No,
-                                                         QMessageBox.Yes)
-                            logMsg['Remark'] = 'SAP数据与ODM不一致，请确认并修改后再继续！！！'
-                            if reply == QMessageBox.Yes:
-                                flag = 1
-                        if (self.checkBox_3.isChecked() or self.checkBox_6.isChecked()) and flag == 1:
-                            try:
-                                session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                                session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                                session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                            except:
-                                try:
-                                    session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                                    session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                                    session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                                    session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                                except:
-                                    self.textBrowser.append("跳过保存")
-                                else:
-                                    pass
-                            else:
-                                pass
-
-                    if self.checkBox_3.isChecked() and flag == 1:
-                        try:
-                            session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                            session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                            session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                        except:
-                            try:
-                                session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                                session.findById("wnd[0]/tbar[0]/btn[3]").press()
-                                session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                                session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-                            except:
-                                self.textBrowser.append("已保存")
-                            else:
-                                pass
-                        else:
-                            pass
-                        session.findById("wnd[0]/tbar[0]/okcd").text = "/nvf01"
-                        session.findById("wnd[0]").sendVKey(0)
-                        session.findById("wnd[0]/tbar[0]/btn[11]").press()
-
-                    if self.checkBox_4.isChecked():
-                        session.findById("wnd[0]/tbar[0]/okcd").text = "/nvf03"
-                        session.findById("wnd[0]").sendVKey(0)
-                        proformaNo = session.findById("wnd[0]/usr/ctxtVBRK-VBELN").text
-                        logMsg['Proforma No.'] = proformaNo
+                    if guiData['vf03Check']:
+                        sap_obj.vf03_operate()
+                        if sap_obj.res['flag'] == 0:
+                            logMsg['Remark'] += sap_obj.res['msg']
+                        sapAmountVat = sap_obj.logMsg['proformaNo']
                         self.textBrowser.append("Proforma No.:%s" % proformaNo)
                         app.processEvents()
-                        session.findById("wnd[0]/mbar/menu[0]/menu[11]").select()
-                        session.findById("wnd[1]/tbar[0]/btn[37]").press()
-
                     self.textBrowser.append('SAP操作已完成')
                     self.textBrowser.append('----------------------------------')
                     app.processEvents()
@@ -1240,13 +634,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser.append('----------------------------------')
             QMessageBox.information(self, "提示信息", '这份%s的ODM获取数据有问题' % guiData['projectNo'], QMessageBox.Yes)
             return logMsg
-        # print(sys.exc_info()[0])
-
-        finally:
-            session = None
-            connection = None
-            application = None
-            SapGuiAuto = None
 
     def getFile(self):
         selectBatchFile = QFileDialog.getOpenFileName(self, '选择ODM导出文件',
@@ -1340,6 +727,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 logFile['Order No.'] = ''
                 logFile['Remark'] = ''
                 logFile['Proforma No.'] = ''
+                logFile['sapAmountVat'] = ''
                 logFile['Update Time'] = '未开Order'
                 if 'Text' not in headList:
                     logFile['Text'] = ''
@@ -1349,91 +737,100 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 fileDataList = newData.getFileDataList(getFileDataListKey)
                 headerData = newData.getHeaderData()
                 n = 0
-                for n in range(len(fileDataList['Amount'])):
-                    if fileDataList['Material Code'][n] == '':
-                        QMessageBox.information(self, "提示信息", "无Material Code，请检查", QMessageBox.Yes)
-                        break
-                    else:
-                        materialCode = fileDataList['Material Code'][n]
-                    self.lineEdit_2.setText(fileDataList['Project No.'][n])
-                    self.lineEdit_3.setText(str(int(fileDataList['GPC Glo. Par. Code'][n])))
-                    self.textBrowser.append("No.:%s" % (n + 1))
-                    # if pd.isnull(fileDataList['SAP No.'][n]):
-                    # # if math.isnan(fileDataList['SAP No.'][n]):
-                    # 	self.textBrowser.append("没有SAP No.")
-                    # 	self.lineEdit.setText('')
-                    # else:
-                    # 	self.lineEdit.setText(str(int(fileDataList['SAP No.'][n])))
-                    try:
-                        self.lineEdit.setText(str(int(fileDataList['SAP No.'][n])))
-                    except:
-                        self.lineEdit.setText('')
-                    else:
-                        pass
-                    # materialCodeList = ['', 'T75-441-A2', 'T75-405-A2', 'T20-441-00', 'T20-405-00', 'T75-441-00', 'T75-405-00', 'T75-441-D2', 'T75-405-D2', 'S11-441-10', 'S11-405-10']
-                    # self.comboBox_4.setCurrentIndex(username.index(materialCode))
-                    app.processEvents()
-                    self.comboBox_4.setItemText(int(0), materialCode)
+                # 实例化sap
+                sap_obj = Sap()
+                if sap_obj.res['flag']:
+                    for n in range(len(fileDataList['Amount'])):
+                        if fileDataList['Material Code'][n] == '':
+                            QMessageBox.information(self, "提示信息", "无Material Code，请检查", QMessageBox.Yes)
+                            break
+                        else:
+                            materialCode = fileDataList['Material Code'][n]
+                        self.lineEdit_2.setText(fileDataList['Project No.'][n])
+                        self.lineEdit_3.setText(str(int(fileDataList['GPC Glo. Par. Code'][n])))
+                        self.textBrowser.append("No.:%s" % (n + 1))
+                        # if pd.isnull(fileDataList['SAP No.'][n]):
+                        # # if math.isnan(fileDataList['SAP No.'][n]):
+                        # 	self.textBrowser.append("没有SAP No.")
+                        # 	self.lineEdit.setText('')
+                        # else:
+                        # 	self.lineEdit.setText(str(int(fileDataList['SAP No.'][n])))
+                        try:
+                            self.lineEdit.setText(str(int(fileDataList['SAP No.'][n])))
+                        except:
+                            self.lineEdit.setText('')
+                        else:
+                            pass
+                        # materialCodeList = ['', 'T75-441-A2', 'T75-405-A2', 'T20-441-00', 'T20-405-00', 'T75-441-00', 'T75-405-00', 'T75-441-D2', 'T75-405-D2', 'S11-441-10', 'S11-405-10']
+                        # self.comboBox_4.setCurrentIndex(username.index(materialCode))
+                        app.processEvents()
+                        self.comboBox_4.setItemText(int(0), materialCode)
 
-                    if fileDataList['CS'][n] in configContent:
-                        # self.comboBox_2.setCurrentIndex(username.index(fileDataList['CS'][n])+1)
-                        self.comboBox_2.setItemText(int(0), fileDataList['CS'][n])
-                    else:
-                        # self.comboBox_2.setCurrentIndex(0)
-                        self.comboBox_2.setItemText(int(0), '')
-                    if fileDataList['Sales'][n] in configContent:
-                        # self.comboBox_3.setCurrentIndex(username.index(fileDataList['Sales'][n]) + 1)
-                        self.comboBox_3.setItemText(int(0), fileDataList['Sales'][n])
-                    else:
-                        # self.comboBox_3.setCurrentIndex(0)
-                        self.comboBox_3.setItemText(int(0), '')
-                    self.comboBox.setItemText(int(0), fileDataList['Currency'][n])
-                    self.doubleSpinBox_2.setValue(fileDataList['Amount'][n])
-                    self.doubleSpinBox_4.setValue(fileDataList['Amount with VAT'][n])
-                    self.doubleSpinBox_3.setValue(fileDataList['Total Cost'][n])
-                    self.doubleSpinBox.setValue(fileDataList['Exchange Rate'][n])
-                    if 'Text' in headList:
-                        try:
-                            self.lineEdit_5.setText(fileDataList['Text'][n])
-                        except:
-                            self.lineEdit_5.setText('Testing Fee')
+                        if fileDataList['CS'][n] in configContent:
+                            # self.comboBox_2.setCurrentIndex(username.index(fileDataList['CS'][n])+1)
+                            self.comboBox_2.setItemText(int(0), fileDataList['CS'][n])
                         else:
-                            pass
-                    else:
-                        self.lineEdit_5.setText('Testing Fee')
-                    if 'Long Text' in headList:
-                        try:
-                            self.lineEdit_4.setText(fileDataList['Long Text'][n])
-                        except:
-                            pass
+                            # self.comboBox_2.setCurrentIndex(0)
+                            self.comboBox_2.setItemText(int(0), '')
+                        if fileDataList['Sales'][n] in configContent:
+                            # self.comboBox_3.setCurrentIndex(username.index(fileDataList['Sales'][n]) + 1)
+                            self.comboBox_3.setItemText(int(0), fileDataList['Sales'][n])
                         else:
-                            pass
-                    app.processEvents()
-                    logMsg = MyMainWindow.sapOperate(self)
-                    # 写log
-                    logIndex = logFile[(logFile['Project No.'] == fileDataList['Project No.'][n])].index.tolist()[0]
-                    logFile.loc[logIndex, 'Order No.'] = logMsg['orderNo']
-                    logFile.loc[logIndex, 'Remark'] = logMsg['Remark']
-                    logFile.loc[logIndex, 'Proforma No.'] = logMsg['Proforma No.']
-                    nowDate = datetime.datetime.today()
-                    logFile.loc[logIndex, 'Update Time'] = nowDate
-                    logDataFile = logFile.to_csv('%s' % logDataPath, encoding='utf_8_sig')
-                    self.lineEdit_9.setText(logDataPath)
-                    if n < len(fileDataList['Amount']) - 1:
-                        if self.checkBox_5.isChecked():
-                            reply = QMessageBox.question(self, '信息', '是否继续填写下一个Order', QMessageBox.Yes | QMessageBox.No,
-                                                         QMessageBox.Yes)
-                            if reply == QMessageBox.Yes:
-                                continue
+                            # self.comboBox_3.setCurrentIndex(0)
+                            self.comboBox_3.setItemText(int(0), '')
+                        self.comboBox.setItemText(int(0), fileDataList['Currency'][n])
+                        self.doubleSpinBox_2.setValue(fileDataList['Amount'][n])
+                        self.doubleSpinBox_4.setValue(fileDataList['Amount with VAT'][n])
+                        self.doubleSpinBox_3.setValue(fileDataList['Total Cost'][n])
+                        self.doubleSpinBox.setValue(fileDataList['Exchange Rate'][n])
+                        if 'Text' in headList:
+                            try:
+                                self.lineEdit_5.setText(fileDataList['Text'][n])
+                            except:
+                                self.lineEdit_5.setText('Testing Fee')
                             else:
-                                break
-                    else:
-                        os.startfile(logFileUrl)
-                        os.startfile(logDataPath)
-                        self.textBrowser.append("ODM数据已全部填写完成")
-                        self.textBrowser.append("log数据:%s" % logDataPath)
-                        self.textBrowser.append('----------------------------------')
-                        QMessageBox.information(self, "提示信息", "ODM数据已全部填写完成", QMessageBox.Yes)
+                                pass
+                        else:
+                            self.lineEdit_5.setText('Testing Fee')
+                        if 'Long Text' in headList:
+                            try:
+                                self.lineEdit_4.setText(fileDataList['Long Text'][n])
+                            except:
+                                pass
+                            else:
+                                pass
+                        app.processEvents()
+                        logMsg = MyMainWindow.sapOperate(self, sap_obj)
+                        # 写log
+                        logIndex = logFile[(logFile['Project No.'] == fileDataList['Project No.'][n])].index.tolist()[0]
+                        logFile.loc[logIndex, 'Order No.'] = logMsg['orderNo']
+                        logFile.loc[logIndex, 'Remark'] = logMsg['Remark']
+                        logFile.loc[logIndex, 'Proforma No.'] = logMsg['Proforma No.']
+                        nowDate = datetime.datetime.today()
+                        logFile.loc[logIndex, 'Update Time'] = nowDate
+                        logDataFile = logFile.to_csv('%s' % logDataPath, encoding='utf_8_sig')
+                        self.lineEdit_9.setText(logDataPath)
+                        if n < len(fileDataList['Amount']) - 1:
+                            if self.checkBox_5.isChecked():
+                                reply = QMessageBox.question(self, '信息', '是否继续填写下一个Order',
+                                                             QMessageBox.Yes | QMessageBox.No,
+                                                             QMessageBox.Yes)
+                                if reply == QMessageBox.Yes:
+                                    continue
+                                else:
+                                    break
+                        else:
+                            os.startfile(logFileUrl)
+                            os.startfile(logDataPath)
+                            self.textBrowser.append("ODM数据已全部填写完成")
+                            self.textBrowser.append("log数据:%s" % logDataPath)
+                            self.textBrowser.append('----------------------------------')
+                            QMessageBox.information(self, "提示信息", "ODM数据已全部填写完成", QMessageBox.Yes)
+                    sap_obj.end_sap()
+                else:
+                    # sap实例化失败
+                    self.textBrowser.append("SAP系统为启动")
+                    pass
             else:
                 self.textBrowser.append("请重新选择ODM文件")
                 QMessageBox.information(self, "提示信息", "请重新选择ODM文件", QMessageBox.Yes)

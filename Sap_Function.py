@@ -1,5 +1,6 @@
-import sys, win32com.client, time, datetime
+import sys, win32com.client, time, datetime, re
 from PyQt5.QtWidgets import QApplication, QMainWindow
+
 from Sap_Operate import *
 
 
@@ -8,7 +9,7 @@ from Sap_Operate import *
 # from PyQt5.QtWidgets import *
 # from PyQt5.QtCore import *
 
-class Sap(MyMainWindow):
+class Sap():
     def __init__(self):
         self.res = {}
         self.res['flag'] = 1
@@ -17,6 +18,7 @@ class Sap(MyMainWindow):
         self.logMsg['Remark'] = ''
         self.logMsg['orderNo'] = ''
         self.logMsg['Proforma No.'] = ''
+        self.logMsg['sapAmountVat'] = ''
         self.today = time.strftime('%Y.%m.%d')
         self.oneWeekday = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime('%Y.%m.%d')
         try:
@@ -52,6 +54,7 @@ class Sap(MyMainWindow):
         self.logMsg['Remark'] = ''
         self.logMsg['orderNo'] = ''
         self.logMsg['Proforma No.'] = ''
+        self.logMsg['sapAmountVat'] = ''
 
     def initializationMsg(self):
         self.res = {}
@@ -59,7 +62,7 @@ class Sap(MyMainWindow):
         self.res['msg'] = '可以操作SAP'
 
     # TODO csCode和salesCode需要添加进guiData中
-
+    # 创建order
     def va01_operate(self, guiData, revenueData):
         try:
             # 初始化数据
@@ -224,8 +227,9 @@ class Sap(MyMainWindow):
         except:
             self.res['flag'] = 0
             self.res['msg'] = 'Order No未创建成功'
-            myWin.textBrowser.append("Order No未创建成功")
+            # myWin.textBrowser.append("Order No未创建成功")
 
+    # 填写Data B
     def lab_cost(self, guiData, revenueData):
         try:
             # 初始化数据
@@ -274,8 +278,9 @@ class Sap(MyMainWindow):
         except:
             self.res['flag'] = 0
             self.res['msg'] = 'Data B未填写'
-            myWin.textBrowser.append("Data B未填写")
+            # myWin.textBrowser.append("Data B未填写")
 
+    # 保存
     def save_sap(self):
         # 保存操作
         try:
@@ -293,12 +298,14 @@ class Sap(MyMainWindow):
             except:
                 self.res['flag'] = 0
                 self.res['msg'] = 'Order添加Item失败'
-                myWin.textBrowser.append("Order添加Item失败")
+                # myWin.textBrowser.append("Order添加Item失败")
             else:
                 pass
         else:
             pass
 
+    # TODO 添加guiData['planCostCheck']，guiData['saveCheck']，guiData['vf01Check']，guiData['vf02Check']
+    # 添加item
     def va02_operate(self, guiData, revenueData):
         try:
             # 初始化数据
@@ -306,8 +313,8 @@ class Sap(MyMainWindow):
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/NVA02"
             self.session.findById("wnd[0]").sendVKey(0)
             orderNo = self.session.findById("wnd[0]/usr/ctxtVBAK-VBELN").text
-            myWin.textBrowser.append("Order No.:%s" % orderNo)
-            app.processEvents()
+            # myWin.textBrowser.append("Order No.:%s" % orderNo)
+            # app.processEvents()
             self.logMsg['orderNo'] = orderNo
             self.session.findById("wnd[0]").sendVKey(0)
             if 'A2' in guiData['materialCode']:
@@ -371,10 +378,9 @@ class Sap(MyMainWindow):
                 sapAmountVat += float(sapAmountVatStr.replace(',', ''))
                 sapAmountVat = format(sapAmountVat, '.2f')
                 sapAmountVat = re.sub(r"(\d)(?=(\d\d\d)+(?!\d))", r"\1,", sapAmountVat)
-                revenueData['sapAmountVat'] = sapAmountVat
 
                 # 是否需要填写plan cost
-                Sap.plan_cost()
+                Sap.plan_cost(guiData, revenueData)
             else:
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").text = \
@@ -402,10 +408,11 @@ class Sap(MyMainWindow):
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").text
 
                 # 是否需要填写plan cost
-                Sap.plan_cost()
+                Sap.plan_cost(guiData, revenueData)
 
             if guiData['longText'] != '':
-                if myWin.checkBox_8.isChecked() or revenueData['revenueForCny'] >= 35000:
+                # if myWin.checkBox_8.isChecked() or revenueData['revenueForCny'] >= 35000:
+                if guiData['planCostCheck'] or revenueData['revenueForCny'] >= 35000:
                     self.session.findById(
                         "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").setFocus()
                     self.session.findById(
@@ -425,35 +432,36 @@ class Sap(MyMainWindow):
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cmbLV70T-SPRAS").setFocus()
                 self.session.findById("wnd[0]").sendVKey(0)
 
-            if myWin.checkBox_8.isChecked() or revenueData['revenueForCny'] >= 35000:
+            if guiData['planCostCheck'] or revenueData['revenueForCny'] >= 35000:
                 pass
             else:
                 self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
-            amountVatStr = re.sub(r"(\d)(?=(\d\d\d)+(?!\d))", r"\1,", format(guiData['amountVat'], '.2f'))
-            myWin.textBrowser.append("Sap Amount Vat:%s" % sapAmountVat)
-            myWin.textBrowser.append("Amount Vat:%s" % amountVatStr)
-            app.processEvents()
-            # sapAmountVat在A2是数字，其它为字符串
-            if sapAmountVat.strip() != amountVatStr:
-                flag = 2
-                reply = QMessageBox.question(self, '信息', 'SAP数据与ODM不一致，请确认并修改后再继续！！！',
-                                             QMessageBox.Yes | QMessageBox.No,
-                                             QMessageBox.Yes)
-                self.logMsg['Remark'] = 'SAP数据与ODM不一致，请确认并修改后再继续！！！'
-                if reply == QMessageBox.Yes:
-                    flag = 1
-            if (myWin.checkBox_3.isChecked() or myWin.checkBox_6.isChecked()) and flag == 1:
-                Sap.save_sap()
+            self.logMsg['sapAmountVat'] = sapAmountVat
+            #    外面整
+            # amountVatStr = re.sub(r"(\d)(?=(\d\d\d)+(?!\d))", r"\1,", format(guiData['amountVat'], '.2f'))
+            # myWin.textBrowser.append("Sap Amount Vat:%s" % sapAmountVat)
+            # myWin.textBrowser.append("Amount Vat:%s" % amountVatStr)
+            # app.processEvents()
+            # # sapAmountVat在A2是数字，其它为字符串，外面判断
+            # if sapAmountVat.strip() != amountVatStr:
+            #     flag = 2
+            #     reply = QMessageBox.question(self, '信息', 'SAP数据与ODM不一致，请确认并修改后再继续！！！',
+            #                                  QMessageBox.Yes | QMessageBox.No,
+            #                                  QMessageBox.Yes)
+            #     self.logMsg['Remark'] = 'SAP数据与ODM不一致，请确认并修改后再继续！！！'
+            #     if reply == QMessageBox.Yes:
+            #         flag = 1
+            # if (guiData['saveCheck'] or myWin.checkBox_6.isChecked()) and flag == 1:
+            #     Sap.save_sap()
         except:
             self.res['flag'] = 0
             self.res['msg'] = 'Order添加Item失败'
-            myWin.textBrowser.append("编辑order失败")
+            # myWin.textBrowser.append("编辑order失败")
 
+    # 填写plan cost
     def plan_cost(self, guiData, revenueData):
         try:
-            # 初始化数据
-            Sap.initializationMsg()
-            if myWin.checkBox_8.isChecked() or revenueData['revenueForCny'] >= 35000:
+            if guiData['planCostCheck'] or revenueData['revenueForCny'] >= 35000:
                 if 'A2' in guiData['materialCode']:
                     self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
                     if revenueData['revenueForCny'] >= 1000:
@@ -466,7 +474,7 @@ class Sap(MyMainWindow):
                         self.session.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press()
                         self.session.findById("wnd[1]/tbar[0]/btn[0]").press()
                         # cs
-                        if myWin.checkBox_13.isChecked():
+                        if guiData['csCheck']:
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,0]").text = "E"
                             self.session.findById(
@@ -483,7 +491,7 @@ class Sap(MyMainWindow):
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").caretPosition = 20
                             self.session.findById("wnd[0]").sendVKey(0)
                         # phy
-                        if myWin.checkBox_15.isChecked():
+                        if guiData['phyCheck']:
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,1]").text = "E"
                             self.session.findById(
@@ -515,7 +523,7 @@ class Sap(MyMainWindow):
                         self.session.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press()
                         self.session.findById("wnd[1]/tbar[0]/btn[0]").press()
                         # cs
-                        if myWin.checkBox_13.isChecked():
+                        if guiData['csCheck']:
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,0]").text = "E"
                             self.session.findById(
@@ -530,7 +538,7 @@ class Sap(MyMainWindow):
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").caretPosition = 19
                         # 	chm
-                        if myWin.checkBox_14.isChecked():
+                        if guiData['chmCheck']:
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,1]").text = "E"
                             self.session.findById(
@@ -546,7 +554,7 @@ class Sap(MyMainWindow):
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").caretPosition = 20
                         self.session.findById("wnd[0]").sendVKey(0)
                         if guiData['cost'] > 0:
-                            if myWin.checkBox_14.isChecked():
+                            if guiData['chmCheck']:
                                 n = 2
                             else:
                                 n = 1
@@ -580,7 +588,7 @@ class Sap(MyMainWindow):
                         self.session.findById("wnd[0]/mbar/menu[3]/menu[7]").select()
                         self.session.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press()
                         self.session.findById("wnd[1]/tbar[0]/btn[0]").press()
-                        if myWin.checkBox_13.isChecked():
+                        if guiData['csCheck']:
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,0]").text = "E"
                             self.session.findById(
@@ -595,7 +603,7 @@ class Sap(MyMainWindow):
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").caretPosition = 19
 
-                        if myWin.checkBox_14.isChecked() or myWin.checkBox_15.isChecked():
+                        if guiData['chmCheck'] or guiData['phyCheck']:
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,1]").text = "E"
                             self.session.findById(
@@ -609,18 +617,18 @@ class Sap(MyMainWindow):
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").caretPosition = 20
 
                         if 'T75' in guiData['materialCode']:
-                            if myWin.checkBox_14.isChecked():
+                            if guiData['chmCheck']:
                                 self.session.findById(
                                     "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,1]").text = guiData[
                                     'chmCostCenter']
                         else:
-                            if myWin.checkBox_15.isChecked():
+                            if guiData['phyCheck']:
                                 self.session.findById(
                                     "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,1]").text = guiData[
                                     'phyCostCenter']
 
                         if guiData['cost'] > 0:
-                            if myWin.checkBox_14.isChecked() or myWin.checkBox_15.isChecked():
+                            if guiData['chmCheck'] or guiData['phyCheck']:
                                 n = 2
                             else:
                                 n = 1
@@ -645,8 +653,22 @@ class Sap(MyMainWindow):
                         self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
         except:
             self.res['flag'] = 0
-            self.res['msg'] = 'plan cost未添加'
+            self.res['msg'] += 'plan cost未添加成功'
 
+    def vf01_operate(self):
+        self.session.findById("wnd[0]/tbar[0]/okcd").text = "/nvf01"
+        self.session.findById("wnd[0]").sendVKey(0)
+        self.session.findById("wnd[0]/tbar[0]/btn[11]").press()
+
+    def vf03_operate(self):
+        self.session.findById("wnd[0]/tbar[0]/okcd").text = "/nvf03"
+        self.session.findById("wnd[0]").sendVKey(0)
+        proformaNo = self.session.findById("wnd[0]/usr/ctxtVBRK-VBELN").text
+        self.logMsg['Proforma No.'] = proformaNo
+        self.session.findById("wnd[0]/mbar/menu[0]/menu[11]").select()
+        self.session.findById("wnd[1]/tbar[0]/btn[37]").press()
+
+    # 打开order
     def open_va02(self, guiData, revenueData, orderNo):
         try:
             # 初始化数据
@@ -658,11 +680,53 @@ class Sap(MyMainWindow):
         except:
             self.res['flag'] = 0
             self.res['msg'] = "该Order No %s 未开启" % orderNo
-            myWin.textBrowser.append("该Order No %s 未开启" % orderNo)
+            # myWin.textBrowser.append("该Order No %s 未开启" % orderNo)
+
+    # 结束sap
+    def end_sap(self):
+        self.session = None
+        self.connection = None
+        self.application = None
+        self.SapGuiAuto = None
 
 
-if __name__ == "__main__":
-    revenue = 230
-    sap_obj = Sap()
-    if sap_obj.flag != 0:
-        sap_obj.Sap_Operate(1)
+# if __name__ == "__main__":
+#     revenue = 230
+#     guiData = {}
+#     guiData['sapNo'] = 5010920197
+#     guiData['projectNo'] = '66.405.23.7556.02A'
+#     guiData['materialCode'] = 'T75-405-A2'
+#     guiData['currencyType'] = 'CNY'
+#     guiData['exchangeRate'] = float(1)
+#     guiData['globalPartnerCode'] = 1500155
+#     guiData['csName'] = 'cai, barry'
+#     guiData['salesName'] = ''
+#     guiData['amount'] = float(200)
+#     guiData['cost'] = float(0)
+#     guiData['amountVat'] = float(212)
+#     guiData['csHourlyRate'] = float(300)
+#     guiData['chmHourlyRate'] = float(250)
+#     guiData['phyHourlyRate'] = float(280)
+#     guiData['longText'] = ''
+#     guiData['shortText'] = 'TEST'
+#     guiData['planCostRate'] = float(0.9)
+#     guiData['significantDigits'] = int(0)
+#     guiData['chmCostRate'] = float(0.3)
+#     guiData['phyCostRate'] = float(0.3)
+#     guiData['dataAE1'] = ''
+#     guiData['dataAZ2'] = ''
+#     guiData['orderType'] = 'DR'
+#     guiData['salesOrganization'] = '0486'
+#     guiData['distributionChannels'] = '01'
+#     guiData['salesOffice'] = '>601'
+#     guiData['salesGroup'] = '240'
+#     guiData['csCostCenter'] = '48601240'
+#     guiData['chmCostCenter'] = '48601293'
+#     guiData['phyCostCenter'] = '48601294'
+#     guiData['csCode'] = '6375108'
+#     guiData['salesCode'] = ''
+#     my_w = MyMainWindow()
+#     revenueData = my_w.getRevenueData(guiData)
+#     sap_obj = Sap()
+#     if sap_obj.flag != 0:
+#         sap_obj.va01_operate(guiData, revenueData)
