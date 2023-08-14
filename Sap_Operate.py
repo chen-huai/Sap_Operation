@@ -123,6 +123,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
              'N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\收样\\3.Sap\\ODM Data - XM\\2.特殊开票',
              '特殊开票文件路径'],
             ['Invoice_File_Name', '特殊开票要求2022.xlsx', '特殊开票文件名称'],
+            ['Data数据处理', '内容', '备注'],
+            ['Row Data', 'Client Contact Name', '以;分隔，横向添加数据'],
+            ['Column Data', 'Project No.;Currency;Amount with VAT;Reference No.', '以;分隔，纵向添加数据'],
+            ['Row Check', 0, '是否默认被选中,1选中，0未选中'],
+            ['Column Check', 0, '是否默认被选中,1选中，0未选中'],
+            ['Combine Key', "CS;Sales;Currency;Material Code;Invoices' name (Chinese);Buyer(GPC);Month;Exchange Rate", '以;分隔，数据透视字段'],
             ['SAP登入信息', '内容', '备注'],
             ['Login_msg', 'DR-0486-01->601-240', '订单类型-销售组织-分销渠道-销售办事处-销售组'],
             ['Hourly Rate', '金额', '备注'],
@@ -153,6 +159,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ['DataB_Selected', 1, '是否默认被选中,1选中，0未选中'],
             ['Plan_Cost_Selected', 25, '每月超过几号自动选中（不包含）'],
             ['Save_Selected', 1, '是否默认被选中,1选中，0未选中'],
+            ['Every_Selected', 1, '是否默认被选中,1选中，0未选中'],
+            ['Contact_Selected', 0, '是否默认被选中,1选中，0未选中'],
             ['管理操作', '内容', '备注'],
             ['Invoice_No_Selected', 1, '是否默认被选中,1选中，0未选中'],
             ['Invoice_Start_Num', 4, 'Invoice的起始数字'],
@@ -196,6 +204,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def getDefaultInformation(self):
         # 默认登录界面信息
         try:
+            # data处理
+            self.checkBox_17.setChecked(int(configContent['Row Check']))
+            self.checkBox_18.setChecked(int(configContent['Column Check']))
+            self.lineEdit_23.setText(configContent['Row Data'])
+            self.lineEdit_24.setText(configContent['Column Data'])
+            self.lineEdit_15.setText(configContent['Combine Key'])
+            self.lineEdit_16.setText(configContent['Combine Key'])
+            # login信息
             loginMsgList = configContent['Login_msg'].split('-')
             self.lineEdit_10.setText(loginMsgList[0])
             self.lineEdit_11.setText(loginMsgList[1])
@@ -229,6 +245,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.checkBox_4.setChecked(int(configContent['NVF03_Selected']))
             self.checkBox_7.setChecked(int(configContent['DataB_Selected']))
             self.checkBox_6.setChecked(int(configContent['Save_Selected']))
+            self.checkBox_16.setChecked(int(configContent['Every_Selected']))
+            self.checkBox_19.setChecked(int(configContent['Contact_Selected']))
             if int(configContent['Plan_Cost_Selected']) < int(today.split('.')[-1]):
                 self.checkBox_8.setChecked(True)
             # admin操作
@@ -380,6 +398,28 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             guiData['phyCheck'] = True
         else:
             guiData['phyCheck'] = False
+
+        if self.checkBox_16.isChecked():
+            guiData['everyCheck'] = True
+        else:
+            guiData['everyCheck'] = False
+
+        if self.checkBox_17.isChecked():
+            guiData['rowCheck'] = True
+        else:
+            guiData['rowCheck'] = False
+
+        if self.checkBox_18.isChecked():
+            guiData['columnCheck'] = True
+        else:
+            guiData['columnCheck'] = False
+
+        if self.checkBox_19.isChecked():
+            guiData['contactCheck'] = True
+        else:
+            guiData['contactCheck'] = False
+
+
         return guiData
 
     def getAdminGuiData(self):
