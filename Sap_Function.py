@@ -13,7 +13,7 @@ class Sap():
     def __init__(self):
         self.res = {}
         self.res['flag'] = 1
-        self.res['msg'] = '可以操作SAP'
+        self.res['msg'] = ''
         self.logMsg = {}
         self.logMsg['Remark'] = ''
         self.logMsg['orderNo'] = ''
@@ -45,7 +45,7 @@ class Sap():
                 return
         except:
             self.res['flag'] = 0
-            self.res['msg'] = '可以操作SAP'
+            self.res['msg'] = ''
             print('SAP未启动')
 
     # 初始化数据
@@ -59,14 +59,13 @@ class Sap():
     def initializationMsg(self):
         self.res = {}
         self.res['flag'] = 1
-        self.res['msg'] = '可以操作SAP'
+        self.res['msg'] = ''
 
-    # TODO csCode和salesCode需要添加进guiData中
     # 创建order
     def va01_operate(self, guiData, revenueData):
         try:
             # 初始化数据
-            Sap.initializationLogMsg()
+            Sap.initializationLogMsg(self)
             # 相当于VA01操作
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/nva01"
             # 回车键功能
@@ -233,7 +232,7 @@ class Sap():
     def lab_cost(self, guiData, revenueData):
         try:
             # 初始化数据
-            Sap.initializationMsg()
+            Sap.initializationMsg(self)
             # Data B是否要添加cost
             # revenuedata包含revenue,planCost,revenueForCny,chmCost,phyCost,chmRe,phyRe,chmCsCostAccounting,chmLabCostAccounting,phyCsCostAccounting
             if 'A2' in guiData['materialCode'] or 'D2' in guiData['materialCode'] or 'D3' in guiData['materialCode']:
@@ -281,11 +280,11 @@ class Sap():
             # myWin.textBrowser.append("Data B未填写")
 
     # 保存
-    def save_sap(self):
+    def save_sap(self, info):
         # 保存操作
         try:
             # 初始化数据
-            Sap.initializationMsg()
+            Sap.initializationMsg(self)
             self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
             self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
             self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
@@ -297,19 +296,24 @@ class Sap():
                 self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
             except:
                 self.res['flag'] = 0
-                self.res['msg'] = 'Order添加Item失败'
-                # myWin.textBrowser.append("Order添加Item失败")
+                self.res['msg'] = '%s保存失败' % info
             else:
                 pass
         else:
-            pass
+            try:
+                self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
+                self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
+            except:
+                pass
+            else:
+                pass
 
     # TODO 添加guiData['planCostCheck']，guiData['saveCheck']，guiData['vf01Check']，guiData['vf02Check']
     # 添加item
     def va02_operate(self, guiData, revenueData):
         try:
             # 初始化数据
-            Sap.initializationMsg()
+            Sap.initializationMsg(self)
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/NVA02"
             self.session.findById("wnd[0]").sendVKey(0)
             orderNo = self.session.findById("wnd[0]/usr/ctxtVBAK-VBELN").text
@@ -380,7 +384,7 @@ class Sap():
                 sapAmountVat = re.sub(r"(\d)(?=(\d\d\d)+(?!\d))", r"\1,", sapAmountVat)
 
                 # 是否需要填写plan cost
-                Sap.plan_cost(guiData, revenueData)
+                Sap.plan_cost(self, guiData, revenueData)
             else:
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").text = \
@@ -398,7 +402,7 @@ class Sap():
                 self.session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06").select()
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").text = format(
-                    revenue, '.2f')
+                    revenueData['revenue'], '.2f')
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").setFocus()
                 self.session.findById(
@@ -408,7 +412,7 @@ class Sap():
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").text
 
                 # 是否需要填写plan cost
-                Sap.plan_cost(guiData, revenueData)
+                Sap.plan_cost(self, guiData, revenueData)
 
             if guiData['longText'] != '':
                 # if myWin.checkBox_8.isChecked() or revenueData['revenueForCny'] >= 35000:
@@ -437,22 +441,6 @@ class Sap():
             else:
                 self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
             self.logMsg['sapAmountVat'] = sapAmountVat
-            #    外面整
-            # amountVatStr = re.sub(r"(\d)(?=(\d\d\d)+(?!\d))", r"\1,", format(guiData['amountVat'], '.2f'))
-            # myWin.textBrowser.append("Sap Amount Vat:%s" % sapAmountVat)
-            # myWin.textBrowser.append("Amount Vat:%s" % amountVatStr)
-            # app.processEvents()
-            # # sapAmountVat在A2是数字，其它为字符串，外面判断
-            # if sapAmountVat.strip() != amountVatStr:
-            #     flag = 2
-            #     reply = QMessageBox.question(self, '信息', 'SAP数据与ODM不一致，请确认并修改后再继续！！！',
-            #                                  QMessageBox.Yes | QMessageBox.No,
-            #                                  QMessageBox.Yes)
-            #     self.logMsg['Remark'] = 'SAP数据与ODM不一致，请确认并修改后再继续！！！'
-            #     if reply == QMessageBox.Yes:
-            #         flag = 1
-            # if (guiData['saveCheck'] or myWin.checkBox_6.isChecked()) and flag == 1:
-            #     Sap.save_sap()
         except:
             self.res['flag'] = 0
             self.res['msg'] = 'Order添加Item失败'
@@ -672,7 +660,7 @@ class Sap():
     def open_va02(self, guiData, revenueData, orderNo):
         try:
             # 初始化数据
-            Sap.initializationMsg()
+            Sap.initializationMsg(self)
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/NVA02"
             self.session.findById("wnd[0]").sendVKey(0)
             self.session.findById("wnd[0]/usr/ctxtVBAK-VBELN").text = orderNo
@@ -688,7 +676,6 @@ class Sap():
         self.connection = None
         self.application = None
         self.SapGuiAuto = None
-
 
 # if __name__ == "__main__":
 #     revenue = 230
