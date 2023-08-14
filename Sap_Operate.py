@@ -559,6 +559,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         guiData = MyMainWindow.getGuiData(self)
         orderNo = ''
         proformaNo = ''
+        if guiData['everyCheck']:
+            sap_obj = Sap()
         if guiData['sapNo'] == '' or guiData['projectNo'] == '' or guiData['materialCode'] == '' or guiData[
             'currencyType'] == '' or guiData['exchangeRate'] == '' or guiData['globalPartnerCode'] == '' or guiData[
             'csName'] == '' or guiData['amount'] == 0.00 or guiData['amountVat'] == 0.00:
@@ -868,7 +870,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 else:
                     # sap实例化失败
                     self.textBrowser.append("SAP系统未启动")
-                    pass
             else:
                 self.textBrowser.append("请重新选择ODM文件")
                 QMessageBox.information(self, "提示信息", "请重新选择ODM文件", QMessageBox.Yes)
