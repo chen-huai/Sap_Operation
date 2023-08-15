@@ -75,6 +75,9 @@
            </item>
            <item row="3" column="0">
             <widget class="QPushButton" name="pushButton_24">
+             <property name="statusTip">
+              <string>选择Log数据</string>
+             </property>
              <property name="text">
               <string>Log Data</string>
              </property>
@@ -87,6 +90,9 @@
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
+             </property>
+             <property name="statusTip">
+              <string>Order No--Project No</string>
              </property>
              <property name="text">
               <string> Merge</string>
@@ -116,6 +122,9 @@
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
+             </property>
+             <property name="statusTip">
+              <string>选择Combine数据</string>
              </property>
              <property name="text">
               <string>Combine Data</string>
@@ -157,7 +166,11 @@
             </widget>
            </item>
            <item row="1" column="2">
-            <widget class="QLineEdit" name="lineEdit_23"/>
+            <widget class="QLineEdit" name="lineEdit_23">
+             <property name="statusTip">
+              <string>需要横向数据的字段</string>
+             </property>
+            </widget>
            </item>
            <item row="0" column="2">
             <widget class="QLineEdit" name="lineEdit_7"/>
@@ -170,6 +183,9 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="statusTip">
+              <string>数据透视，找回Project No</string>
+             </property>
              <property name="text">
               <string>Combine Data</string>
              </property>
@@ -177,6 +193,9 @@
            </item>
            <item row="0" column="0">
             <widget class="QPushButton" name="pushButton_18">
+             <property name="statusTip">
+              <string>获取文件</string>
+             </property>
              <property name="text">
               <string>Get File</string>
              </property>
@@ -194,6 +213,9 @@
            </item>
            <item row="0" column="3">
             <widget class="QPushButton" name="pushButton_36">
+             <property name="statusTip">
+              <string>筛选特殊开票</string>
+             </property>
              <property name="text">
               <string>Data Collation</string>
              </property>
@@ -201,6 +223,9 @@
            </item>
            <item row="1" column="0">
             <widget class="QCheckBox" name="checkBox_17">
+             <property name="statusTip">
+              <string>是否添加横向数据</string>
+             </property>
              <property name="text">
               <string>Add Row</string>
              </property>
@@ -208,25 +233,52 @@
            </item>
            <item row="2" column="0">
             <widget class="QCheckBox" name="checkBox_18">
+             <property name="statusTip">
+              <string>是否添加纵向数据</string>
+             </property>
              <property name="text">
               <string>Add Column</string>
              </property>
             </widget>
            </item>
            <item row="2" column="2">
-            <widget class="QLineEdit" name="lineEdit_24"/>
+            <widget class="QLineEdit" name="lineEdit_24">
+             <property name="statusTip">
+              <string>需要纵向数据的字段</string>
+             </property>
+            </widget>
            </item>
-           <item row="1" column="3" rowspan="2">
+           <item row="2" column="3">
             <widget class="QPushButton" name="pushButton_48">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="statusTip">
+              <string>添加信息</string>
+             </property>
              <property name="text">
               <string>Add Infomations</string>
              </property>
+            </widget>
+           </item>
+           <item row="1" column="3">
+            <widget class="QComboBox" name="comboBox_5">
+             <property name="statusTip">
+              <string>信息添加进哪个字段</string>
+             </property>
+             <item>
+              <property name="text">
+               <string>Text</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Long Text</string>
+              </property>
+             </item>
             </widget>
            </item>
           </layout>
@@ -307,6 +359,9 @@
              <property name="tabletTracking">
               <bool>false</bool>
              </property>
+             <property name="statusTip">
+              <string>创建Order</string>
+             </property>
              <property name="text">
               <string>/NVA01</string>
              </property>
@@ -330,6 +385,9 @@
              </property>
              <property name="tabletTracking">
               <bool>false</bool>
+             </property>
+             <property name="statusTip">
+              <string>添加Item</string>
              </property>
              <property name="text">
               <string>/NVA02</string>
@@ -355,6 +413,9 @@
              <property name="tabletTracking">
               <bool>false</bool>
              </property>
+             <property name="statusTip">
+              <string>保存形式发票</string>
+             </property>
              <property name="text">
               <string>/NVF01</string>
              </property>
@@ -378,6 +439,9 @@
              </property>
              <property name="tabletTracking">
               <bool>false</bool>
+             </property>
+             <property name="statusTip">
+              <string>查看形式发票</string>
              </property>
              <property name="text">
               <string>/NVF03</string>
@@ -458,6 +522,9 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="statusTip">
+              <string>获取数据</string>
+             </property>
              <property name="text">
               <string>Get Data</string>
              </property>
@@ -475,6 +542,9 @@
            </item>
            <item>
             <widget class="QPushButton" name="pushButton_49">
+             <property name="statusTip">
+              <string>查看数据</string>
+             </property>
              <property name="text">
               <string>View Data</string>
              </property>
@@ -524,6 +594,9 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="statusTip">
+              <string>根据ODM数据，循环创建Order</string>
+             </property>
              <property name="text">
               <string>Fill in the SAP for ODM Data</string>
              </property>
@@ -531,6 +604,9 @@
            </item>
            <item row="0" column="2">
             <widget class="QCheckBox" name="checkBox_16">
+             <property name="statusTip">
+              <string>每个都需要提示，取消后只有特殊才提示</string>
+             </property>
              <property name="text">
               <string>Every</string>
              </property>
@@ -573,6 +649,9 @@
            </item>
            <item row="0" column="4">
             <widget class="QCheckBox" name="checkBox_19">
+             <property name="statusTip">
+              <string>是否需要添加联系人</string>
+             </property>
              <property name="text">
               <string>Client Contact</string>
              </property>
@@ -615,6 +694,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="statusTip">
+               <string>登录信息</string>
               </property>
               <property name="title">
                <string>The login information</string>
@@ -776,6 +858,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="statusTip">
+               <string>时薪</string>
+              </property>
               <property name="title">
                <string>Hourly Rate</string>
               </property>
@@ -863,6 +948,9 @@
             </item>
             <item row="1" column="1">
              <widget class="QGroupBox" name="groupBox_13">
+              <property name="statusTip">
+               <string>成本中心</string>
+              </property>
               <property name="title">
                <string>Cost Center</string>
               </property>
@@ -923,6 +1011,9 @@
             </item>
             <item row="2" column="0" colspan="2">
              <widget class="QGroupBox" name="groupBox_14">
+              <property name="statusTip">
+               <string>Plan cost 比例和保留有效数字</string>
+              </property>
               <property name="title">
                <string>Plan Cost Parameter</string>
               </property>
@@ -968,6 +1059,9 @@
             </item>
             <item row="3" column="0" colspan="2">
              <widget class="QGroupBox" name="groupBox_15">
+              <property name="statusTip">
+               <string>实验室成本比例</string>
+              </property>
               <property name="title">
                <string>Lab Cost Parameter</string>
               </property>
@@ -1023,6 +1117,9 @@
             </item>
             <item row="4" column="0" colspan="2">
              <widget class="QGroupBox" name="groupBox_16">
+              <property name="statusTip">
+               <string>电商代码</string>
+              </property>
               <property name="title">
                <string>Industry</string>
               </property>
@@ -1063,8 +1160,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>503</width>
-             <height>552</height>
+             <width>277</width>
+             <height>402</height>
             </rect>
            </property>
            <attribute name="label">
@@ -1473,6 +1570,9 @@
                 <pointsize>10</pointsize>
                </font>
               </property>
+              <property name="statusTip">
+               <string>所有成本</string>
+              </property>
               <property name="maximum">
                <double>999999999.990000009536743</double>
               </property>
@@ -1614,6 +1714,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="statusTip">
+               <string>售达方文本</string>
+              </property>
               <property name="text">
                <string>Testing Fee</string>
               </property>
@@ -1643,6 +1746,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="statusTip">
+               <string>Item文本</string>
+              </property>
              </widget>
             </item>
            </layout>
@@ -1664,6 +1770,9 @@
           <layout class="QGridLayout" name="gridLayout_14">
            <item row="0" column="2">
             <widget class="QSpinBox" name="spinBox">
+             <property name="statusTip">
+              <string>Invoice No 起始数字</string>
+             </property>
              <property name="minimum">
               <number>0</number>
              </property>
@@ -1713,6 +1822,9 @@
            </item>
            <item row="0" column="4">
             <widget class="QSpinBox" name="spinBox_2">
+             <property name="statusTip">
+              <string>Invoice No 长度</string>
+             </property>
              <property name="maximum">
               <number>20</number>
              </property>
@@ -1740,6 +1852,9 @@
            </item>
            <item row="1" column="2">
             <widget class="QSpinBox" name="spinBox_3">
+             <property name="statusTip">
+              <string>Order No 起始数字</string>
+             </property>
              <property name="maximum">
               <number>9</number>
              </property>
@@ -1750,6 +1865,9 @@
            </item>
            <item row="1" column="4">
             <widget class="QSpinBox" name="spinBox_4">
+             <property name="statusTip">
+              <string>Order No 长度</string>
+             </property>
              <property name="value">
               <number>10</number>
              </property>
@@ -1801,6 +1919,9 @@
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
+             </property>
+             <property name="statusTip">
+              <string>命名规则，按顺序</string>
              </property>
              <property name="text">
               <string>Invoice No + Company Name</string>
