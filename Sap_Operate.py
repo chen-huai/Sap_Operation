@@ -8,16 +8,16 @@ import numpy as np
 import win32com.client
 import datetime
 import chicon  # 引用图标
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QApplication, QMainWindow
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from Sap_Operate_Ui import *
+# from PyQt5 import QtCore, QtGui, QtWidgets
+# from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtWidgets import QMessageBox, QFileDialog
+# from PyQt5.QtCore import *
 from Get_Data import *
 from File_Operate import *
 from PDF_Operate import *
 from Sap_Function import *
 from Sap_Operate_Ui import Ui_MainWindow
+from Data_Table import *
 
 
 class MyMainWindow(QMainWindow, Ui_MainWindow):
@@ -44,6 +44,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_34.clicked.connect(self.textBrowser_3.clear)
         self.pushButton_35.clicked.connect(self.pdfOperate)
         self.pushButton_33.clicked.connect(self.getFiles)
+        self.pushButton_49.clicked.connect(self.viewOdmData)
         self.lineEdit_15.textChanged.connect(self.lineEditChange)
         self.doubleSpinBox_2.valueChanged.connect(self.getAmountVat)
         self.checkBox_9.toggled.connect(lambda: self.pdfNameRule('Invoice No'))
@@ -128,7 +129,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ['Column Data', 'Project No.;Currency;Amount with VAT;Reference No.', '以;分隔，纵向添加数据'],
             ['Row Check', 0, '是否默认被选中,1选中，0未选中'],
             ['Column Check', 0, '是否默认被选中,1选中，0未选中'],
-            ['Combine Key', "CS;Sales;Currency;Material Code;Invoices' name (Chinese);Buyer(GPC);Month;Exchange Rate", '以;分隔，数据透视字段'],
+            ['Combine Key', "CS;Sales;Currency;Material Code;Invoices' name (Chinese);Buyer(GPC);Month;Exchange Rate",
+             '以;分隔，数据透视字段'],
             ['SAP登入信息', '内容', '备注'],
             ['Login_msg', 'DR-0486-01->601-240', '订单类型-销售组织-分销渠道-销售办事处-销售组'],
             ['Hourly Rate', '金额', '备注'],
@@ -418,7 +420,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             guiData['contactCheck'] = True
         else:
             guiData['contactCheck'] = False
-
 
         return guiData
 
@@ -717,6 +718,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.textBrowser_2.append("请重新选择ODM文件")
             QMessageBox.information(self, "提示信息", "请重新选择ODM文件", QMessageBox.Yes)
+
+    def viewOdmData(self):
+        fileUrl = self.lineEdit_6.text()
+        myTable.createTable(fileUrl)
+        myTable.showMaximized()
 
     def odmDataToSap(self):
         try:
@@ -1245,6 +1251,7 @@ if __name__ == "__main__":
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     app = QApplication(sys.argv)
     myWin = MyMainWindow()
+    myTable = MyTableWindow()
     myWin.show()
     myWin.getConfig()
     sys.exit(app.exec_())
