@@ -1,4 +1,6 @@
 # from PyQt5 import QtCore, QtGui, QtWidgets
+import os.path
+
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtCore import pyqtSlot
@@ -15,7 +17,11 @@ class MyTableWindow(QMainWindow, Ui_TableWindow):
         # self.pushButton_2.clicked.connect(self.createTable)
 
     def createTable(self, filePath):
-        self.df = pd.read_excel('%s' % filePath)
+        fileType=os.path.splitext(filePath)[-1]
+        if fileType == '.csv':
+            self.df = pd.read_csv('%s' % filePath)
+        else:
+            self.df = pd.read_excel('%s' % filePath)
         self.df = self.df.astype(str)
         self.df_rows = self.df.shape[0]
         self.df_cols = self.df.shape[1]
