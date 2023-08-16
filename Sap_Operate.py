@@ -554,127 +554,127 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         logMsg['orderNo'] = ''
         logMsg['Proforma No.'] = ''
         logMsg['sapAmountVat'] = ''
-        # try:
-        flag = 1
-        # 获取数据
-        guiData = MyMainWindow.getGuiData(self)
-        orderNo = ''
-        proformaNo = ''
-        if guiData['everyCheck']:
-            sap_obj = Sap()
-        if guiData['sapNo'] == '' or guiData['projectNo'] == '' or guiData['materialCode'] == '' or guiData[
-            'currencyType'] == '' or guiData['exchangeRate'] == '' or guiData['globalPartnerCode'] == '' or guiData[
-            'csName'] == '' or guiData['amount'] == 0.00 or guiData['amountVat'] == 0.00:
-            self.textBrowser.append("有关键信息未填")
-            logMsg['Remark'] = '有关键信息未填'
-            self.textBrowser.append(
-                "'Project No.', 'CS', 'Sales', 'Currency', 'GPC Glo. Par. Code', 'Material Code','SAP No.', 'Amount', 'Amount with VAT', 'Exchange Rate'都是必须填写的")
-            self.textBrowser.append('----------------------------------')
-            app.processEvents()
-            QMessageBox.information(self, "提示信息", "有关键信息未填", QMessageBox.Yes)
-        else:
-            revenueData = MyMainWindow.getRevenueData(self, guiData)
-            messageFlag = 1
-            if self.checkBox_5.isChecked():
-                if guiData['salesName'] == '':
-                    reply = QMessageBox.question(self, '信息', 'Sales未填，是否继续', QMessageBox.Yes | QMessageBox.No,
-                                                 QMessageBox.Yes)
-                    if reply == QMessageBox.Yes:
-                        messageFlag = 1
-                    else:
-                        messageFlag = 2
-            if guiData['salesName'] != '' or messageFlag == 1:
-                self.textBrowser.append("Sap No.:%s" % guiData['sapNo'])
-                self.textBrowser.append("Project No.:%s" % guiData['projectNo'])
-                self.textBrowser.append("Material Code:%s" % guiData['materialCode'])
-                self.textBrowser.append("Global Partner Code:%s" % guiData['globalPartnerCode'])
-                self.textBrowser.append("CS Name:%s" % guiData['csName'])
-                self.textBrowser.append("Sales Name:%s" % guiData['salesName'])
-                self.textBrowser.append("Amount:%s" % guiData['amount'])
-                self.textBrowser.append("Cost:%s" % guiData['cost'])
-                self.textBrowser.append("Currency Type:%s" % guiData['currencyType'])
-                self.textBrowser.append("CHM Cost:%s" % revenueData['chmCost'])
-                self.textBrowser.append("PHY Cost:%s" % revenueData['phyCost'])
-                self.textBrowser.append("CHM Amount:%s" % revenueData['chmRe'])
-                self.textBrowser.append("PHY Amount:%s" % revenueData['phyRe'])
-                app.processEvents()
-
-                # VA01
-                if guiData['va01Check']:
-                    sap_obj.va01_operate(guiData, revenueData)
-                    if sap_obj.res['flag'] == 1:
-                        # 是否要添加lab cost
-                        if guiData['labCostCheck'] and sap_obj.res['flag'] == 1:
-                            sap_obj.lab_cost(guiData, revenueData)
-                            if sap_obj.res['flag'] == 0:
-                                logMsg['Remark'] += ';' + sap_obj.res['msg']
-                        if guiData['va02Check'] or guiData['saveCheck']:
-                            sap_obj.save_sap('VA01')
-                            if sap_obj.res['flag'] == 0:
-                                logMsg['Remark'] += ';' + sap_obj.res['msg']
-                    else:
-                        logMsg['Remark'] += ';' + sap_obj.res['msg']
-                # VA02
-                if guiData['va02Check']:
-                    sap_obj.va02_operate(guiData, revenueData)
-                    if sap_obj.res['flag'] == 1:
-                        amountVatStr = re.sub(r"(\d)(?=(\d\d\d)+(?!\d))", r"\1,",
-                                              format(guiData['amountVat'], '.2f'))
-                        sapAmountVat = sap_obj.logMsg['sapAmountVat']
-                        self.textBrowser.append("Sap Amount Vat:%s" % sapAmountVat)
-                        self.textBrowser.append("Amount Vat:%s" % amountVatStr)
-                        app.processEvents()
-                        # sapAmountVat在A2是数字，其它为字符串
-                        if sapAmountVat.strip() != amountVatStr:
-                            flag = 0
-                            reply = QMessageBox.question(self, '信息', 'SAP数据与ODM不一致，请确认并修改后再继续！！！',
-                                                         QMessageBox.Yes | QMessageBox.No,
-                                                         QMessageBox.Yes)
-                            logMsg['Remark'] += ';' + 'SAP数据与ODM不一致，请确认并修改后再继续！！！'
-                            if reply == QMessageBox.Yes:
-                                flag = 1
-                        if (guiData['vf01Check'] or guiData['saveCheck']) and flag == 1:
-                            sap_obj.save_sap('VA02')
-                            if sap_obj.res['flag'] == 0:
-                                logMsg['Remark'] += ';' + sap_obj.res['msg']
-                        logMsg['orderNo'] = sap_obj.logMsg['orderNo']
-                        self.textBrowser.append("Order No.:%s" % logMsg['orderNo'])
-                    else:
-                        logMsg['Remark'] += ';' + sap_obj.res['msg']
-
-                # VF01
-                if guiData['vf01Check'] and flag == 1:
-                    sap_obj.save_sap('VF01准备前')
-                    if sap_obj.res['flag'] == 0:
-                        logMsg['Remark'] += ';' + sap_obj.res['msg']
-
-                    sap_obj.vf01_operate()
-                    if sap_obj.res['flag'] == 0:
-                        logMsg['Remark'] += ';' + sap_obj.res['msg']
-                # VF03
-                if guiData['vf03Check']:
-                    sap_obj.vf03_operate()
-                    if sap_obj.res['flag'] == 0:
-                        logMsg['Remark'] += ';' + sap_obj.res['msg']
-                    proformaNo = sap_obj.logMsg['Proforma No.']
-                    self.textBrowser.append("Proforma No.:%s" % proformaNo)
-                    app.processEvents()
-                self.textBrowser.append('SAP操作已完成')
+        try:
+            flag = 1
+            # 获取数据
+            guiData = MyMainWindow.getGuiData(self)
+            orderNo = ''
+            proformaNo = ''
+            if guiData['everyCheck']:
+                sap_obj = Sap()
+            if guiData['sapNo'] == '' or guiData['projectNo'] == '' or guiData['materialCode'] == '' or guiData[
+                'currencyType'] == '' or guiData['exchangeRate'] == '' or guiData['globalPartnerCode'] == '' or guiData[
+                'csName'] == '' or guiData['amount'] == 0.00 or guiData['amountVat'] == 0.00:
+                self.textBrowser.append("有关键信息未填")
+                logMsg['Remark'] = '有关键信息未填'
+                self.textBrowser.append(
+                    "'Project No.', 'CS', 'Sales', 'Currency', 'GPC Glo. Par. Code', 'Material Code','SAP No.', 'Amount', 'Amount with VAT', 'Exchange Rate'都是必须填写的")
                 self.textBrowser.append('----------------------------------')
                 app.processEvents()
+                QMessageBox.information(self, "提示信息", "有关键信息未填", QMessageBox.Yes)
+            else:
+                revenueData = MyMainWindow.getRevenueData(self, guiData)
+                messageFlag = 1
                 if self.checkBox_5.isChecked():
-                    QMessageBox.information(self, "提示信息", "SAP操作已完成", QMessageBox.Yes)
+                    if guiData['salesName'] == '':
+                        reply = QMessageBox.question(self, '信息', 'Sales未填，是否继续', QMessageBox.Yes | QMessageBox.No,
+                                                     QMessageBox.Yes)
+                        if reply == QMessageBox.Yes:
+                            messageFlag = 1
+                        else:
+                            messageFlag = 2
+                if guiData['salesName'] != '' or messageFlag == 1:
+                    self.textBrowser.append("Sap No.:%s" % guiData['sapNo'])
+                    self.textBrowser.append("Project No.:%s" % guiData['projectNo'])
+                    self.textBrowser.append("Material Code:%s" % guiData['materialCode'])
+                    self.textBrowser.append("Global Partner Code:%s" % guiData['globalPartnerCode'])
+                    self.textBrowser.append("CS Name:%s" % guiData['csName'])
+                    self.textBrowser.append("Sales Name:%s" % guiData['salesName'])
+                    self.textBrowser.append("Amount:%s" % guiData['amount'])
+                    self.textBrowser.append("Cost:%s" % guiData['cost'])
+                    self.textBrowser.append("Currency Type:%s" % guiData['currencyType'])
+                    self.textBrowser.append("CHM Cost:%s" % revenueData['chmCost'])
+                    self.textBrowser.append("PHY Cost:%s" % revenueData['phyCost'])
+                    self.textBrowser.append("CHM Amount:%s" % revenueData['chmRe'])
+                    self.textBrowser.append("PHY Amount:%s" % revenueData['phyRe'])
+                    app.processEvents()
 
-        return logMsg
+                    # VA01
+                    if guiData['va01Check']:
+                        sap_obj.va01_operate(guiData, revenueData)
+                        if sap_obj.res['flag'] == 1:
+                            # 是否要添加lab cost
+                            if guiData['labCostCheck'] and sap_obj.res['flag'] == 1:
+                                sap_obj.lab_cost(guiData, revenueData)
+                                if sap_obj.res['flag'] == 0:
+                                    logMsg['Remark'] += ';' + sap_obj.res['msg']
+                            if guiData['va02Check'] or guiData['saveCheck']:
+                                sap_obj.save_sap('VA01')
+                                if sap_obj.res['flag'] == 0:
+                                    logMsg['Remark'] += ';' + sap_obj.res['msg']
+                        else:
+                            logMsg['Remark'] += ';' + sap_obj.res['msg']
+                    # VA02
+                    if guiData['va02Check']:
+                        sap_obj.va02_operate(guiData, revenueData)
+                        if sap_obj.res['flag'] == 1:
+                            amountVatStr = re.sub(r"(\d)(?=(\d\d\d)+(?!\d))", r"\1,",
+                                                  format(guiData['amountVat'], '.2f'))
+                            sapAmountVat = sap_obj.logMsg['sapAmountVat']
+                            self.textBrowser.append("Sap Amount Vat:%s" % sapAmountVat)
+                            self.textBrowser.append("Amount Vat:%s" % amountVatStr)
+                            app.processEvents()
+                            # sapAmountVat在A2是数字，其它为字符串
+                            if sapAmountVat.strip() != amountVatStr:
+                                flag = 0
+                                reply = QMessageBox.question(self, '信息', 'SAP数据与ODM不一致，请确认并修改后再继续！！！',
+                                                             QMessageBox.Yes | QMessageBox.No,
+                                                             QMessageBox.Yes)
+                                logMsg['Remark'] += ';' + 'SAP数据与ODM不一致，请确认并修改后再继续！！！'
+                                if reply == QMessageBox.Yes:
+                                    flag = 1
+                            if (guiData['vf01Check'] or guiData['saveCheck']) and flag == 1:
+                                sap_obj.save_sap('VA02')
+                                if sap_obj.res['flag'] == 0:
+                                    logMsg['Remark'] += ';' + sap_obj.res['msg']
+                            logMsg['orderNo'] = sap_obj.logMsg['orderNo']
+                            self.textBrowser.append("Order No.:%s" % logMsg['orderNo'])
+                        else:
+                            logMsg['Remark'] += ';' + sap_obj.res['msg']
 
-        # except Exception as msg:
-        #     guiData = MyMainWindow.getGuiData(self)
-        #     self.textBrowser.append('这单%s的数据或者SAP有问题' % guiData['projectNo'])
-        #     self.textBrowser.append('错误信息：%s' % msg)
-        #     logMsg['Remark'] += '错误信息：%s' % msg
-        #     self.textBrowser.append('----------------------------------')
-        #     QMessageBox.information(self, "提示信息", '这份%s的ODM获取数据有问题' % guiData['projectNo'], QMessageBox.Yes)
-        #     return logMsg
+                    # VF01
+                    if guiData['vf01Check'] and flag == 1:
+                        sap_obj.save_sap('VF01准备前')
+                        if sap_obj.res['flag'] == 0:
+                            logMsg['Remark'] += ';' + sap_obj.res['msg']
+
+                        sap_obj.vf01_operate()
+                        if sap_obj.res['flag'] == 0:
+                            logMsg['Remark'] += ';' + sap_obj.res['msg']
+                    # VF03
+                    if guiData['vf03Check']:
+                        sap_obj.vf03_operate()
+                        if sap_obj.res['flag'] == 0:
+                            logMsg['Remark'] += ';' + sap_obj.res['msg']
+                        proformaNo = sap_obj.logMsg['Proforma No.']
+                        self.textBrowser.append("Proforma No.:%s" % proformaNo)
+                        app.processEvents()
+                    self.textBrowser.append('SAP操作已完成')
+                    self.textBrowser.append('----------------------------------')
+                    app.processEvents()
+                    if self.checkBox_5.isChecked():
+                        QMessageBox.information(self, "提示信息", "SAP操作已完成", QMessageBox.Yes)
+
+            return logMsg
+
+        except Exception as msg:
+            guiData = MyMainWindow.getGuiData(self)
+            self.textBrowser.append('这单%s的数据或者SAP有问题' % guiData['projectNo'])
+            self.textBrowser.append('错误信息：%s' % msg)
+            logMsg['Remark'] += '错误信息：%s' % msg
+            self.textBrowser.append('----------------------------------')
+            QMessageBox.information(self, "提示信息", '这份%s的ODM获取数据有问题' % guiData['projectNo'], QMessageBox.Yes)
+            return logMsg
 
     def getFile(self):
         selectBatchFile = QFileDialog.getOpenFileName(self, '选择ODM导出文件',
