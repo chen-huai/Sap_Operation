@@ -66,6 +66,7 @@ class Sap():
         try:
             # 初始化数据
             Sap.initializationLogMsg(self)
+            Sap.initializationMsg(self)
             # 相当于VA01操作
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/nva01"
             # 回车键功能
