@@ -28,6 +28,9 @@ class MyTableWindow(QMainWindow, Ui_TableWindow):
         self.tableWidget.setRowCount(self.df_rows)
         self.tableWidget.setColumnCount(self.df_cols)
 
+        ##设置水平表头
+        self.tableWidget.setHorizontalHeaderLabels(self.df.head())
+
         # self.tabletWidget.
         for i in range(self.df_rows):
             for j in range(self.df_cols):
