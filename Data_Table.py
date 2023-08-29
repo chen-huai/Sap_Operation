@@ -43,6 +43,10 @@ class MyTableWindow(QMainWindow, Ui_TableWindow):
         self.tableWidget.resizeColumnsToContents()
         # 平均分配
         self.tableWidget.horizontalHeader().setSectionResizeMode(True)
+        # 排序
+        self.tableWidget.setSortingEnabled(True)
+        # 设置默认第几列排序，0列开始
+        # self.tableWidget.sortItems(0)
 
     @pyqtSlot()
     def print_my_df(self):
