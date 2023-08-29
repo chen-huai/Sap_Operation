@@ -466,7 +466,7 @@ class Sap():
                         self.session.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press()
                         self.session.findById("wnd[1]/tbar[0]/btn[0]").press()
                         # cs
-                        if guiData['csCheck']:
+                        if guiData['csCheck'] and round(float(revenueData['phyCsCostAccounting']), 0) > 0:
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,0]").text = "E"
                             self.session.findById(
@@ -483,7 +483,7 @@ class Sap():
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").caretPosition = 20
                             self.session.findById("wnd[0]").sendVKey(0)
                         # phy
-                        if guiData['phyCheck']:
+                        if guiData['phyCheck'] and round(float(revenueData['phyLabCostAccounting']), 0) > 0:
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,1]").text = "E"
                             self.session.findById(
@@ -515,7 +515,7 @@ class Sap():
                         self.session.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press()
                         self.session.findById("wnd[1]/tbar[0]/btn[0]").press()
                         # cs
-                        if guiData['csCheck']:
+                        if guiData['csCheck'] and round(float(revenueData['chmCsCostAccounting']), 0) > 0:
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,0]").text = "E"
                             self.session.findById(
@@ -530,7 +530,7 @@ class Sap():
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").caretPosition = 19
                         # 	chm
-                        if guiData['chmCheck']:
+                        if guiData['chmCheck'] and round(float(revenueData['chmLabCostAccounting']), 0) > 0:
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,1]").text = "E"
                             self.session.findById(
@@ -580,7 +580,7 @@ class Sap():
                         self.session.findById("wnd[0]/mbar/menu[3]/menu[7]").select()
                         self.session.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press()
                         self.session.findById("wnd[1]/tbar[0]/btn[0]").press()
-                        if guiData['csCheck']:
+                        if guiData['csCheck'] and round(float(revenueData['csCostAccounting']), 0) > 0:
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,0]").text = "E"
                             self.session.findById(
@@ -595,7 +595,7 @@ class Sap():
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").caretPosition = 19
 
-                        if guiData['chmCheck'] or guiData['phyCheck']:
+                        if (guiData['chmCheck'] or guiData['phyCheck']) and round(float(revenueData['labCostAccounting']), 0) > 0:
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,1]").text = "E"
                             self.session.findById(
@@ -609,12 +609,12 @@ class Sap():
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").caretPosition = 20
 
                         if 'T75' in guiData['materialCode']:
-                            if guiData['chmCheck']:
+                            if guiData['chmCheck'] and round(float(revenueData['labCostAccounting']), 0) > 0:
                                 self.session.findById(
                                     "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,1]").text = guiData[
                                     'chmCostCenter']
                         else:
-                            if guiData['phyCheck']:
+                            if guiData['phyCheck'] and round(float(revenueData['labCostAccounting']), 0) > 0:
                                 self.session.findById(
                                     "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,1]").text = guiData[
                                     'phyCostCenter']
