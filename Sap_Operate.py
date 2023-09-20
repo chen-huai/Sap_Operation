@@ -42,7 +42,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_25.clicked.connect(self.orderMergeProject)
         self.pushButton_36.clicked.connect(self.splitOdmData)
         self.pushButton_34.clicked.connect(self.textBrowser_3.clear)
-        self.pushButton_35.clicked.connect(self.pdfOperate)
+        self.pushButton_35.clicked.connect(self.invoiceRenameOperate)
         self.pushButton_33.clicked.connect(self.getFiles)
         self.pushButton_49.clicked.connect(self.viewOdmData)
         self.lineEdit_15.textChanged.connect(self.lineEditChange)
@@ -1210,7 +1210,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         app.processEvents()
         return self.filesUrl
 
-    def pdfOperate(self):
+    def invoiceRenameOperate(self):
+        # invoice中的pdf重新命名
         fileUrls = self.filesUrl
         flag = 'Y'
         if fileUrls == []:
