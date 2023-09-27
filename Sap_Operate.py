@@ -45,6 +45,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_35.clicked.connect(self.invoiceRenameOperate)
         self.pushButton_33.clicked.connect(self.getFiles)
         self.pushButton_49.clicked.connect(self.viewOdmData)
+        self.pushButton_50.clicked.connect(self.getEleInvoiceFiles)
+        self.pushButton_51.clicked.connect(self.electronicInvoice)
         self.lineEdit_15.textChanged.connect(self.lineEditChange)
         self.doubleSpinBox_2.valueChanged.connect(self.getAmountVat)
         self.checkBox_9.toggled.connect(lambda: self.pdfNameRule('Invoice No'))
@@ -172,9 +174,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ['Order_Start_Num', 7, 'Order的起始数字'],
             ['Order_Num', 9, 'Order的总位数'],
             ['Project_No_Selected', 0, '是否默认被选中,1选中，0未选中'],
-            ['PDF_Name', 'Invoice No + Company Name', 'PDF文件名称默认规则'],
-            ['PDF_Files_Import_URL', desktopUrl, 'PDF文件导入路径'],
-            ['PDF_Files_Export_URL', 'N:\\XM Softlines\\1. Project\\3. Finance\\02. WIP', 'PDF文件导出路径'],
+            ['Invoice_Name', 'Invoice No + Company Name', 'Invoice文件名称默认规则'],
+            ['Invoice_Files_Import_URL', desktopUrl, 'Invoice文件导入路径'],
+            ['Invoice_Files_Export_URL', 'N:\\XM Softlines\\1. Project\\3. Finance\\02. WIP', 'Invoice文件导出路径'],
+            ['Ele_Invoice_Files_Import_URL', 'N:\\Company Data\\FCO\\11.全电发票', '全电发票路径'],
+            ['Ele_Invoice_Files_Export_URL', 'N:\\XM Softlines\\1. Project\\3. Finance\\02. WIP\\全电发票 2023\\10',
+             '全电发票导出路径'],
             ['名称', '编号', '角色'],
             ['chen, frank', '6375108', 'CS'],
             ['chen, frank', '6375108', 'Sales'],
@@ -260,7 +265,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.spinBox_3.setValue(int(configContent['Order_Start_Num']))
             self.spinBox_4.setValue(int(configContent['Order_Num']))
             self.checkBox_11.setChecked(int(configContent['Project_No_Selected']))
-            self.lineEdit_17.setText(configContent['PDF_Name'])
+            self.lineEdit_17.setText(configContent['Invoice_Name'])
         except Exception as msg:
             self.textBrowser_2.append("错误信息：%s" % msg)
             self.textBrowser_2.append('----------------------------------')
@@ -1197,7 +1202,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         return changedPdfName
 
     def getFiles(self):
-        selectBatchFile = QFileDialog.getOpenFileNames(self, '选择文件', '%s' % configContent['PDF_Files_Import_URL'],
+        # 获取invoice文件
+        selectBatchFile = QFileDialog.getOpenFileNames(self, '选择文件', '%s' % configContent['Invoice_Files_Import_URL'],
                                                        'files(*.pdf)')
         self.filesUrl = selectBatchFile[0]
         if self.filesUrl != []:
@@ -1227,7 +1233,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         if flag == 'Y':
             guiData = MyMainWindow.getAdminGuiData(self)
             pdfOperate = PDF_Operate
-            self.textBrowser_3.append('导出文件夹：%s' % configContent['PDF_Files_Export_URL'])
+            self.textBrowser_3.append('导出文件夹：%s' % configContent['Invoice_Files_Export_URL'])
             self.textBrowser_3.append('导出文件名称：')
             i = 1
             for fileUrl in fileUrls:
@@ -1276,7 +1282,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                 outputFlieName += msg['Project No']
                         outputFlie = outputFlieName + '.pdf'
                         # outputFlie = msg['Invoice No'] + '-' + msg['Company Name'] + '.pdf'
-                        pdfOperate.saveAs(fileUrl, '%s\\%s' % (configContent['PDF_Files_Export_URL'], outputFlie))
+                        pdfOperate.saveAs(fileUrl, '%s\\%s' % (configContent['Invoice_Files_Export_URL'], outputFlie))
                     self.textBrowser_3.append('%s' % outputFlie)
                     app.processEvents()
                 except Exception as errorMsg:
@@ -1284,6 +1290,93 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
                     self.textBrowser_3.append("<font color='red'>出错的文件：%s </font>" % fileUrl)
                 i += 1
+            self.textBrowser_3.append('----------------------------------')
+
+    def getEleInvoiceFiles(self):
+        # 获取电子发票文件
+        selectBatchFile = QFileDialog.getOpenFileNames(self, '选择文件',
+                                                       '%s' % configContent['Ele_Invoice_Files_Import_URL'],
+                                                       'files(*.pdf)')
+        self.filesUrl = selectBatchFile[0]
+        if self.filesUrl != []:
+            self.textBrowser_3.append('选中文件:')
+            self.textBrowser_3.append('\n'.join(self.filesUrl))
+            self.textBrowser_3.append('----------------------------------')
+        else:
+            self.textBrowser_3.append('无选中文件')
+            self.textBrowser_3.append('----------------------------------')
+        app.processEvents()
+        return self.filesUrl
+
+    def electronicInvoice(self):
+        # 需要名称，金额，发票号，税号
+        # Excel或csv数据保留对吧billing list的金额
+        fileUrls = self.filesUrl
+        flag = 'Y'
+        if fileUrls == []:
+            reply = QMessageBox.question(self, '信息', '没有选中文件，是否重新选择文件', QMessageBox.Yes | QMessageBox.No,
+                                         QMessageBox.Yes)
+            if reply == QMessageBox.Yes:
+                fileUrls = MyMainWindow.getFiles(self)
+                if fileUrls == []:
+                    flag = 'N'
+            else:
+                QMessageBox.information(self, "提示信息", "没有选中文件，请重新选择文件", QMessageBox.Yes)
+                flag = 'N'
+        if flag == 'Y':
+            guiData = MyMainWindow.getAdminGuiData(self)
+            pdfOperate = PDF_Operate
+            self.textBrowser_3.append('导出文件夹：%s' % configContent['Ele_Invoice_Files_Export_URL'])
+            self.textBrowser_3.append('导出文件名称：')
+            i = 1
+            fileMsg = {}
+            fileMsg['id'] = []
+            fileMsg['Company Name'] = []
+            fileMsg['Revenue'] = []
+            fileMsg['fapiao'] = []
+            fileMsg['update'] = []
+            fileMsg['path'] = []
+            for fileUrl in fileUrls:
+                try:
+                    self.textBrowser_3.append('第%s份文件：' % i)
+                    msg = {}
+                    with open(fileUrl, 'rb') as pdfFile:
+                        fileCon = pdfOperate.readPdf(pdfFile)
+                        fileNum = 0
+                        for fileCon[fileNum] in fileCon:
+                            if '名称：' in fileCon[fileNum]:
+                                msg['Company Name'] = fileCon[fileNum].split('：')[1].split(' ')[0]
+                            elif '（小写）' in fileCon[fileNum]:
+                                msg['Revenue'] = fileCon[fileNum].split('（小写）')[1]
+                            elif '发票号码：' in fileCon[fileNum]:
+                                msg['fapiao'] = fileCon[fileNum].split('：')[1]
+                            fileNum += 1
+                        outputFlieName = msg['Company Name'] + '-' + msg['Revenue'] + '-' + msg['fapiao']
+                        outputFlie = outputFlieName + '.pdf'
+                        exportUrl = configContent['Ele_Invoice_Files_Export_URL'] + '/' + msg['Company Name']
+                        newFolder = File_Opetate()
+                        newFolder.createFolder(exportUrl)
+                        pdfOperate.saveAs(fileUrl, '%s\\%s' % (exportUrl, outputFlie))
+                        fileMsg['id'].append(i)
+                        fileMsg['Company Name'].append(msg['Company Name'])
+                        fileMsg['Revenue'].append(msg['Revenue'])
+                        fileMsg['fapiao'].append(msg['fapiao'])
+                        fileMsg['update'].append(time.strftime('%Y-%m-%d %H.%M.%S'))
+                        fileMsg['path'].append('%s\\%s' % (exportUrl, outputFlie))
+                    self.textBrowser_3.append('%s' % outputFlie)
+                    app.processEvents()
+
+                except Exception as errorMsg:
+                    # self.textBrowser_3.append("<font color='red'>第%s份文件：</font>" % i)
+                    self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
+                    self.textBrowser_3.append("<font color='red'>出错的文件：%s </font>" % fileUrl)
+                    app.processEvents()
+                i += 1
+
+            invoiceFile = pd.DataFrame(fileMsg)
+            filePath = '%s/invoice %s.csv' % (configContent['Ele_Invoice_Files_Export_URL'], today)
+            invoiceFile.to_csv(filePath, index=False, mode='a', encoding='utf_8_sig')
+            self.textBrowser_3.append('已生成数据文件：%s' % filePath)
             self.textBrowser_3.append('----------------------------------')
 
 
