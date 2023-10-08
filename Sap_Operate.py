@@ -49,10 +49,15 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_51.clicked.connect(self.electronicInvoice)
         self.lineEdit_15.textChanged.connect(self.lineEditChange)
         self.doubleSpinBox_2.valueChanged.connect(self.getAmountVat)
-        self.checkBox_9.toggled.connect(lambda: self.pdfNameRule('Invoice No'))
-        self.checkBox_10.toggled.connect(lambda: self.pdfNameRule('Company Name'))
-        self.checkBox_12.toggled.connect(lambda: self.pdfNameRule('Order No'))
-        self.checkBox_11.toggled.connect(lambda: self.pdfNameRule('Project No'))
+        self.checkBox_9.toggled.connect(lambda: self.pdfNameRule('Invoice No', 'invoice'))
+        self.checkBox_20.toggled.connect(lambda: self.pdfNameRule('Invoice No', 'Electron'))
+        self.checkBox_10.toggled.connect(lambda: self.pdfNameRule('Company Name', 'invoice'))
+        self.checkBox_22.toggled.connect(lambda: self.pdfNameRule('Company Name', 'Electron'))
+        self.checkBox_12.toggled.connect(lambda: self.pdfNameRule('Order No', 'invoice'))
+        self.checkBox_21.toggled.connect(lambda: self.pdfNameRule('Order No', 'Electron'))
+        self.checkBox_11.toggled.connect(lambda: self.pdfNameRule('Project No', 'invoice'))
+        self.checkBox_23.toggled.connect(lambda: self.pdfNameRule('FaPiao No', 'Electron'))
+        self.checkBox_24.toggled.connect(lambda: self.pdfNameRule('Revenue', 'Electron'))
         self.filesUrl = []
 
     def getConfig(self):
@@ -177,6 +182,16 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ['Invoice_Name', 'Invoice No + Company Name', 'Invoice文件名称默认规则'],
             ['Invoice_Files_Import_URL', desktopUrl, 'Invoice文件导入路径'],
             ['Invoice_Files_Export_URL', 'N:\\XM Softlines\\1. Project\\3. Finance\\02. WIP', 'Invoice文件导出路径'],
+            ['Ele_Invoice_No_Selected', 1, '是否默认被选中,1选中，0未选中'],
+            ['Ele_Invoice_Start_Num', 486, '电子发票的起始数字'],
+            ['Ele_Invoice_Num', 9, 'Invoice的总位数'],
+            ['Ele_Order_No_Selected', 0, '是否默认被选中,1选中，0未选中'],
+            ['Ele_Order_Start_Num', 7486, '电子发票的起始数字'],
+            ['Ele_Order_Num', 9, 'Order的总位数'],
+            ['Ele_Company_Name_Selected', 1, '是否默认被选中,1选中，0未选中'],
+            ['Ele_Revenue_Selected', 1, '是否默认被选中,1选中，0未选中'],
+            ['Ele_Fapiao_No_Selected', 0, '是否默认被选中,1选中，0未选中'],
+            ['Ele_Invoice_Name', 'Company Name + Invoice No + Revenue', '电子发票文件名称默认规则'],
             ['Ele_Invoice_Files_Import_URL', 'N:\\Company Data\\FCO\\11.全电发票', '全电发票路径'],
             ['Ele_Invoice_Files_Export_URL', 'N:\\XM Softlines\\1. Project\\3. Finance\\02. WIP\\全电发票 2023\\10',
              '全电发票导出路径'],
@@ -266,6 +281,16 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.spinBox_4.setValue(int(configContent['Order_Num']))
             self.checkBox_11.setChecked(int(configContent['Project_No_Selected']))
             self.lineEdit_17.setText(configContent['Invoice_Name'])
+            self.checkBox_20.setChecked(int(configContent['Ele_Invoice_No_Selected']))
+            self.spinBox_8.setValue(int(configContent['Ele_Invoice_Start_Num']))
+            self.spinBox_6.setValue(int(configContent['Ele_Invoice_Num']))
+            self.checkBox_21.setChecked(int(configContent['Ele_Order_No_Selected']))
+            self.spinBox_9.setValue(int(configContent['Ele_Order_Start_Num']))
+            self.spinBox_7.setValue(int(configContent['Ele_Order_Num']))
+            self.checkBox_22.setChecked(int(configContent['Ele_Company_Name_Selected']))
+            self.checkBox_23.setChecked(int(configContent['Ele_Fapiao_No_Selected']))
+            self.checkBox_24.setChecked(int(configContent['Ele_Revenue_Selected']))
+            self.lineEdit_27.setText(configContent['Ele_Invoice_Name'])
         except Exception as msg:
             self.textBrowser_2.append("错误信息：%s" % msg)
             self.textBrowser_2.append('----------------------------------')
@@ -435,6 +460,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         guiAdminData['orderStsrtNum'] = int(self.spinBox_3.text())
         guiAdminData['orderBits'] = int(self.spinBox_4.text())
         guiAdminData['pdfName'] = self.lineEdit_17.text()
+        guiAdminData['eleInvoiceStsrtNum'] = int(self.spinBox_8.text())
+        guiAdminData['eleOrderStsrtNum'] = int(self.spinBox_9.text())
+        guiAdminData['eleInvoiceBits'] = int(self.spinBox_6.text())
+        guiAdminData['eleOrderBits'] = int(self.spinBox_7.text())
+        guiAdminData['fapiaoName'] = self.lineEdit_27.text()
         return guiAdminData
 
     def getRevenueData(self, guiData):
@@ -1182,9 +1212,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             app.processEvents()
         # QMessageBox.information(self, "提示信息", '这份%s的ODM获取数据有问题' % fileData, QMessageBox.Yes)
 
-    def pdfNameRule(self, msg):
+    def pdfNameRule(self, msg, flag):
         guiData = MyMainWindow.getAdminGuiData(self)
-        pdfName = guiData['pdfName']
+        if flag == 'invoice':
+            pdfName = guiData['pdfName']
+        else:
+            pdfName = guiData['fapiaoName']
         pdfNameList = pdfName.split(' + ')
         changedPdfName = ''
         if msg in pdfNameList:
@@ -1198,7 +1231,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             if changedPdfName != '':
                 changedPdfName += ' + '
             changedPdfName += msg
-        self.lineEdit_17.setText(changedPdfName)
+        if flag == 'invoice':
+            self.lineEdit_17.setText(changedPdfName)
+        else:
+            self.lineEdit_27.setText(changedPdfName)
+        app.processEvents()
         return changedPdfName
 
     def getFiles(self):
@@ -1324,14 +1361,16 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 QMessageBox.information(self, "提示信息", "没有选中文件，请重新选择文件", QMessageBox.Yes)
                 flag = 'N'
         if flag == 'Y':
-            guiData = MyMainWindow.getAdminGuiData(self)
             pdfOperate = PDF_Operate
+            adminGuiData = MyMainWindow.getAdminGuiData(self)
             self.textBrowser_3.append('导出文件夹：%s' % configContent['Ele_Invoice_Files_Export_URL'])
             self.textBrowser_3.append('导出文件名称：')
             i = 1
             fileMsg = {}
             fileMsg['id'] = []
             fileMsg['Company Name'] = []
+            fileMsg['Invoice No'] = []
+            fileMsg['Order No'] = []
             fileMsg['Revenue'] = []
             fileMsg['fapiao'] = []
             fileMsg['update'] = []
@@ -1343,24 +1382,49 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     with open(fileUrl, 'rb') as pdfFile:
                         fileCon = pdfOperate.readPdf(pdfFile)
                         fileNum = 0
+
+                        # 获取文件内容
                         for fileCon[fileNum] in fileCon:
                             if '名称：' in fileCon[fileNum]:
                                 msg['Company Name'] = fileCon[fileNum].split('：')[1].split(' ')[0]
                             elif '（小写）' in fileCon[fileNum]:
                                 msg['Revenue'] = fileCon[fileNum].split('（小写）')[1]
                             elif '发票号码：' in fileCon[fileNum]:
-                                msg['fapiao'] = fileCon[fileNum].split('：')[1]
+                                msg['fapiao'] = str(fileCon[fileNum].split('：')[1])
+                            elif re.search('%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'], int(adminGuiData['eleInvoiceBits']) - len(str(adminGuiData['eleInvoiceStsrtNum']))), fileCon[fileNum]):
+                                text = fileCon[fileNum].split('/')
+                                msg['Invoice No'] = text[2]
+                                msg['Order No'] = text[1]
                             fileNum += 1
-                        outputFlieName = msg['Company Name'] + '-' + msg['Revenue'] + '-' + msg['fapiao']
+                        # 文件命名规则
+                        pdfNameRule = adminGuiData['fapiaoName'].split(' + ')
+                        outputFlieName = ''
+                        for eachName in pdfNameRule:
+                            if outputFlieName != '':
+                                outputFlieName += '-'
+                            if eachName == 'Invoice No':
+                                outputFlieName += msg['Invoice No']
+                            elif eachName == 'Company Name':
+                                outputFlieName += msg['Company Name']
+                            elif eachName == 'Order No':
+                                outputFlieName += msg['Order No']
+                            elif eachName == 'FaPiao No':
+                                outputFlieName += msg['fapiao']
+                            elif eachName == 'Revenue':
+                                outputFlieName += msg['Revenue']
+
+                        # outputFlieName = msg['Company Name'] + '-' + msg['Revenue'] + '-' + msg['fapiao']
                         outputFlie = outputFlieName + '.pdf'
-                        exportUrl = configContent['Ele_Invoice_Files_Export_URL'] + '/' + msg['Company Name']
+                        exportUrl = configContent['Ele_Invoice_Files_Export_URL'] + '\\' + msg['Company Name']
                         newFolder = File_Opetate()
                         newFolder.createFolder(exportUrl)
                         pdfOperate.saveAs(fileUrl, '%s\\%s' % (exportUrl, outputFlie))
                         fileMsg['id'].append(i)
                         fileMsg['Company Name'].append(msg['Company Name'])
+                        fileMsg['Invoice No'].append(msg['Invoice No'])
+                        fileMsg['Order No'].append(msg['Order No'])
                         fileMsg['Revenue'].append(msg['Revenue'])
-                        fileMsg['fapiao'].append(msg['fapiao'])
+                        fileMsg['fapiao'].append('发票号码:' + msg['fapiao'])
                         fileMsg['update'].append(time.strftime('%Y-%m-%d %H.%M.%S'))
                         fileMsg['path'].append('%s\\%s' % (exportUrl, outputFlie))
                     self.textBrowser_3.append('%s' % outputFlie)
@@ -1378,6 +1442,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             invoiceFile.to_csv(filePath, index=False, mode='a', encoding='utf_8_sig')
             self.textBrowser_3.append('已生成数据文件：%s' % filePath)
             self.textBrowser_3.append('----------------------------------')
+            os.startfile(configContent['Ele_Invoice_Files_Export_URL'])
 
 
 if __name__ == "__main__":
