@@ -1286,7 +1286,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                 msg['Company Name'] = fileCon[fileNum + 1].replace(
                                     'Please quote this number on all inquiries and payments.', '').replace(
                                     'Invoice No.', '')
-                            elif re.match('%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - 1),
+                            elif re.match('%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - len(str(guiData['invoiceStsrtNum']))),
                                           fileCon[fileNum]):
                                 msg['Invoice No'] = fileCon[fileNum]
                             elif re.search('\d{2}.\d{3}.\d{2}.\d{4,5}', fileCon[fileNum]):
@@ -1298,7 +1298,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                             '%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - 1),
                                             each) and msg['Invoice No'] == '':
                                         msg['Invoice No'] = each
-                            elif re.search('%s\d{%s}' % (guiData['orderStsrtNum'], int(guiData['orderBits']) - 1),
+                            elif re.search('%s\d{%s}' % (guiData['orderStsrtNum'], int(guiData['orderBits']) - len(str(guiData['orderStsrtNum']))),
                                            fileCon[fileNum]):
                                 res = fileCon[fileNum].split(' ')
                                 if len(res[1]) == int(guiData['orderBits']):
