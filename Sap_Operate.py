@@ -1060,6 +1060,32 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser_2.append('错误信息：%s' % msg)
             self.textBrowser_2.append('----------------------------------')
 
+    # 数据添加列信息
+    def addColumnMsg(self, data):
+        key = self.lineEdit_24.text().split(';')
+        df = data
+        df['column_msg'] = df[key].apply(lambda row: '\t'.join(map(str, row)), axis=1)
+        return df
+
+    # 数据添加行信息
+    def addRowMsg(self, data):
+        key = self.lineEdit_23.text().split(';')
+        df = data
+        df['row_msg'] = df[key].apply(lambda row: '\n'.join(f"{col}:{val}" for col, val in zip(df[key], row)),
+                                      axis=1)
+        return df
+
+    # 合并行数据
+    def combineMsg(self, key, data):
+        newData = Get_Data()
+        combineProject = data.groupby(key).apply(newData.concat_func).reset_index()
+        df = pd.merge(data, combineProject, on=key, how='right')
+        return df
+
+    # 添加信息
+    def addMsg(self):
+        pass
+
     # 数据透视并合并
     def odmCombineData(self):
         try:
@@ -1286,7 +1312,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                 msg['Company Name'] = fileCon[fileNum + 1].replace(
                                     'Please quote this number on all inquiries and payments.', '').replace(
                                     'Invoice No.', '')
-                            elif re.match('%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - len(str(guiData['invoiceStsrtNum']))),
+                            elif re.match('%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - len(
+                                    str(guiData['invoiceStsrtNum']))),
                                           fileCon[fileNum]):
                                 msg['Invoice No'] = fileCon[fileNum]
                             elif re.search('\d{2}.\d{3}.\d{2}.\d{4,5}', fileCon[fileNum]):
@@ -1298,7 +1325,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                             '%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - 1),
                                             each) and msg['Invoice No'] == '':
                                         msg['Invoice No'] = each
-                            elif re.search('%s\d{%s}' % (guiData['orderStsrtNum'], int(guiData['orderBits']) - len(str(guiData['orderStsrtNum']))),
+                            elif re.search('%s\d{%s}' % (
+                                    guiData['orderStsrtNum'],
+                                    int(guiData['orderBits']) - len(str(guiData['orderStsrtNum']))),
                                            fileCon[fileNum]):
                                 res = fileCon[fileNum].split(' ')
                                 if len(res[1]) == int(guiData['orderBits']):
@@ -1391,7 +1420,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                 msg['Revenue'] = fileCon[fileNum].split('（小写）')[1]
                             elif '发票号码：' in fileCon[fileNum]:
                                 msg['fapiao'] = str(fileCon[fileNum].split('：')[1])
-                            elif re.search('%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'], int(adminGuiData['eleInvoiceBits']) - len(str(adminGuiData['eleInvoiceStsrtNum']))), fileCon[fileNum]):
+                            elif re.search('%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'],
+                                                         int(adminGuiData['eleInvoiceBits']) - len(
+                                                             str(adminGuiData['eleInvoiceStsrtNum']))),
+                                           fileCon[fileNum]):
                                 text = fileCon[fileNum].split('/')
                                 msg['Invoice No'] = text[2]
                                 msg['Order No'] = text[1]
