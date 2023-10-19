@@ -10,6 +10,7 @@ import datetime
 import chicon  # 引用图标
 # from PyQt5 import QtCore, QtGui, QtWidgets
 # from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtWidgets import QMessageBox, QFileDialog
 # from PyQt5.QtCore import *
 from Get_Data import *
@@ -18,6 +19,7 @@ from PDF_Operate import *
 from Sap_Function import *
 from Sap_Operate_Ui import Ui_MainWindow
 from Data_Table import *
+from Logger import *
 
 
 class MyMainWindow(QMainWindow, Ui_MainWindow):
@@ -58,6 +60,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.checkBox_11.toggled.connect(lambda: self.pdfNameRule('Project No', 'invoice'))
         self.checkBox_23.toggled.connect(lambda: self.pdfNameRule('FaPiao No', 'Electron'))
         self.checkBox_24.toggled.connect(lambda: self.pdfNameRule('Revenue', 'Electron'))
+        self.pushButton_56.clicked.connect(lambda: self.orderUnlockOrLock('Unlock'))
+        self.pushButton_57.clicked.connect(lambda: self.orderUnlockOrLock('Lock'))
         self.filesUrl = []
 
     def getConfig(self):
@@ -1475,6 +1479,44 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser_3.append('已生成数据文件：%s' % filePath)
             self.textBrowser_3.append('----------------------------------')
             os.startfile(configContent['Ele_Invoice_Files_Export_URL'])
+
+    def orderUnlockOrLock(self, flag):
+        fileUrl = self.lineEdit_6.text()
+        (filepath, filename) = os.path.split(fileUrl)
+        if fileUrl:
+            log_file_name = 'log %s.csv' % time.strftime('%Y-%m-%d %H.%M.%S')
+            Log_file = '%s\\%s' % (filepath, log_file_name)
+            log_obj = Logger(Log_file, ['Update', 'Order No', 'Remark'])
+            newData = Get_Data()
+            file_data = newData.getFileData(fileUrl)
+            order_list = list(file_data['Order No'])
+            if not self.checkBox_16.isChecked():
+                sap_obj = Sap()
+            for orderNo in order_list:
+                # try:
+                    log_list = []
+                    log_list.append(orderNo)
+                    if self.checkBox_16.isChecked():
+                        sap_obj = Sap()
+                    sap_obj.open_va02(orderNo)
+                    lock_res = sap_obj.unlock_or_lock_order(flag)
+                    self.textBrowser.append('Order No: %s' % orderNo)
+                    self.textBrowser.append('%s' % sap_obj.res['msg'])
+                    app.processEvents()
+                    if not sap_obj.res['flag']:
+                        log_list.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
+                    else:
+                        log_list.append(' ')
+                    log_obj.log(log_list)
+                # except:
+                #     self.textBrowser.append('该Order: %s 有问题' % orderNo)
+                #     app.processEvents()
+            log_obj.save_log_to_csv()
+            self.textBrowser.append('%s' % Log_file)
+            app.processEvents()
+        else:
+            self.textBrowser.append('没有文件请添加')
+            app.processEvents()
 
 
 if __name__ == "__main__":

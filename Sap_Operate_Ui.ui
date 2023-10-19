@@ -7,8 +7,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1034</width>
-    <height>679</height>
+    <width>1019</width>
+    <height>730</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -565,6 +565,67 @@
            <string>Operate</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_18">
+           <item row="0" column="3">
+            <widget class="QCheckBox" name="checkBox_5">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Message</string>
+             </property>
+             <property name="checked">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="4">
+            <widget class="QCheckBox" name="checkBox_19">
+             <property name="statusTip">
+              <string>是否需要添加联系人</string>
+             </property>
+             <property name="text">
+              <string>Client Contact</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="4">
+            <widget class="QPushButton" name="pushButton_17">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="statusTip">
+              <string>根据ODM数据，循环创建Order</string>
+             </property>
+             <property name="text">
+              <string>Fill in the SAP for ODM Data</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QPushButton" name="pushButton_12">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="statusTip">
+              <string>清理Messages框中的信息</string>
+             </property>
+             <property name="text">
+              <string>Clear</string>
+             </property>
+            </widget>
+           </item>
            <item row="1" column="3">
             <widget class="QPushButton" name="pushButton_11">
              <property name="sizePolicy">
@@ -586,22 +647,6 @@
              </property>
             </widget>
            </item>
-           <item row="1" column="4">
-            <widget class="QPushButton" name="pushButton_17">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="statusTip">
-              <string>根据ODM数据，循环创建Order</string>
-             </property>
-             <property name="text">
-              <string>Fill in the SAP for ODM Data</string>
-             </property>
-            </widget>
-           </item>
            <item row="0" column="2">
             <widget class="QCheckBox" name="checkBox_16">
              <property name="statusTip">
@@ -615,48 +660,17 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="3">
-            <widget class="QCheckBox" name="checkBox_5">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
+           <item row="0" column="5">
+            <widget class="QPushButton" name="pushButton_56">
              <property name="text">
-              <string>Message</string>
-             </property>
-             <property name="checked">
-              <bool>false</bool>
+              <string>Unlock Order</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="2">
-            <widget class="QPushButton" name="pushButton_12">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="statusTip">
-              <string>清理Messages框中的信息</string>
-             </property>
+           <item row="1" column="5">
+            <widget class="QPushButton" name="pushButton_57">
              <property name="text">
-              <string>Clear</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="4">
-            <widget class="QCheckBox" name="checkBox_19">
-             <property name="statusTip">
-              <string>是否需要添加联系人</string>
-             </property>
-             <property name="text">
-              <string>Client Contact</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
+              <string>Lock Order</string>
              </property>
             </widget>
            </item>
@@ -672,15 +686,15 @@
            </sizepolicy>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="page_3">
            <property name="geometry">
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>429</width>
-             <height>492</height>
+             <width>499</width>
+             <height>505</height>
             </rect>
            </property>
            <attribute name="label">
@@ -1160,8 +1174,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>277</width>
-             <height>402</height>
+             <width>486</width>
+             <height>556</height>
             </rect>
            </property>
            <attribute name="label">
@@ -2191,7 +2205,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1034</width>
+     <width>1019</width>
      <height>25</height>
     </rect>
    </property>

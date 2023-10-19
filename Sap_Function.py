@@ -1,5 +1,4 @@
 import sys, win32com.client, time, datetime, re
-from PyQt5.QtWidgets import QApplication, QMainWindow
 
 from Sap_Operate import *
 
@@ -312,7 +311,6 @@ class Sap():
             else:
                 pass
 
-    # TODO 添加guiData['planCostCheck']，guiData['saveCheck']，guiData['vf01Check']，guiData['vf02Check']
     # 添加item
     def va02_operate(self, guiData, revenueData):
         try:
@@ -661,7 +659,7 @@ class Sap():
         self.session.findById("wnd[1]/tbar[0]/btn[37]").press()
 
     # 打开order
-    def open_va02(self, guiData, revenueData, orderNo):
+    def open_va02(self, orderNo):
         try:
             # 初始化数据
             Sap.initializationMsg(self)
@@ -673,6 +671,48 @@ class Sap():
             self.res['flag'] = 0
             self.res['msg'] = "该Order No %s 未开启" % orderNo
             # myWin.textBrowser.append("该Order No %s 未开启" % orderNo)
+
+    # 解锁order
+    def unlock_or_lock_order(self, flag):
+        try:
+            # 初始化数据
+            Sap.initializationMsg(self)
+            # 锁order操作
+            self.session.findById("wnd[1]").sendVKey(0)
+            self.session.findById(
+                "wnd[0]/usr/subSUBSCREEN_HEADER:SAPMV45A:4021/subPART-SUB:SAPMV45A:4701/lblKUAGV-KUNNR").setFocus()
+            self.session.findById(
+                "wnd[0]/usr/subSUBSCREEN_HEADER:SAPMV45A:4021/subPART-SUB:SAPMV45A:4701/lblKUAGV-KUNNR").caretPosition = 3
+            self.session.findById("wnd[0]").sendVKey(2)
+            self.session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\12").select()
+            self.session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\12/ssubSUBSCREEN_BODY:SAPMV45A:4305/btnBT_KSTC").press()
+            if flag == 'Unlock':
+                self.session.findById(
+                    "wnd[0]/usr/tabsTABSTRIP_0300/tabpANWS/ssubSUBSCREEN:SAPLBSVA:0302/tblSAPLBSVATC_EO/chkJ_STMAINT-ANWSO[0,1]").selected = False
+                self.session.findById(
+                    "wnd[0]/usr/tabsTABSTRIP_0300/tabpANWS/ssubSUBSCREEN:SAPLBSVA:0302/tblSAPLBSVATC_EO/chkJ_STMAINT-ANWSO[0,0]").selected = False
+            else:
+                # self.session.findById(
+                #     "wnd[0]/usr/tabsTABSTRIP_0300/tabpANWS/ssubSUBSCREEN:SAPLBSVA:0302/tblSAPLBSVATC_EO/chkJ_STMAINT-ANWSO[0,1]").selected = True
+                self.session.findById(
+                    "wnd[0]/usr/tabsTABSTRIP_0300/tabpANWS/ssubSUBSCREEN:SAPLBSVA:0302/tblSAPLBSVATC_EO/chkJ_STMAINT-ANWSO[0,0]").selected = True
+            self.session.findById(
+                "wnd[0]/usr/tabsTABSTRIP_0300/tabpANWS/ssubSUBSCREEN:SAPLBSVA:0302/tblSAPLBSVATC_EO/chkJ_STMAINT-ANWSO[0,0]").setFocus()
+            self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
+            self.session.findById("wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\13").select()
+            if flag == 'Unlock':
+                self.session.findById(
+                "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\13/ssubSUBSCREEN_BODY:SAPMV45A:4309/cmbVBAK-KVGR4").key = "100"
+            else:
+                self.session.findById(
+                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\13/ssubSUBSCREEN_BODY:SAPMV45A:4309/cmbVBAK-KVGR4").key = " "
+            self.session.findById(
+                "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\13/ssubSUBSCREEN_BODY:SAPMV45A:4309/cmbVBAK-KVGR4").setFocus()
+            self.session.findById("wnd[0]/tbar[0]/btn[11]").press()
+            self.res['msg'] = "%s 成功" % flag
+        except:
+            self.res['flag'] = 0
+            self.res['msg'] = "%s 未成功" % flag
 
     # 结束sap
     def end_sap(self):
