@@ -1,6 +1,7 @@
 import pandas as pd
 import datetime
 
+
 class Logger:
     def __init__(self, log_file, columns):
         self.log_file = log_file
@@ -8,10 +9,10 @@ class Logger:
         self.log_df = pd.DataFrame(columns=columns)
 
     def log(self, data):
-        if len(data) != len(self.columns)-1:
+        if len(data) != len(self.columns) - 1:
             raise ValueError("Data length does not match the number of columns.")
         timestamp = datetime.datetime.now()
-        log_data = dict(zip(self.columns, [timestamp] + data))
+        log_data = {'Update': timestamp, **data}
         self.log_df.loc[len(self.log_df)] = log_data
 
     def save_log_to_csv(self):

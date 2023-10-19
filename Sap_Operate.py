@@ -1486,34 +1486,44 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         if fileUrl:
             log_file_name = 'log %s.csv' % time.strftime('%Y-%m-%d %H.%M.%S')
             Log_file = '%s\\%s' % (filepath, log_file_name)
-            log_obj = Logger(Log_file, ['Update', 'Order No', 'Remark'])
+            log_obj = Logger(Log_file, ['Update', 'Order No', 'Type', 'Remark'])
             newData = Get_Data()
             file_data = newData.getFileData(fileUrl)
             order_list = list(file_data['Order No'])
             if not self.checkBox_16.isChecked():
                 sap_obj = Sap()
+            i = 1
             for orderNo in order_list:
                 # try:
-                    log_list = []
-                    log_list.append(orderNo)
+                #     log_list = []
+                #     log_list.append(orderNo)
+                #     log_list.append(flag)
+                    log_list = {}
+                    log_list['Order No'] = orderNo
+                    log_list['Type'] = flag
+
                     if self.checkBox_16.isChecked():
                         sap_obj = Sap()
                     sap_obj.open_va02(orderNo)
                     lock_res = sap_obj.unlock_or_lock_order(flag)
-                    self.textBrowser.append('Order No: %s' % orderNo)
+                    self.textBrowser.append('%s.Order No: %s' % (i, orderNo))
                     self.textBrowser.append('%s' % sap_obj.res['msg'])
                     app.processEvents()
                     if not sap_obj.res['flag']:
-                        log_list.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
+                        # log_list.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
+                        log_list['Remark'] = sap_obj.res['msg']
                     else:
-                        log_list.append(' ')
+                        # log_list.append(' ')
+                        log_list['Remark'] = ''
                     log_obj.log(log_list)
+                    i += 1
                 # except:
-                #     self.textBrowser.append('该Order: %s 有问题' % orderNo)
+                #     self.textBrowser.append("<font color='red'>该Order: %s 有问题</font>" % orderNo)
                 #     app.processEvents()
             log_obj.save_log_to_csv()
             self.textBrowser.append('%s' % Log_file)
             app.processEvents()
+            os.startfile(Log_file)
         else:
             self.textBrowser.append('没有文件请添加')
             app.processEvents()
