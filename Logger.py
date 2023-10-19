@@ -8,11 +8,11 @@ class Logger:
         self.log_df = pd.DataFrame(columns=columns)
 
     def log(self, data):
-        if len(data) != len(self.columns):
+        if len(data) != len(self.columns)-1:
             raise ValueError("Data length does not match the number of columns.")
         timestamp = datetime.datetime.now()
         log_data = dict(zip(self.columns, [timestamp] + data))
-        self.log_df = self.log_df.append(log_data, ignore_index=True)
+        self.log_df.loc[len(self.log_df)] = log_data
 
     def save_log_to_csv(self):
         self.log_df.to_csv(self.log_file, index=False)
