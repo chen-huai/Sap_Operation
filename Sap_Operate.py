@@ -4,6 +4,7 @@ import re
 import time
 import math
 import pandas as pd
+import csv
 import numpy as np
 import win32com.client
 import datetime
@@ -46,6 +47,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_34.clicked.connect(self.textBrowser_3.clear)
         self.pushButton_35.clicked.connect(self.invoiceRenameOperate)
         self.pushButton_33.clicked.connect(self.getPdfFiles)
+        self.pushButton_48.clicked.connect(self.addMsg)
         self.pushButton_49.clicked.connect(self.viewOdmData)
         self.pushButton_50.clicked.connect(self.getEleInvoiceFiles)
         self.pushButton_51.clicked.connect(self.electronicInvoice)
@@ -1107,7 +1109,51 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     # 添加信息
     def addMsg(self):
-        pass
+        fileUrl = self.lineEdit_7.text()
+        (filepath, filename) = os.path.split(fileUrl)
+        if fileUrl:
+            rowChecked = self.checkBox_17.isChecked()
+            columnChecked = self.checkBox_18.isChecked()
+            if rowChecked or columnChecked:
+                try:
+                    column_name = self.comboBox_5.currentText()
+                    key = self.lineEdit_24.text().replace(';', '\t')
+                    newData = Get_Data()
+                    newData.getFileData(fileUrl)
+                    if rowChecked:
+                        newData.fileData = MyMainWindow.addRowMsg(self, newData.fileData)
+                    if columnChecked:
+                        newData.fileData = MyMainWindow.addColumnMsg(self, newData.fileData)
+                        newData.fileData['column_msg'] = key + '\n' + newData.fileData['column_msg']
+                    if rowChecked and columnChecked:
+                        newData.fileData[column_name] = newData.fileData['row_msg'] + '\n' + newData.fileData[
+                            'column_msg']
+                    elif rowChecked:
+                        newData.fileData[column_name] = newData.fileData['row_msg']
+                    else:
+                        newData.fileData[column_name] = newData.fileData['column_msg']
+                    csvFileType = 'xlsx'
+                    odmFileName = '添加信息后的数据'
+                    odmDataPath = MyMainWindow.getFileName(self, filepath, odmFileName, csvFileType)
+                    # newData.fileData = newData.fileData.applymap(lambda x: x.strip('"') if isinstance(x, str) else x)
+                    odmDataFile = newData.fileData.to_excel('%s' % (odmDataPath))
+                    self.textBrowser_2.append('已完成该文件的信息添加')
+                    self.textBrowser_2.append('文件保存在：%s' % odmDataPath)
+                    self.textBrowser_2.append('----------------------------------')
+                    app.processEvents()
+                except Exception as msg:
+                    self.textBrowser_2.append('这份%s的ODM获取数据有问题' % fileUrl)
+                    self.textBrowser_2.append('错误信息：%s' % msg)
+                    self.textBrowser_2.append('----------------------------------')
+                    app.processEvents()
+            else:
+                self.textBrowser_2.append('没有选中要添加的信息，请选择')
+                self.textBrowser_2.append('----------------------------------')
+                app.processEvents()
+        else:
+            self.textBrowser_2.append('没有文件，请重新选择')
+            self.textBrowser_2.append('----------------------------------')
+            app.processEvents()
 
     # 数据透视并合并
     def odmCombineData(self):
@@ -1523,28 +1569,28 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 #     log_list = []
                 #     log_list.append(orderNo)
                 #     log_list.append(flag)
-                    log_list = {}
-                    log_list['Order No'] = orderNo
-                    log_list['Type'] = flag
+                log_list = {}
+                log_list['Order No'] = orderNo
+                log_list['Type'] = flag
 
-                    if self.checkBox_16.isChecked():
-                        sap_obj = Sap()
-                    sap_obj.open_va02(orderNo)
-                    lock_res = sap_obj.unlock_or_lock_order(flag)
-                    self.textBrowser.append('%s.Order No: %s' % (i, orderNo))
-                    self.textBrowser.append('%s' % sap_obj.res['msg'])
-                    app.processEvents()
-                    if not sap_obj.res['flag']:
-                        # log_list.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
-                        log_list['Remark'] = sap_obj.res['msg']
-                    else:
-                        # log_list.append(' ')
-                        log_list['Remark'] = ''
-                    log_obj.log(log_list)
-                    i += 1
-                # except:
-                #     self.textBrowser.append("<font color='red'>该Order: %s 有问题</font>" % orderNo)
-                #     app.processEvents()
+                if self.checkBox_16.isChecked():
+                    sap_obj = Sap()
+                sap_obj.open_va02(orderNo)
+                lock_res = sap_obj.unlock_or_lock_order(flag)
+                self.textBrowser.append('%s.Order No: %s' % (i, orderNo))
+                self.textBrowser.append('%s' % sap_obj.res['msg'])
+                app.processEvents()
+                if not sap_obj.res['flag']:
+                    # log_list.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
+                    log_list['Remark'] = sap_obj.res['msg']
+                else:
+                    # log_list.append(' ')
+                    log_list['Remark'] = ''
+                log_obj.log(log_list)
+                i += 1
+            # except:
+            #     self.textBrowser.append("<font color='red'>该Order: %s 有问题</font>" % orderNo)
+            #     app.processEvents()
             log_obj.save_log_to_csv()
             self.textBrowser.append('%s' % Log_file)
             app.processEvents()
