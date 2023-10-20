@@ -45,7 +45,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_36.clicked.connect(self.splitOdmData)
         self.pushButton_34.clicked.connect(self.textBrowser_3.clear)
         self.pushButton_35.clicked.connect(self.invoiceRenameOperate)
-        self.pushButton_33.clicked.connect(self.getFiles)
+        self.pushButton_33.clicked.connect(self.getPdfFiles)
         self.pushButton_49.clicked.connect(self.viewOdmData)
         self.pushButton_50.clicked.connect(self.getEleInvoiceFiles)
         self.pushButton_51.clicked.connect(self.electronicInvoice)
@@ -96,6 +96,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         else:
             MyMainWindow.getConfigContent(self)
 
+    # 获取配置文件内容
     def getConfigContent(self):
         # 配置文件
         csvFile = pd.read_csv('%s/config_sap.csv' % configFileUrl, names=['A', 'B', 'C'])
@@ -120,6 +121,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         else:
             pass
 
+    # 创建配置文件
     def createConfigContent(self):
         global monthAbbrev
         months = "JanFebMarAprMayJunJulAugSepOctNovDec"
@@ -211,6 +213,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                 "默认配置文件已经创建好，\n如需修改请在用户桌面查找config文件夹中config_sap.csv，\n将相应的文件内容替换成用户需求即可，修改后记得重新导入配置文件。",
                                 QMessageBox.Yes)
 
+    # 导出配置文件
     def exportConfig(self):
         # 重新导出默认配置文件
         reply = QMessageBox.question(self, '信息', '确认是否要创建默认配置文件', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
@@ -219,6 +222,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         else:
             QMessageBox.information(self, "提示信息", "没有创建默认配置文件，保留原有的配置文件", QMessageBox.Yes)
 
+    # 导入配置文件
     def importConfig(self):
         # 重新导入配置文件
         reply = QMessageBox.question(self, '信息', '确认是否要导入配置文件', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
@@ -227,6 +231,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         else:
             QMessageBox.information(self, "提示信息", "没有重新导入配置文件，将按照原有的配置文件操作", QMessageBox.Yes)
 
+    # 界面设置默认配置文件信息
     def getDefaultInformation(self):
         # 默认登录界面信息
         try:
@@ -344,6 +349,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         amount = float(self.doubleSpinBox_2.text())
         self.doubleSpinBox_4.setValue(amount * 1.06)
 
+    # 获取SAP配置信息
     def getGuiData(self):
         guiData = {}
         guiData['sapNo'] = self.lineEdit.text()
@@ -457,6 +463,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
         return guiData
 
+    # 获取Invoice配置信息
     def getAdminGuiData(self):
         guiAdminData = {}
         guiAdminData['invoiceStsrtNum'] = int(self.spinBox.text())
@@ -471,6 +478,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         guiAdminData['fapiaoName'] = self.lineEdit_27.text()
         return guiAdminData
 
+    # 计算Order所需数据
     def getRevenueData(self, guiData):
         # 计算金额
         # revenue,planCost,revenueForCny,chmCost,phyCost,chmRe,phyRe,chmCsCostAccounting,chmLabCostAccounting,phyCsCostAccounting
@@ -587,6 +595,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 '.%sf' % guiData['significantDigits'])
         return revenueData
 
+    # SAP开Order操作
     def sapOperate(self, sap_obj):
         logMsg = {}
         logMsg['Remark'] = ''
@@ -754,6 +763,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.information(self, "提示信息", '这份%s的ODM获取数据有问题' % guiData['projectNo'], QMessageBox.Yes)
             return logMsg
 
+    # 获取文件
     def getFile(self):
         selectBatchFile = QFileDialog.getOpenFileName(self, '选择ODM导出文件',
                                                       '%s\\%s' % (configContent['SAP_Date_URL'], today),
@@ -761,6 +771,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         fileUrl = selectBatchFile[0]
         return fileUrl
 
+    # SAP数据路径
     def getFileUrl(self):
         fileUrl = MyMainWindow.getFile(self)
         if fileUrl:
@@ -770,6 +781,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser.append("请重新选择ODM文件")
             QMessageBox.information(self, "提示信息", "请重新选择ODM文件", QMessageBox.Yes)
 
+    # ODM数据路径
     def getODMDataFileUrl(self):
         fileUrl = MyMainWindow.getFile(self)
         if fileUrl:
@@ -779,6 +791,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser_2.append("请重新选择ODM文件")
             QMessageBox.information(self, "提示信息", "请重新选择ODM文件", QMessageBox.Yes)
 
+    # 获取需要Combine文件的路径
     def getCombineFileUrl(self):
         fileUrl = MyMainWindow.getFile(self)
         if fileUrl:
@@ -788,6 +801,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser_2.append("请重新选择ODM文件")
             QMessageBox.information(self, "提示信息", "请重新选择ODM文件", QMessageBox.Yes)
 
+    # 获取Log文件路径
     def getLogFileUrl(self):
         fileUrl = MyMainWindow.getFile(self)
         if fileUrl:
@@ -797,11 +811,13 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser_2.append("请重新选择ODM文件")
             QMessageBox.information(self, "提示信息", "请重新选择ODM文件", QMessageBox.Yes)
 
+    # 查看SAP操作数据详情
     def viewOdmData(self):
         fileUrl = self.lineEdit_6.text()
         myTable.createTable(fileUrl)
         myTable.showMaximized()
 
+    # 批量开Order
     def odmDataToSap(self):
         try:
             fileUrl = self.lineEdit_6.text()
@@ -964,11 +980,13 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser.append('----------------------------------')
             QMessageBox.information(self, "提示信息", '这份%s的ODM获取数据有问题' % fileData, QMessageBox.Yes)
 
+    # 获取文件名称
     def getFileName(self, fileUrl, fileName, fileType):
         nowTime = time.strftime('%Y-%m-%d %H.%M.%S')
         fileName = fileUrl + '/' + nowTime + ' - ' + fileName + '.' + fileType
         return fileName
 
+    # 创建文件夹
     def createFolder(self, url):
         isExists = os.path.exists(url)
         if not isExists:
@@ -978,6 +996,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         combineKey = self.lineEdit_15.text()
         self.lineEdit_16.setText(combineKey)
 
+    # 获取特殊开票内容
     def getInvoiceMsg(self):
         try:
             # 特殊开票文件
@@ -1242,6 +1261,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             app.processEvents()
         # QMessageBox.information(self, "提示信息", '这份%s的ODM获取数据有问题' % fileData, QMessageBox.Yes)
 
+    # PDF命名规则
     def pdfNameRule(self, msg, flag):
         guiData = MyMainWindow.getAdminGuiData(self)
         if flag == 'invoice':
@@ -1268,7 +1288,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         app.processEvents()
         return changedPdfName
 
-    def getFiles(self):
+    # 获取PDF文件
+    def getPdfFiles(self):
         # 获取invoice文件
         selectBatchFile = QFileDialog.getOpenFileNames(self, '选择文件', '%s' % configContent['Invoice_Files_Import_URL'],
                                                        'files(*.pdf)')
@@ -1283,6 +1304,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         app.processEvents()
         return self.filesUrl
 
+    # Invoice PDF文件重命名并保存至指定文件夹
     def invoiceRenameOperate(self):
         # invoice中的pdf重新命名
         fileUrls = self.filesUrl
@@ -1291,7 +1313,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             reply = QMessageBox.question(self, '信息', '没有选中文件，是否重新选择文件', QMessageBox.Yes | QMessageBox.No,
                                          QMessageBox.Yes)
             if reply == QMessageBox.Yes:
-                fileUrls = MyMainWindow.getFiles(self)
+                fileUrls = MyMainWindow.getPdfFiles(self)
                 if fileUrls == []:
                     flag = 'N'
             else:
@@ -1362,6 +1384,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 i += 1
             self.textBrowser_3.append('----------------------------------')
 
+    # 获取电子发票文件
     def getEleInvoiceFiles(self):
         # 获取电子发票文件
         selectBatchFile = QFileDialog.getOpenFileNames(self, '选择文件',
@@ -1378,6 +1401,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         app.processEvents()
         return self.filesUrl
 
+    # 电子发票文件重命名并保存至指定文件夹
     def electronicInvoice(self):
         # 需要名称，金额，发票号，税号
         # Excel或csv数据保留对吧billing list的金额
@@ -1387,7 +1411,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             reply = QMessageBox.question(self, '信息', '没有选中文件，是否重新选择文件', QMessageBox.Yes | QMessageBox.No,
                                          QMessageBox.Yes)
             if reply == QMessageBox.Yes:
-                fileUrls = MyMainWindow.getFiles(self)
+                fileUrls = MyMainWindow.getPdfFiles(self)
                 if fileUrls == []:
                     flag = 'N'
             else:
@@ -1480,6 +1504,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser_3.append('----------------------------------')
             os.startfile(configContent['Ele_Invoice_Files_Export_URL'])
 
+    # Order解锁或关闭操作
     def orderUnlockOrLock(self, flag):
         fileUrl = self.lineEdit_6.text()
         (filepath, filename) = os.path.split(fileUrl)
