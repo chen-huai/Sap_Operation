@@ -651,101 +651,105 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
                     # VA01
                     if guiData['va01Check']:
-                        sap_obj.va01_operate(guiData, revenueData)
-                        if sap_obj.res['flag'] == 1:
+                        va01_res = sap_obj.va01_operate(guiData, revenueData)
+                        if va01_res['flag'] == 1:
                             # 是否要添加lab cost
-                            if guiData['labCostCheck'] and sap_obj.res['flag'] == 1:
-                                sap_obj.lab_cost(guiData, revenueData)
-                                if sap_obj.res['flag'] == 0:
-                                    logMsg['Remark'] += ';' + sap_obj.res['msg']
-                                    self.textBrowser.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
+                            if guiData['labCostCheck'] and va01_res['flag'] == 1:
+                                data_b_res = sap_obj.lab_cost(guiData, revenueData)
+                                if data_b_res['flag'] == 0:
+                                    logMsg['Remark'] += data_b_res['msg']
+                                    self.textBrowser.append("<font color='red'>出错信息：%s </font>" % data_b_res['msg'])
                                     app.processEvents()
                                     if guiData['everyCheck']:
-                                        QMessageBox.information(self, "错误提示", "出错信息：%s" % sap_obj.res['msg'],
+                                        QMessageBox.information(self, "错误提示", "出错信息：%s" % data_b_res['msg'],
                                                                 QMessageBox.Yes)
                             if guiData['va02Check'] or guiData['saveCheck']:
-                                sap_obj.save_sap('VA01')
-                                if sap_obj.res['flag'] == 0:
-                                    logMsg['Remark'] += ';' + sap_obj.res['msg']
-                                    self.textBrowser.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
+                                save_res = sap_obj.save_sap('VA01')
+                                if save_res['flag'] == 0:
+                                    logMsg['Remark'] += ';' + save_res['msg']
+                                    self.textBrowser.append("<font color='red'>出错信息：%s </font>" % save_res['msg'])
                                     app.processEvents()
                                     if guiData['everyCheck']:
-                                        QMessageBox.information(self, "错误提示", "出错信息：%s" % sap_obj.res['msg'],
+                                        QMessageBox.information(self, "错误提示", "出错信息：%s" % save_res['msg'],
                                                                 QMessageBox.Yes)
                         else:
-                            logMsg['Remark'] += sap_obj.res['msg']
-                            self.textBrowser.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
+                            logMsg['Remark'] += va01_res['msg']
+                            self.textBrowser.append("<font color='red'>出错信息：%s </font>" % va01_res['msg'])
                             app.processEvents()
                             if guiData['everyCheck']:
-                                QMessageBox.information(self, "错误提示", "出错信息：%s" % sap_obj.res['msg'],
+                                QMessageBox.information(self, "错误提示", "出错信息：%s" % va01_res['msg'],
                                                         QMessageBox.Yes)
                     # VA02
                     if guiData['va02Check'] and sap_obj.res['flag'] == 1:
-                        sap_obj.va02_operate(guiData, revenueData)
-                        if sap_obj.res['flag'] == 1:
+                        va02_res = sap_obj.va02_operate(guiData, revenueData)
+                        if va02_res['flag'] == 1:
                             amountVatStr = re.sub(r"(\d)(?=(\d\d\d)+(?!\d))", r"\1,",
                                                   format(guiData['amountVat'], '.2f'))
-                            sapAmountVat = sap_obj.logMsg['sapAmountVat']
+                            sapAmountVat = va02_res['sapAmountVat']
+                            logMsg['orderNo'] = va02_res['orderNo']
                             self.textBrowser.append("Sap Amount Vat:%s" % sapAmountVat)
                             self.textBrowser.append("Amount Vat:%s" % amountVatStr)
+                            self.textBrowser.append("Order No.:%s" % logMsg['orderNo'])
                             app.processEvents()
                             # sapAmountVat在A2是数字，其它为字符串
                             flag = 1
-                            if sapAmountVat.strip() != amountVatStr and guiData['everyCheck']:
-                                reply = QMessageBox.question(self, '信息', 'SAP数据与ODM不一致，请确认并修改后再继续！！！',
-                                                             QMessageBox.Yes | QMessageBox.No,
-                                                             QMessageBox.Yes)
+                            if sapAmountVat.strip() != amountVatStr:
+                                self.textBrowser.append("<font color='yellow'>提示信息：SAP数据与ODM不一致，请确认并修改后再继续！！！ </font>")
+                                app.processEvents()
                                 logMsg['Remark'] += ';' + 'SAP数据与ODM不一致，请确认并修改后再继续！！！'
+                                if guiData['everyCheck']:
+                                    reply = QMessageBox.question(self, '信息', 'SAP数据与ODM不一致，请确认并修改后再继续！！！',
+                                                                 QMessageBox.Yes | QMessageBox.No,
+                                                                 QMessageBox.Yes)
                                 if reply == QMessageBox.No:
                                     flag = 0
                             if (guiData['vf01Check'] or guiData['saveCheck']) and flag == 1:
-                                sap_obj.save_sap('VA02')
-                                if sap_obj.res['flag'] == 0:
-                                    logMsg['Remark'] += ';' + sap_obj.res['msg']
-                                    self.textBrowser.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
+                                sava_res = sap_obj.save_sap('VA02')
+                                if sava_res['flag'] == 0:
+                                    logMsg['Remark'] += ';' + sava_res['msg']
+                                    self.textBrowser.append("<font color='red'>出错信息：%s </font>" % sava_res['msg'])
                                     app.processEvents()
                                     if guiData['everyCheck']:
-                                        QMessageBox.information(self, "错误提示", "出错信息：%s" % sap_obj.res['msg'],
+                                        QMessageBox.information(self, "错误提示", "出错信息：%s" % sava_res['msg'],
                                                                 QMessageBox.Yes)
-                            logMsg['orderNo'] = sap_obj.logMsg['orderNo']
-                            self.textBrowser.append("Order No.:%s" % logMsg['orderNo'])
                         else:
-                            logMsg['Remark'] += ';' + sap_obj.res['msg']
-                            self.textBrowser.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
+                            logMsg['Remark'] += ';' + va02_res['msg']
+                            self.textBrowser.append("<font color='red'>出错信息：%s </font>" % va02_res['msg'])
                             app.processEvents()
                             if guiData['everyCheck']:
-                                QMessageBox.information(self, "错误提示", "出错信息：%s" % sap_obj.res['msg'],
+                                QMessageBox.information(self, "错误提示", "出错信息：%s" % va02_res['msg'],
                                                         QMessageBox.Yes)
 
                     # VF01
                     if guiData['vf01Check'] and flag == 1:
-                        sap_obj.save_sap('VF01准备前')
-                        if sap_obj.res['flag'] == 0:
-                            logMsg['Remark'] += ';' + sap_obj.res['msg']
-                            self.textBrowser.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
+                        save_res = sap_obj.save_sap('VF01准备前')
+                        if save_res['flag'] == 0:
+                            logMsg['Remark'] += ';' + save_res['msg']
+                            self.textBrowser.append("<font color='red'>出错信息：%s </font>" % save_res['msg'])
                             app.processEvents()
                             if guiData['everyCheck']:
-                                QMessageBox.information(self, "错误提示", "出错信息：%s" % sap_obj.res['msg'],
+                                QMessageBox.information(self, "错误提示", "出错信息：%s" % save_res['msg'],
                                                         QMessageBox.Yes)
-                        sap_obj.vf01_operate()
-                        if sap_obj.res['flag'] == 0:
-                            logMsg['Remark'] += ';' + sap_obj.res['msg']
-                            self.textBrowser.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
+                        vf01_res = sap_obj.vf01_operate()
+                        if vf01_res['flag'] == 0:
+                            logMsg['Remark'] += ';' + vf01_res['msg']
+                            self.textBrowser.append("<font color='red'>出错信息：%s </font>" % vf01_res['msg'])
                             app.processEvents()
                             if guiData['everyCheck']:
-                                QMessageBox.information(self, "错误提示", "出错信息：%s" % sap_obj.res['msg'],
+                                QMessageBox.information(self, "错误提示", "出错信息：%s" % vf01_res['msg'],
                                                         QMessageBox.Yes)
                     # VF03
                     if guiData['vf03Check'] and sap_obj.res['flag'] == 1:
-                        sap_obj.vf03_operate()
-                        if sap_obj.res['flag'] == 0:
-                            logMsg['Remark'] += ';' + sap_obj.res['msg']
-                            self.textBrowser.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
+                        vf03_res = sap_obj.vf03_operate()
+                        if vf03_res['flag'] == 0:
+                            logMsg['Remark'] += ';' + vf03_res['msg']
+                            self.textBrowser.append("<font color='red'>出错信息：%s </font>" % vf03_res['msg'])
                             app.processEvents()
                             if guiData['everyCheck']:
-                                QMessageBox.information(self, "错误提示", "出错信息：%s" % sap_obj.res['msg'],
+                                QMessageBox.information(self, "错误提示", "出错信息：%s" % vf03_res['msg'],
                                                         QMessageBox.Yes)
-                        proformaNo = sap_obj.logMsg['Proforma No.']
+                        proformaNo = vf03_res['Proforma No.']
+                        logMsg['Proforma No.'] = proformaNo
                         self.textBrowser.append("Proforma No.:%s" % proformaNo)
                         app.processEvents()
                     self.textBrowser.append('SAP操作已完成')
@@ -1578,11 +1582,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 sap_obj.open_va02(orderNo)
                 lock_res = sap_obj.unlock_or_lock_order(flag)
                 self.textBrowser.append('%s.Order No: %s' % (i, orderNo))
-                self.textBrowser.append('%s' % sap_obj.res['msg'])
+                self.textBrowser.append('%s' % lock_res['msg'])
                 app.processEvents()
                 if not sap_obj.res['flag']:
                     # log_list.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
-                    log_list['Remark'] = sap_obj.res['msg']
+                    log_list['Remark'] = lock_res['msg']
                 else:
                     # log_list.append(' ')
                     log_list['Remark'] = ''

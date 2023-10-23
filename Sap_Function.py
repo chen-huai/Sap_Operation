@@ -12,14 +12,10 @@ class Sap():
     def __init__(self):
         self.res = {}
         self.res['flag'] = 1
-        self.res['msg'] = ''
-        self.logMsg = {}
-        self.logMsg['Remark'] = ''
-        self.logMsg['orderNo'] = ''
-        self.logMsg['Proforma No.'] = ''
-        self.logMsg['sapAmountVat'] = ''
         self.today = time.strftime('%Y.%m.%d')
         self.oneWeekday = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime('%Y.%m.%d')
+        res = {}
+        res['flag'] = 1
         try:
             self.SapGuiAuto = win32com.client.GetObject("SAPGUI")
             if not type(self.SapGuiAuto) == win32com.client.CDispatch:
@@ -42,30 +38,17 @@ class Sap():
                 self.application = None
                 self.SapGuiAuto = None
                 return
-        except:
+        except Exception as msg:
             self.res['flag'] = 0
             self.res['msg'] = ''
             print('SAP未启动')
 
-    # 初始化数据
-    def initializationLogMsg(self):
-        self.logMsg = {}
-        self.logMsg['Remark'] = ''
-        self.logMsg['orderNo'] = ''
-        self.logMsg['Proforma No.'] = ''
-        self.logMsg['sapAmountVat'] = ''
-
-    def initializationMsg(self):
-        self.res = {}
-        self.res['flag'] = 1
-        self.res['msg'] = ''
 
     # 创建order
     def va01_operate(self, guiData, revenueData):
+        res = {}
+        res['flag'] = 1
         try:
-            # 初始化数据
-            Sap.initializationLogMsg(self)
-            Sap.initializationMsg(self)
             # 相当于VA01操作
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/nva01"
             # 回车键功能
@@ -226,17 +209,17 @@ class Sap():
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/txtZAUFTD-AUFTRAGSWERT").text = format(
                     revenueData['revenueForCny'], '.2f')
-        except:
-            self.res['flag'] = 0
-            self.res['msg'] = 'Order No未创建成功'
+        except Exception as msg:
+            res['flag'] = 0
+            res['msg'] = 'Order No未创建成功，%s' % msg
             # myWin.textBrowser.append("Order No未创建成功")
+        return res
 
     # 填写Data B
     def lab_cost(self, guiData, revenueData):
+        res = {}
+        res['flag'] = 1
         try:
-            # 初始化数据
-            Sap.initializationMsg(self)
-            # Data B是否要添加cost
             # revenuedata包含revenue,planCost,revenueForCny,chmCost,phyCost,chmRe,phyRe,chmCsCostAccounting,chmLabCostAccounting,phyCsCostAccounting
             if 'A2' in guiData['materialCode'] or 'D2' in guiData['materialCode'] or 'D3' in guiData['materialCode']:
                 self.session.findById(
@@ -277,17 +260,18 @@ class Sap():
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/txtTABD-FESTPREIS[5,0]").text = \
                     revenueData['chmCost']
-        except:
-            self.res['flag'] = 0
-            self.res['msg'] = 'Data B未填写'
+        except Exception as msg:
+            res['flag'] = 0
+            res['msg'] = 'Data B未填写，%s' % msg
             # myWin.textBrowser.append("Data B未填写")
+        return res
 
     # 保存
     def save_sap(self, info):
+        res = {}
+        res['flag'] = 1
         # 保存操作
         try:
-            # 初始化数据
-            Sap.initializationMsg(self)
             self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
             self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
             self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
@@ -297,9 +281,9 @@ class Sap():
                 self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
                 self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
                 self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-            except:
-                self.res['flag'] = 0
-                self.res['msg'] = '%s保存失败' % info
+            except Exception as msg:
+                res['flag'] = 0
+                res['msg'] = '%s保存失败，%s' % (info, msg)
             else:
                 pass
         else:
@@ -311,17 +295,16 @@ class Sap():
             else:
                 pass
 
+        return res
     # 添加item
     def va02_operate(self, guiData, revenueData):
+        res = {}
+        res['flag'] = 1
         try:
-            # 初始化数据
-            Sap.initializationMsg(self)
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/NVA02"
             self.session.findById("wnd[0]").sendVKey(0)
             orderNo = self.session.findById("wnd[0]/usr/ctxtVBAK-VBELN").text
-            # myWin.textBrowser.append("Order No.:%s" % orderNo)
-            # app.processEvents()
-            self.logMsg['orderNo'] = orderNo
+            res['orderNo'] = orderNo
             self.session.findById("wnd[0]").sendVKey(0)
             if 'A2' in guiData['materialCode']:
                 if '405' in guiData['materialCode']:
@@ -386,7 +369,9 @@ class Sap():
                 sapAmountVat = re.sub(r"(\d)(?=(\d\d\d)+(?!\d))", r"\1,", sapAmountVat)
 
                 # 是否需要填写plan cost
-                Sap.plan_cost(self, guiData, revenueData)
+                plan_cost_res = Sap.plan_cost(self, guiData, revenueData)
+                if not plan_cost_res['flag']:
+                    res['msg'] += plan_cost_res['msg']
             else:
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").text = \
@@ -414,8 +399,9 @@ class Sap():
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\06/ssubSUBSCREEN_BODY:SAPLV69A:6201/tblSAPLV69ATCTRL_KONDITIONEN/txtKOMV-KBETR[3,5]").text
 
                 # 是否需要填写plan cost
-                Sap.plan_cost(self, guiData, revenueData)
-
+                plan_cost_res = Sap.plan_cost(self, guiData, revenueData)
+                if not plan_cost_res['flag']:
+                    res['msg'] += plan_cost_res['msg']
             if guiData['longText'] != '':
                 # if myWin.checkBox_8.isChecked() or revenueData['revenueForCny'] >= 35000:
                 if guiData['planCostCheck'] or revenueData['revenueForCny'] >= 35000:
@@ -442,14 +428,17 @@ class Sap():
                 pass
             else:
                 self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
-            self.logMsg['sapAmountVat'] = sapAmountVat
-        except:
-            self.res['flag'] = 0
-            self.res['msg'] = 'Order添加Item失败'
+            res['sapAmountVat'] = sapAmountVat
+        except Exception as msg:
+            res['flag'] = 0
+            res['msg'] += 'Order添加Item失败，%s' % msg
             # myWin.textBrowser.append("编辑order失败")
+        return res
 
     # 填写plan cost
     def plan_cost(self, guiData, revenueData):
+        res = {}
+        res['flag'] = 1
         try:
             if guiData['planCostCheck'] or revenueData['revenueForCny'] >= 35000:
                 if 'A2' in guiData['materialCode']:
@@ -641,42 +630,58 @@ class Sap():
                         # self.session.findById("wnd[0]/tbar[0]/btn[11]").press()
                         self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
                         self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-        except:
-            self.res['flag'] = 0
-            self.res['msg'] += 'plan cost未添加成功'
+        except Exception as msg:
+            res['flag'] = 0
+            res['msg'] += 'plan cost未添加成功,%s' % msg
+        return res
 
     def vf01_operate(self):
-        self.session.findById("wnd[0]/tbar[0]/okcd").text = "/nvf01"
-        self.session.findById("wnd[0]").sendVKey(0)
-        self.session.findById("wnd[0]/tbar[0]/btn[11]").press()
+        res = {}
+        res['flag'] = 1
+        try:
+            self.session.findById("wnd[0]/tbar[0]/okcd").text = "/nvf01"
+            self.session.findById("wnd[0]").sendVKey(0)
+            self.session.findById("wnd[0]/tbar[0]/btn[11]").press()
+        except Exception as msg:
+            res['flag'] = 0
+            res['msg'] += '形式发票添加失败，%s' % msg
+        return res
 
     def vf03_operate(self):
-        self.session.findById("wnd[0]/tbar[0]/okcd").text = "/nvf03"
-        self.session.findById("wnd[0]").sendVKey(0)
-        proformaNo = self.session.findById("wnd[0]/usr/ctxtVBRK-VBELN").text
-        self.logMsg['Proforma No.'] = proformaNo
-        self.session.findById("wnd[0]/mbar/menu[0]/menu[11]").select()
-        self.session.findById("wnd[1]/tbar[0]/btn[37]").press()
+        res = {}
+        res['flag'] = 1
+        try:
+            self.session.findById("wnd[0]/tbar[0]/okcd").text = "/nvf03"
+            self.session.findById("wnd[0]").sendVKey(0)
+            proformaNo = self.session.findById("wnd[0]/usr/ctxtVBRK-VBELN").text
+            res['Proforma No.'] = proformaNo
+            self.session.findById("wnd[0]/mbar/menu[0]/menu[11]").select()
+            self.session.findById("wnd[1]/tbar[0]/btn[37]").press()
+        except Exception as msg:
+            res['flag'] = 0
+            res['msg'] += '形式发票查看失败，%s' % msg
+        return res
 
     # 打开order
     def open_va02(self, orderNo):
+        res = {}
+        res['flag'] = 1
         try:
-            # 初始化数据
-            Sap.initializationMsg(self)
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/NVA02"
             self.session.findById("wnd[0]").sendVKey(0)
             self.session.findById("wnd[0]/usr/ctxtVBAK-VBELN").text = orderNo
             self.session.findById("wnd[0]").sendVKey(0)
-        except:
-            self.res['flag'] = 0
-            self.res['msg'] = "该Order No %s 未开启" % orderNo
+        except Exception as msg:
+            res['flag'] = 0
+            res['msg'] = "该Order No %s 未开启，%s" % (orderNo, msg)
             # myWin.textBrowser.append("该Order No %s 未开启" % orderNo)
+        return res
 
     # 解锁order
     def unlock_or_lock_order(self, flag):
+        res = {}
+        res['flag'] = 1
         try:
-            # 初始化数据
-            Sap.initializationMsg(self)
             # 锁order操作
             self.session.findById("wnd[1]").sendVKey(0)
             self.session.findById(
@@ -709,10 +714,11 @@ class Sap():
             self.session.findById(
                 "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\13/ssubSUBSCREEN_BODY:SAPMV45A:4309/cmbVBAK-KVGR4").setFocus()
             self.session.findById("wnd[0]/tbar[0]/btn[11]").press()
-            self.res['msg'] = "%s 成功" % flag
-        except:
-            self.res['flag'] = 0
-            self.res['msg'] = "%s 未成功" % flag
+            res['msg'] = "%s 成功" % flag
+        except Exception as msg:
+            res['flag'] = 0
+            res['msg'] = "%s 未成功，%s" % (flag, msg)
+        return res
 
     # 结束sap
     def end_sap(self):
