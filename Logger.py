@@ -16,7 +16,7 @@ class Logger:
         self.log_df.loc[len(self.log_df)] = log_data
 
     def save_log_to_csv(self):
-        self.log_df.to_csv(self.log_file, index=False)
+        self.log_df.to_csv(self.log_file, index=False, encoding='utf_8_sig')
 
 # # 创建Logger对象，传递列名作为参数
 # logger = Logger("log.csv", ["Timestamp", "Message", "Value"])
