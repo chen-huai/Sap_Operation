@@ -1503,9 +1503,24 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                                              str(adminGuiData['eleInvoiceStsrtNum']))),
                                            fileCon[fileNum]):
                                 text = fileCon[fileNum].split('/')
-                                msg['Invoice No'] = text[2]
-                                msg['Order No'] = text[1]
+                                msg['Invoice No'] = text[-1].replace('0', '', 1)
+                            elif re.search('%s\d{%s}' % (adminGuiData['eleOrderStsrtNum'],
+                                                         int(adminGuiData['eleOrderBits']) - len(
+                                                             str(adminGuiData['eleOrderStsrtNum']))),
+                                           fileCon[fileNum]):
+                                text = fileCon[fileNum].split('/')
+                                try:
+                                    msg['Order No'] = text[1]
+                                except:
+                                    msg['Order No'] = ''
                             fileNum += 1
+                        if 'Order No' not in msg:
+                            msg['Order No'] = ''
+                        if 'Invoice No' not in msg:
+                            msg['Invoice No'] = re.findall('%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'],
+                                                                         int(adminGuiData['eleInvoiceBits']) - len(
+                                                                             str(adminGuiData['eleInvoiceStsrtNum']))),
+                                                           fileUrl)[0]
                         # 文件命名规则
                         pdfNameRule = adminGuiData['fapiaoName'].split(' + ')
                         outputFlieName = ''
@@ -1546,7 +1561,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     self.textBrowser_3.append("<font color='red'>出错的文件：%s </font>" % fileUrl)
                     app.processEvents()
                 i += 1
-
             invoiceFile = pd.DataFrame(fileMsg)
             filePath = '%s/invoice %s.csv' % (configContent['Ele_Invoice_Files_Export_URL'], today)
             invoiceFile.to_csv(filePath, index=False, mode='a', encoding='utf_8_sig')
