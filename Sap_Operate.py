@@ -694,15 +694,15 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             # sapAmountVat在A2是数字，其它为字符串
                             flag = 1
                             if sapAmountVat.strip() != amountVatStr:
-                                self.textBrowser.append("<font color='yellow'>提示信息：SAP数据与ODM不一致，请确认并修改后再继续！！！ </font>")
+                                self.textBrowser.append("<font color='blue'>提示信息：SAP数据与ODM不一致，请确认并修改后再继续！！！ </font>")
                                 app.processEvents()
                                 logMsg['Remark'] += ';' + 'SAP数据与ODM不一致，请确认并修改后再继续！！！'
                                 if guiData['everyCheck']:
                                     reply = QMessageBox.question(self, '信息', 'SAP数据与ODM不一致，请确认并修改后再继续！！！',
                                                                  QMessageBox.Yes | QMessageBox.No,
                                                                  QMessageBox.Yes)
-                                if reply == QMessageBox.No:
-                                    flag = 0
+                                    if reply == QMessageBox.No:
+                                        flag = 0
                             if (guiData['vf01Check'] or guiData['saveCheck']) and flag == 1:
                                 sava_res = sap_obj.save_sap('VA02')
                                 if sava_res['flag'] == 0:
@@ -1503,7 +1503,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                                              str(adminGuiData['eleInvoiceStsrtNum']))),
                                            fileCon[fileNum]):
                                 text = fileCon[fileNum].split('/')
-                                msg['Invoice No'] = text[-1].replace('0', '', 1)
+                                msg['Invoice No'] = text[-1]
                             elif re.search('%s\d{%s}' % (adminGuiData['eleOrderStsrtNum'],
                                                          int(adminGuiData['eleOrderBits']) - len(
                                                              str(adminGuiData['eleOrderStsrtNum']))),
