@@ -1517,6 +1517,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 fileMsg['update'] = []
                 fileMsg['path'] = []
                 fileMsg['CS'] = []
+                fileMsg['ODM Revenue'] = []
+                fileMsg['ODM Customer Name'] = []
                 for fileUrl in fileUrls:
                     try:
                         self.textBrowser_3.append('第%s份文件：' % i)
@@ -1559,12 +1561,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             if self.checkBox_25.isChecked():
                                 cs = list(
                                     billing_df[billing_df['Final Invoice No.'].astype(int) == int(msg['Invoice No'])]['CS'])
+                                odmRe = list(
+                                    billing_df[billing_df['Final Invoice No.'].astype(int) == int(msg['Invoice No'])]['求和项:Amount with VAT'])
+                                customerName = list(
+                                    billing_df[billing_df['Final Invoice No.'].astype(int) == int(msg['Invoice No'])]['Customer Name'])
                                 if cs == []:
                                     msg['CS'] = ''
+                                    msg['odmRe'] = 0.00
+                                    msg['Customer Name'] = ''
                                 else:
                                     msg['CS'] = cs[0]
+                                    msg['odmRe'] = odmRe[0]
+                                    msg['Customer Name'] = customerName[0]
                             else:
                                 msg['CS'] = ''
+                                msg['odmRe'] = 0.00
+                                msg['Customer Name'] = ''
                             # 文件命名规则
                             pdfNameRule = adminGuiData['fapiaoName'].split(' + ')
                             outputFlieName = ''
@@ -1594,11 +1606,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             fileMsg['Company Name'].append(msg['Company Name'])
                             fileMsg['Invoice No'].append(msg['Invoice No'])
                             fileMsg['Order No'].append(msg['Order No'])
-                            fileMsg['Revenue'].append(msg['Revenue'])
+                            fileMsg['Revenue'].append(float(msg['Revenue'].replace('¥', '')))
                             fileMsg['fapiao'].append('发票号码:' + msg['fapiao'])
                             fileMsg['update'].append(time.strftime('%Y-%m-%d %H.%M.%S'))
                             fileMsg['path'].append('%s\\%s' % (exportUrl, outputFlie))
                             fileMsg['CS'].append(msg['CS'])
+                            fileMsg['ODM Customer Name'].append(msg['Customer Name'])
+                            fileMsg['ODM Revenue'].append(msg['odmRe'])
+
                         self.textBrowser_3.append('%s' % outputFlie)
                         app.processEvents()
 
@@ -1608,7 +1623,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         self.textBrowser_3.append("<font color='red'>出错的文件：%s </font>" % fileUrl)
                         app.processEvents()
                     i += 1
+
                 invoiceFile = pd.DataFrame(fileMsg)
+                invoiceFile['ODMRe - Re'] = invoiceFile['ODM Revenue'] - invoiceFile['Revenue']
+                invoiceFile['判断客户名称是否正确'] = pd.Series(invoiceFile['Company Name']==invoiceFile['ODM Customer Name'])
                 filePath = '%s/invoice %s.csv' % (configContent['Ele_Invoice_Files_Export_URL'], today)
                 invoiceFile.to_csv(filePath, index=False, mode='a', encoding='utf_8_sig')
                 self.textBrowser_3.append('已生成数据文件：%s' % filePath)
@@ -1698,6 +1716,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             else:
                 billing_list_obj = Get_Data()
                 billing_list_data = billing_list_obj.getFileMoreSheetData(billing_list_url, sheet_name)
+                pivotTableKey = ['Final Invoice No.', 'Customer Name', 'CS', 'Cur.']
+                valusKey = ['求和项:Amount with VAT']
+                billing_list_data = billing_list_obj.pivotTable(pivotTableKey, valusKey)
+                billing_list_data = billing_list_data.reset_index()
                 return billing_list_data
         except Exception as errorMsg:
             self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
@@ -1711,8 +1733,13 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         if fileUrl:
             sheet_name = []
             df = myWin.getBillingListData(sheet_name)
-            myTable.createTable(df)
-            myTable.showMaximized()
+            try:
+                myTable.createTable(df)
+                myTable.showMaximized()
+            except Exception as errorMsg:
+                self.textBrowser_3.append('数据有问题%s' % errorMsg)
+                self.textBrowser_3.append('----------------------------------')
+                app.processEvents()
         else:
             self.textBrowser_3.append('无选中文件')
             self.textBrowser_3.append('----------------------------------')
