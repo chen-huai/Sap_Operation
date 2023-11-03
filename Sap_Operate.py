@@ -692,11 +692,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     # VA02
                     if guiData['va02Check'] and sap_obj.res['flag'] == 1:
                         va02_res = sap_obj.va02_operate(guiData, revenueData)
+                        logMsg['orderNo'] = va02_res['orderNo']
                         if va02_res['flag'] == 1:
                             amountVatStr = re.sub(r"(\d)(?=(\d\d\d)+(?!\d))", r"\1,",
                                                   format(guiData['amountVat'], '.2f'))
                             sapAmountVat = va02_res['sapAmountVat']
-                            logMsg['orderNo'] = va02_res['orderNo']
                             self.textBrowser.append("Sap Amount Vat:%s" % sapAmountVat)
                             self.textBrowser.append("Amount Vat:%s" % amountVatStr)
                             self.textBrowser.append("Order No.:%s" % logMsg['orderNo'])
