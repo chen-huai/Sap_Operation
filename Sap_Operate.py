@@ -684,7 +684,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                                                 QMessageBox.Yes)
                         else:
                             logMsg['Remark'] += va01_res['msg']
-                            self.textBrowser.append("<font color='red'>出错信息：%s </font>" % va01_res['msg'])
+                            self.textBrowser.append("<font color='red'>出错信息：VA01出错；%s </font>" % va01_res['msg'])
                             app.processEvents()
                             if guiData['everyCheck']:
                                 QMessageBox.information(self, "错误提示", "出错信息：%s" % va01_res['msg'],
@@ -724,7 +724,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                                                 QMessageBox.Yes)
                         else:
                             logMsg['Remark'] += ';' + va02_res['msg']
-                            self.textBrowser.append("<font color='red'>出错信息：%s </font>" % va02_res['msg'])
+                            self.textBrowser.append("<font color='red'>出错信息：VA02出错；%s </font>" % va02_res['msg'])
                             app.processEvents()
                             if guiData['everyCheck']:
                                 QMessageBox.information(self, "错误提示", "出错信息：%s" % va02_res['msg'],
@@ -743,7 +743,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         vf01_res = sap_obj.vf01_operate()
                         if vf01_res['flag'] == 0:
                             logMsg['Remark'] += ';' + vf01_res['msg']
-                            self.textBrowser.append("<font color='red'>出错信息：%s </font>" % vf01_res['msg'])
+                            self.textBrowser.append("<font color='red'>出错信息：VF01出错；%s </font>" % vf01_res['msg'])
                             app.processEvents()
                             if guiData['everyCheck']:
                                 QMessageBox.information(self, "错误提示", "出错信息：%s" % vf01_res['msg'],
@@ -753,7 +753,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         vf03_res = sap_obj.vf03_operate()
                         if vf03_res['flag'] == 0:
                             logMsg['Remark'] += ';' + vf03_res['msg']
-                            self.textBrowser.append("<font color='red'>出错信息：%s </font>" % vf03_res['msg'])
+                            self.textBrowser.append("<font color='red'>出错信息：VF03出错;%s </font>" % vf03_res['msg'])
                             app.processEvents()
                             if guiData['everyCheck']:
                                 QMessageBox.information(self, "错误提示", "出错信息：%s" % vf03_res['msg'],
