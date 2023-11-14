@@ -16,12 +16,8 @@ class MyTableWindow(QMainWindow, Ui_TableWindow):
         # self.pushButton.clicked.connect(self.saveTable)
         # self.pushButton_2.clicked.connect(self.createTable)
 
-    def createTable(self, filePath):
-        fileType=os.path.splitext(filePath)[-1]
-        if fileType == '.csv':
-            self.df = pd.read_csv('%s' % filePath)
-        else:
-            self.df = pd.read_excel('%s' % filePath)
+    def createTable(self, df):
+        self.df = df
         self.df = self.df.astype(str)
         self.df_rows = self.df.shape[0]
         self.df_cols = self.df.shape[1]
@@ -29,7 +25,7 @@ class MyTableWindow(QMainWindow, Ui_TableWindow):
         self.tableWidget.setColumnCount(self.df_cols)
 
         ##设置水平表头
-        self.tableWidget.setHorizontalHeaderLabels(self.df.head())
+        self.tableWidget.setHorizontalHeaderLabels(self.df.keys().astype(str))
 
         # self.tabletWidget.
         for i in range(self.df_rows):
