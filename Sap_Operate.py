@@ -693,13 +693,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     if guiData['va02Check'] and sap_obj.res['flag'] == 1:
                         va02_res = sap_obj.va02_operate(guiData, revenueData)
                         logMsg['orderNo'] = va02_res['orderNo']
+                        self.textBrowser.append("Order No.:%s" % logMsg['orderNo'])
+                        app.processEvents()
                         if va02_res['flag'] == 1:
                             amountVatStr = re.sub(r"(\d)(?=(\d\d\d)+(?!\d))", r"\1,",
                                                   format(guiData['amountVat'], '.2f'))
                             sapAmountVat = va02_res['sapAmountVat']
                             self.textBrowser.append("Sap Amount Vat:%s" % sapAmountVat)
                             self.textBrowser.append("Amount Vat:%s" % amountVatStr)
-                            self.textBrowser.append("Order No.:%s" % logMsg['orderNo'])
                             app.processEvents()
                             # sapAmountVat在A2是数字，其它为字符串
                             flag = 1
@@ -1194,6 +1195,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     newData.fillNanColumn(fillNanColumnKey)
                 # 将联系人空值填上
                 newData.fileData['Client Contact Name'].fillna("******", inplace=True)
+                # 单个数据保留原始数据
+
                 # 保存原始数据
                 fileUrl = '%s/%s' % (filepath, today)
                 MyMainWindow.createFolder(self, fileUrl)
@@ -1217,6 +1220,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 # 删除列
                 deleteColumnList = ['Amount', 'Amount with VAT', 'Total Cost', 'Revenue\n(RMB)']
                 newData = newData.deleteTheColumn(deleteColumnList)
+                # 合并多行数据
+
+                # 合并两列数据
+
                 # merge数据，combine和原始数据
                 onData = combineKeyFieldsList
                 # onData = ['CS', 'Sales', 'Currency', 'Material Code', "Invoices' name (Chinese)", 'Buyer(GPC)', 'Month', 'Exchange Rate']
@@ -1540,7 +1547,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                                                  str(adminGuiData['eleInvoiceStsrtNum']))),
                                                fileCon[fileNum]):
                                     text = fileCon[fileNum].split('/')
-                                    msg['Invoice No'] = text[-1].replace('0', '', 1)
+                                    try:
+                                        msg['Invoice No'] = int(text[-1])
+                                    except :
+                                        pass
                                 elif re.search('%s\d{%s}' % (adminGuiData['eleOrderStsrtNum'],
                                                              int(adminGuiData['eleOrderBits']) - len(
                                                                  str(adminGuiData['eleOrderStsrtNum']))),
@@ -1584,11 +1594,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                 if outputFlieName != '':
                                     outputFlieName += '-'
                                 if eachName == 'Invoice No':
-                                    outputFlieName += msg['Invoice No']
+                                    outputFlieName += str(msg['Invoice No'])
                                 elif eachName == 'Company Name':
                                     outputFlieName += msg['Company Name']
                                 elif eachName == 'Order No':
-                                    outputFlieName += msg['Order No']
+                                    outputFlieName += str(msg['Order No'])
                                 elif eachName == 'FaPiao No':
                                     outputFlieName += msg['fapiao']
                                 elif eachName == 'Revenue':
