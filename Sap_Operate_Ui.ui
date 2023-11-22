@@ -257,7 +257,7 @@
               </sizepolicy>
              </property>
              <property name="statusTip">
-              <string>添加信息</string>
+              <string>每行添加信息</string>
              </property>
              <property name="text">
               <string>Add Infomations</string>
@@ -1965,6 +1965,9 @@
              <layout class="QGridLayout" name="gridLayout_15">
               <item row="0" column="0">
                <widget class="QPushButton" name="pushButton_33">
+                <property name="statusTip">
+                 <string>选择PDF文件</string>
+                </property>
                 <property name="text">
                  <string>Select Files</string>
                 </property>
@@ -1978,6 +1981,9 @@
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="statusTip">
+                 <string>清除信息框内容</string>
+                </property>
                 <property name="text">
                  <string>Clear</string>
                 </property>
@@ -1985,6 +1991,9 @@
               </item>
               <item row="0" column="2">
                <widget class="QPushButton" name="pushButton_35">
+                <property name="statusTip">
+                 <string>重命名并保存至指定文件夹</string>
+                </property>
                 <property name="text">
                  <string>Files Rename</string>
                 </property>
@@ -2095,10 +2104,17 @@
                </widget>
               </item>
               <item row="3" column="0" colspan="5">
-               <widget class="QLineEdit" name="lineEdit_27"/>
+               <widget class="QLineEdit" name="lineEdit_27">
+                <property name="statusTip">
+                 <string>命名规则，按顺序</string>
+                </property>
+               </widget>
               </item>
               <item row="0" column="4">
                <widget class="QSpinBox" name="spinBox_6">
+                <property name="statusTip">
+                 <string>Invoice No 长度</string>
+                </property>
                 <property name="value">
                  <number>9</number>
                 </property>
@@ -2106,6 +2122,9 @@
               </item>
               <item row="1" column="4">
                <widget class="QSpinBox" name="spinBox_7">
+                <property name="statusTip">
+                 <string>Order No 长度</string>
+                </property>
                 <property name="value">
                  <number>9</number>
                 </property>
@@ -2113,6 +2132,9 @@
               </item>
               <item row="0" column="2">
                <widget class="QSpinBox" name="spinBox_8">
+                <property name="statusTip">
+                 <string>Invoice No 起始数字</string>
+                </property>
                 <property name="maximum">
                  <number>9999</number>
                 </property>
@@ -2123,6 +2145,9 @@
               </item>
               <item row="1" column="2">
                <widget class="QSpinBox" name="spinBox_9">
+                <property name="statusTip">
+                 <string>Order No 起始数字</string>
+                </property>
                 <property name="maximum">
                  <number>9999</number>
                 </property>
@@ -2164,6 +2189,9 @@
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="statusTip">
+                 <string>选择PDF文件</string>
+                </property>
                 <property name="text">
                  <string>Select Files</string>
                 </property>
@@ -2171,6 +2199,9 @@
               </item>
               <item row="0" column="1">
                <widget class="QPushButton" name="pushButton_51">
+                <property name="statusTip">
+                 <string>重命名并保存至指定文件夹</string>
+                </property>
                 <property name="text">
                  <string>Move</string>
                 </property>
@@ -2196,16 +2227,26 @@
           </item>
           <item>
            <widget class="QPushButton" name="pushButton_58">
+            <property name="statusTip">
+             <string>选择Billing List数据</string>
+            </property>
             <property name="text">
              <string>Get Billing List</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_25"/>
+           <widget class="QLineEdit" name="lineEdit_25">
+            <property name="statusTip">
+             <string>Billing List数据路径</string>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QPushButton" name="pushButton_59">
+            <property name="statusTip">
+             <string>浏览Billing List数据</string>
+            </property>
             <property name="text">
              <string>View</string>
             </property>
