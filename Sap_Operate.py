@@ -1172,6 +1172,19 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser_2.append('----------------------------------')
             app.processEvents()
 
+    def column_concat_func(self, data):
+        # 行信息合并
+        return pd.Series({
+                'combine_column_msg': '\n'.join(data['column_msg'].unique()),
+            })
+
+    def row_concat_func(self, data):
+        # 列信息合并
+        return pd.Series({
+                'combine_row_msg': '\n'.join(data['row_msg'].unique()),
+            }
+            )
+
     # 数据透视并合并
     def odmCombineData(self):
         try:
@@ -1196,7 +1209,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 # 将联系人空值填上
                 newData.fileData['Client Contact Name'].fillna("******", inplace=True)
                 # 单个数据保留原始数据
-
+                if self.checkBox_17.isChecked():
+                    newData.fileData = myWin.addRowMsg(newData.fileData)
+                if self.checkBox_18.isChecked():
+                    newData.fileData = myWin.addColumnMsg(newData.fileData)
                 # 保存原始数据
                 fileUrl = '%s/%s' % (filepath, today)
                 MyMainWindow.createFolder(self, fileUrl)
@@ -1221,8 +1237,21 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 deleteColumnList = ['Amount', 'Amount with VAT', 'Total Cost', 'Revenue\n(RMB)']
                 newData = newData.deleteTheColumn(deleteColumnList)
                 # 合并多行数据
-
+                if self.checkBox_17.isChecked():
+                    combineRrData = newData.groupby(combineKeyFieldsList).apply(Get_Data().row_concat_func).reset_index()
+                    newData = pd.merge(newData, combineRrData, on=combineKeyFieldsList, how='right')
+                if self.checkBox_18.isChecked():
+                    combineRcData = newData.groupby(combineKeyFieldsList).apply(Get_Data().column_concat_func).reset_index()
+                    newData = pd.merge(newData, combineRcData, on=combineKeyFieldsList, how='right')
+                    key = self.lineEdit_24.text().replace(';', '\t')
+                    newData['combine_column_msg'] = key + '\n' + newData['combine_column_msg']
                 # 合并两列数据
+                if self.checkBox_17.isChecked() and self.checkBox_18.isChecked():
+                    newData[self.comboBox_5.currentText()] = newData['combine_row_msg'] + '\n' + newData['combine_column_msg']
+                elif self.checkBox_17.isChecked():
+                    newData[self.comboBox_5.currentText()] = newData['combine_row_msg']
+                elif self.checkBox_18.isChecked():
+                    newData[self.comboBox_5.currentText()] = newData['combine_column_msg']
 
                 # merge数据，combine和原始数据
                 onData = combineKeyFieldsList
@@ -1658,32 +1687,27 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 sap_obj = Sap()
             i = 1
             for orderNo in order_list:
-                # try:
-                #     log_list = []
-                #     log_list.append(orderNo)
-                #     log_list.append(flag)
-                log_list = {}
-                log_list['Order No'] = orderNo
-                log_list['Type'] = flag
+                try:
+                    log_list = {}
+                    log_list['Order No'] = orderNo
+                    log_list['Type'] = flag
 
-                if self.checkBox_16.isChecked():
-                    sap_obj = Sap()
-                sap_obj.open_va02(orderNo)
-                lock_res = sap_obj.unlock_or_lock_order(flag)
-                self.textBrowser.append('%s.Order No: %s' % (i, orderNo))
-                self.textBrowser.append('%s' % lock_res['msg'])
-                app.processEvents()
-                if not sap_obj.res['flag']:
-                    # log_list.append("<font color='red'>出错信息：%s </font>" % sap_obj.res['msg'])
-                    log_list['Remark'] = lock_res['msg']
-                else:
-                    # log_list.append(' ')
-                    log_list['Remark'] = ''
-                log_obj.log(log_list)
-                i += 1
-            # except:
-            #     self.textBrowser.append("<font color='red'>该Order: %s 有问题</font>" % orderNo)
-            #     app.processEvents()
+                    if self.checkBox_16.isChecked():
+                        sap_obj = Sap()
+                    sap_obj.open_va02(orderNo)
+                    lock_res = sap_obj.unlock_or_lock_order(flag)
+                    self.textBrowser.append('%s.Order No: %s' % (i, orderNo))
+                    self.textBrowser.append('%s' % lock_res['msg'])
+                    app.processEvents()
+                    if not sap_obj.res['flag']:
+                        log_list['Remark'] = lock_res['msg']
+                    else:
+                        log_list['Remark'] = ''
+                    log_obj.log(log_list)
+                    i += 1
+                except:
+                    self.textBrowser.append("<font color='red'>该Order: %s 有问题</font>" % orderNo)
+                    app.processEvents()
             log_obj.save_log_to_csv()
             self.textBrowser.append('%s' % Log_file)
             app.processEvents()

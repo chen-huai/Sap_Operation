@@ -22,6 +22,16 @@ class Get_Data():
             # self.fileData = pd.read_csv(self.fileDataUrl, keep_default_na=False)
         height, width = self.fileData.shape
         return self.fileData
+
+    def getFileMoreSheetData(self, fileDataUrl, sheet_name=[]):
+        if sheet_name==[]:
+            sheet_name = None
+        self.fileDataUrl = fileDataUrl
+        self.fileData = pd.read_excel(self.fileDataUrl, sheet_name=sheet_name)
+        self.fileData = pd.concat(self.fileData.values(), ignore_index=True)
+        self.fileData.dropna(subset=['Final Invoice No.'], inplace=True)
+        return self.fileData
+
     def getMergeFileData(self, fileDataUrl):
         self.fileDataUrl = fileDataUrl
         fileType = self.fileDataUrl.split(".")[-1]
@@ -98,37 +108,35 @@ class Get_Data():
         mergeData = pd.merge(data1, data2, on=onData, how='inner')
         return mergeData
 
-    def concat_func(self, data):
+    def column_concat_func(self, data):
+        # 行信息合并
         return pd.Series({
-            '合并':'\n'.join(data['合并'].unique()),
-        }
-        )
-# deleteRowList = {'Amount': 0}
-# # a = Get_Data("C:\\Users\\chen-fr\\OneDrive - Binghamton University\\chenhuai\\CS Work\\4.SAP Data\\ODM Data\\Final Data\\data.csv")
-# a = Get_Data()
-# a.getFileData("N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\收样\\3.Sap\\ODM Data\\ODM Raw Data\\0412-billing-2.xlsx")
-# a.deleteTheRows(deleteRowList)
-# fillNanColumnKey = {'Material Code':["PHY Material Code", "CHM Material Code"]}
-# a.fillNanColumn(fillNanColumnKey)
-# pivotTableKey = ['CS', 'Sales', 'Currency', 'Material Code', "Invoices' name (Chinese)", 'Buyer(GPC)', 'Month']
-# valusKey = ['Amount', 'Amount with VAT', 'Total Cost']
-# b = a.pivotTable(pivotTableKey, valusKey)
-# c = b.to_csv("C:\\Users\\chen-fr\\Desktop\\test.csv", encoding='utf_8_sig')
-# d = Get_Data()
-# d.getFileData("C:\\Users\\chen-fr\\Desktop\\test.csv")
-#
-# deleteColumnList = ['Amount', 'Amount with VAT', 'Total Cost']
-# a.deleteTheColumn(deleteColumnList)
-# onData = ['CS', 'Sales', 'Currency', 'Material Code', "Invoices' name (Chinese)", 'Buyer(GPC)', 'Month']
-# # onData = set(['CS', 'Sales', 'Currency', 'Material Code', "Invoices' name (Chinese)", 'Buyer(GPC)', 'Month'])
-# # f = pd.merge(a.fileData, d.fileData, on=onData, how='inner')
-# f = Get_Data()
-# f = f.mergeData(a.fileData, d.fileData, onData)
-# f.to_csv("C:\\Users\\chen-fr\\Desktop\\test2.csv", encoding='utf_8_sig')
-# f.drop_duplicates(subset=pivotTableKey, keep='first', inplace=True)
-# # getFileDataListKey = ['Project No.', 'CS', 'Sales', 'Currency', 'GPC Glo. Par. Code', 'Material Code', 'SAP No.', 'Amount', 'Amount with VAT', 'Exchange Rate', 'Total Cost']
-# # a.getFileDataList(getFileDataListKey)
-# print(a)
+                'combine_column_msg': '\n'.join(data['column_msg'].unique()),
+            })
 
+    def row_concat_func(self, data):
+        # 列信息合并
+        return pd.Series({
+                'combine_row_msg': '\n'.join(data['row_msg'].unique()),
+            }
+            )
+
+
+# data = {
+#     'col1': [1, 2, 3],
+#     'col2': [4, 5, 6],
+#     'col3': [7, 8, 9],
+#     'col4': [10, 11, 12]
+# }
+#
+# df = pd.DataFrame(data)
+#
+# # 选择要合并的三列，并使用apply函数将它们相加并用制表符隔开
+# # df['merged'] = df[['col1', 'col2', 'col3']].apply(lambda row: '\t'.join(map(str, row)), axis=1)
+#
+# df['merged'] = df[['col1', 'col3', 'col2']].apply(lambda row: '\n'.join(f"{col}:{val}" for col, val in zip(df[['col1', 'col3', 'col2']], row)), axis=1)
+#
+# # 移除原始三列
+# df.drop(['col1', 'col2', 'col3'], axis=1, inplace=True)
 
 
