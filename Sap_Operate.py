@@ -1172,18 +1172,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser_2.append('----------------------------------')
             app.processEvents()
 
-    def column_concat_func(self, data):
-        # 行信息合并
-        return pd.Series({
-                'combine_column_msg': '\n'.join(data['column_msg'].unique()),
-            })
-
-    def row_concat_func(self, data):
-        # 列信息合并
-        return pd.Series({
-                'combine_row_msg': '\n'.join(data['row_msg'].unique()),
-            }
-            )
 
     # 数据透视并合并
     def odmCombineData(self):
@@ -1301,34 +1289,21 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 csvFileType = 'csv'
                 fileUrl = combineFilepath
                 combineFile = Get_Data()
-                # combineFile.getMergeFileData(combineFileUrl)
                 combineFile.getFileData(combineFileUrl)
                 logFile = Get_Data()
-                # logFile.getMergeFileData(logFileUrl)
                 logFile.getFileData(logFileUrl)
-                # # 删除列，Project No.保留以便更好的溯源数据
-                # deleteColumnList = ['Project No.']
-                # logFile = logFile.deleteTheColumn(deleteColumnList)
                 # merge数据，combine和原始数据
                 mergekeyFields = self.lineEdit_16.text()
                 mergekeyFieldsList = mergekeyFields.split(';')
-                # 多个字段合并为一列，作为id用于匹配
-                # combineKey = ''
-                # logKey = ''
-                # for each in mergekeyFieldsList:
-                # 	combineKey += "+ combineFile.fileData['%s']" % each
-                # 	logKey += "+ logFile['%s']" % each
-                # combineFile.fileData['ID'] = combineKey
-                # logFile['ID'] = logKey
-                # combineFile.fileData['ID'] = combineFile.fileData['Amount with VAT'] + combineFile.fileData['CS'] + combineFile.fileData['Currency'] + combineFile.fileData['Material Code'] + combineFile.fileData['GPC Glo. Par. Code'] + combineFile.fileData['SAP No.'] + combineFile.fileData['Exchange Rate']
-                # logFile['ID'] = logFile['Amount with VAT'] + logFile['CS'] + logFile['Currency'] + logFile['Material Code'] + logFile['GPC Glo. Par. Code'] + logFile['SAP No.'] + logFile['Exchange Rate']
-                # mergeData = pd.merge(combineFile.fileData, logFile, on='ID', how='outer', indicator=True)
                 # 原来根据多个字段meger
                 # combineFile.fileData['SAP No.'] = combineFile.fileData['SAP No.'].apply(int)
                 # logFile['SAP No.'] = logFile['SAP No.'].apply(int)
+                delColums = ['Text', 'Long Text']
+                for col in delColums:
+                    if col in combineFile.fileData.columns:
+                        combineFile.fileData = combineFile.fileData.drop(columns=col, axis=1)
                 onData = mergekeyFieldsList
                 mergeData = pd.merge(combineFile.fileData, logFile.fileData, on=onData, how='outer', indicator=True)
-                # mergeData = pd.merge(combineFile.fileData, logFile, on=['SAP No.'], how='outer', indicator=True)
                 mergeData.sort_values(by=['Order No.'], axis=0, ascending=[True], inplace=True)
                 # 保留数据
                 leaveDataList = ["_merge", 'Project No._x', 'Order No.', 'Text', 'Long Text', 'Total Cost_x',
