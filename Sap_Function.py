@@ -48,6 +48,7 @@ class Sap():
     def va01_operate(self, guiData, revenueData):
         res = {}
         res['flag'] = 1
+        res['msg'] = ''
         try:
             # 相当于VA01操作
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/nva01"
@@ -213,12 +214,14 @@ class Sap():
             res['flag'] = 0
             res['msg'] = 'Order No未创建成功，%s' % msg
             # myWin.textBrowser.append("Order No未创建成功")
-        return res
+        finally:
+            return res
 
     # 填写Data B
     def lab_cost(self, guiData, revenueData):
         res = {}
         res['flag'] = 1
+        res['msg'] = ''
         try:
             # revenuedata包含revenue,planCost,revenueForCny,chmCost,phyCost,chmRe,phyRe,chmCsCostAccounting,chmLabCostAccounting,phyCsCostAccounting
             if 'A2' in guiData['materialCode'] or 'D2' in guiData['materialCode'] or 'D3' in guiData['materialCode']:
@@ -264,12 +267,14 @@ class Sap():
             res['flag'] = 0
             res['msg'] = 'Data B未填写，%s' % msg
             # myWin.textBrowser.append("Data B未填写")
-        return res
+        finally:
+            return res
 
     # 保存
     def save_sap(self, info):
         res = {}
         res['flag'] = 1
+        res['msg'] = ''
         # 保存操作
         try:
             self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
@@ -295,11 +300,14 @@ class Sap():
             else:
                 pass
 
-        return res
+        finally:
+            return res
     # 添加item
     def va02_operate(self, guiData, revenueData):
         res = {}
         res['flag'] = 1
+        res['orderNo'] = ''
+        res['msg'] = ''
         try:
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/NVA02"
             self.session.findById("wnd[0]").sendVKey(0)
@@ -418,13 +426,28 @@ class Sap():
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cntlSPLITTER_CONTAINER/shellcont/shellcont/shell/shellcont[1]/shell").setSelectionIndexes(
                     4, 4)
-                self.session.findById(
-                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cmbLV70T-SPRAS").key = "EN"
-                self.session.findById(
-                    "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cmbLV70T-SPRAS").setFocus()
-                self.session.findById("wnd[0]").sendVKey(0)
-
-            if guiData['planCostCheck'] or revenueData['revenueForCny'] >= 35000:
+                try:
+                    # 好像国内公司可以成功
+                    self.session.findById(
+                        "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cmbLV70T-SPRAS").key = "EN"
+                    self.session.findById(
+                        "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cmbLV70T-SPRAS").setFocus()
+                    self.session.findById("wnd[0]").sendVKey(0)
+                    self.session.findById(
+                        "wnd[0]/usr/tabsTAXI_TABSTRIP_ITEM/tabpT\\09/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cntlSPLITTER_CONTAINER/shellcont/shellcont/shell/shellcont[1]/shell").setSelectionIndexes(0, 0)
+                except:
+                    try:
+                        self.session.findById(
+                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cmbLV70T-SPRAS").key = "EN"
+                        self.session.findById(
+                            "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\10/ssubSUBSCREEN_BODY:SAPMV45A:4152/subSUBSCREEN_TEXT:SAPLV70T:2100/cmbLV70T-SPRAS").setFocus()
+                        self.session.findById("wnd[0]").sendVKey(0)
+                    except:
+                        res['msg'] += 'Long Text 添加失败'
+                # finally:
+                #     # 返回键
+                #     self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
+            if guiData['planCostCheck'] or revenueData['revenueForCny'] >= 35000 or guiData['longText'] == '':
                 pass
             else:
                 self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
@@ -432,13 +455,14 @@ class Sap():
         except Exception as msg:
             res['flag'] = 0
             res['msg'] += 'Order添加Item失败，%s' % msg
-            # myWin.textBrowser.append("编辑order失败")
-        return res
+        finally:
+            return res
 
     # 填写plan cost
     def plan_cost(self, guiData, revenueData):
         res = {}
         res['flag'] = 1
+        res['msg'] = ''
         try:
             if guiData['planCostCheck'] or revenueData['revenueForCny'] >= 35000:
                 if 'A2' in guiData['materialCode']:
@@ -633,11 +657,13 @@ class Sap():
         except Exception as msg:
             res['flag'] = 0
             res['msg'] += 'plan cost未添加成功,%s' % msg
-        return res
+        finally:
+            return res
 
     def vf01_operate(self):
         res = {}
         res['flag'] = 1
+        res['msg'] = ''
         try:
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/nvf01"
             self.session.findById("wnd[0]").sendVKey(0)
@@ -645,11 +671,13 @@ class Sap():
         except Exception as msg:
             res['flag'] = 0
             res['msg'] += '形式发票添加失败，%s' % msg
-        return res
+        finally:
+            return res
 
     def vf03_operate(self):
         res = {}
         res['flag'] = 1
+        res['msg'] = ''
         try:
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/nvf03"
             self.session.findById("wnd[0]").sendVKey(0)
@@ -660,12 +688,14 @@ class Sap():
         except Exception as msg:
             res['flag'] = 0
             res['msg'] += '形式发票查看失败，%s' % msg
-        return res
+        finally:
+            return res
 
     # 打开order
     def open_va02(self, orderNo):
         res = {}
         res['flag'] = 1
+        res['msg'] = ''
         try:
             self.session.findById("wnd[0]/tbar[0]/okcd").text = "/NVA02"
             self.session.findById("wnd[0]").sendVKey(0)
@@ -675,12 +705,14 @@ class Sap():
             res['flag'] = 0
             res['msg'] = "该Order No %s 未开启，%s" % (orderNo, msg)
             # myWin.textBrowser.append("该Order No %s 未开启" % orderNo)
-        return res
+        finally:
+            return res
 
     # 解锁order
     def unlock_or_lock_order(self, flag):
         res = {}
         res['flag'] = 1
+        res['msg'] = ''
         try:
             # 锁order操作
             self.session.findById("wnd[1]").sendVKey(0)
@@ -718,7 +750,8 @@ class Sap():
         except Exception as msg:
             res['flag'] = 0
             res['msg'] = "%s 未成功，%s" % (flag, msg)
-        return res
+        finally:
+            return res
 
     # 结束sap
     def end_sap(self):

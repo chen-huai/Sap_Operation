@@ -777,7 +777,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser.append('错误信息：%s' % msg)
             logMsg['Remark'] += '错误信息：%s' % msg
             self.textBrowser.append('----------------------------------')
-            QMessageBox.information(self, "提示信息", '这份%s的ODM获取数据有问题' % guiData['projectNo'], QMessageBox.Yes)
+            QMessageBox.information(self, "提示信息", '这单%s的数据或者SAP有问题' % guiData['projectNo'], QMessageBox.Yes)
             return logMsg
 
     # 获取文件
@@ -955,9 +955,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             try:
                                 self.lineEdit_4.setText(fileDataList['Long Text'][n])
                             except:
-                                pass
+                                self.lineEdit_4.clear()
                             else:
                                 pass
+                        else:
+                            self.lineEdit_4.clear()
                         app.processEvents()
                         logMsg = MyMainWindow.sapOperate(self, sap_obj)
                         # 写log
