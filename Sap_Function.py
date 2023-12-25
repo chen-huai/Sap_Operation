@@ -287,20 +287,25 @@ class Sap():
                 self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
                 self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
             except Exception as msg:
-                res['flag'] = 0
-                res['msg'] = '%s保存失败，%s' % (info, msg)
+                pass
             else:
                 pass
         else:
             try:
                 self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
                 self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
-            except:
+            except Exception as msg:
                 pass
             else:
                 pass
 
         finally:
+            saveMessageText = self.session.findById("wnd[0]/sbar/pane[0]").text
+            if '已保存' in saveMessageText or 'saved' in saveMessageText:
+                pass
+            else:
+                res['flag'] = 0
+                res['msg'] += '%s保存失败，%s' % (info, saveMessageText)
             return res
     # 添加item
     def va02_operate(self, guiData, revenueData):
