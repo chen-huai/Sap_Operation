@@ -1063,6 +1063,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 specialInvoiceMsg[each] = embeddedDict
 
             self.textBrowser_2.append('特殊开票信息获取成功')
+            self.textBrowser_2.append('特殊开票文件名称：%s/%s' % (configContent['Invoice_File_URL'], configContent['Invoice_File_Name']))
             self.textBrowser_2.append('----------------------------------')
         except Exception as msg:
             self.textBrowser_2.append('错误信息：%s' % msg)
