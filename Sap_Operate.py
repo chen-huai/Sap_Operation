@@ -1073,6 +1073,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def splitOdmData(self):
         try:
             fileUrl = self.lineEdit_7.text()
+            self.textBrowser_2.append('区分特殊开票的原始文件:%s' % fileUrl)
             (filepath, filename) = os.path.split(fileUrl)
             if fileUrl:
                 newData = Get_Data()
@@ -1088,6 +1089,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 else:
                     invoiceFileName = '1.正常合并'
                     invoiceFilePath = newFolder.getFileName(newFolderUrl, invoiceFileName, csvFileType)
+                    self.textBrowser_2.append('1:%s' % invoiceFilePath)
                     generalFile = generalData.to_csv('%s' % invoiceFilePath, encoding='utf_8_sig')
                 specialData = newData.fileData[newData.fileData["Invoices' name (Chinese)"].isin(invoiceName)]
                 fileNum = 2
@@ -1099,6 +1101,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     else:
                         invoiceFileName = str(fileNum) + '.' + each
                         invoiceFilePath = newFolder.getFileName(newFolderUrl, invoiceFileName, csvFileType)
+                        self.textBrowser_2.append('%s:%s' % (fileNum, invoiceFilePath))
                         specialFile = eachSpecialData.to_csv('%s' % invoiceFilePath, encoding='utf_8_sig')
                         fileNum += 1
                 os.startfile(newFolderUrl)
@@ -1186,6 +1189,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def odmCombineData(self):
         try:
             fileUrl = self.lineEdit_7.text()
+            self.textBrowser_2.append('合并前的原始数据：%s' % fileUrl)
             (filepath, filename) = os.path.split(fileUrl)
             if fileUrl:
                 newData = Get_Data()
