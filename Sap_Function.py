@@ -243,7 +243,7 @@ class Sap():
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AKOSTENSAETZE/txtTABD-FESTPREIS[5,1]").text = \
                     revenueData['phyCost']
-            elif 'T20' in guiData['materialCode']:
+            elif 'T20' in guiData['materialCode'] or '430' in guiData['materialCode']:
                 self.session.findById(
                     "wnd[0]/usr/tabsTAXI_TABSTRIP_HEAD/tabpT\\14/ssubSUBSCREEN_BODY:SAPMV45A:4312/tblSAPMV45AZULEISTENDE/ctxtTABL-KOSTL[0,0]").text = \
                     guiData['phyCostCenter']
