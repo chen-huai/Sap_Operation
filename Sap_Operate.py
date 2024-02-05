@@ -1427,7 +1427,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             fileCon = pdfOperate.readPdf(pdfFile)
                             fileNum = 0
                             for fileCon[fileNum] in fileCon:
-                                if re.match('.*P. R. China', fileCon[fileNum]):
+                                if re.match('.*P. R. China', fileCon[fileNum]) or re.match('.*P.R. China', fileCon[fileNum]):
                                     msg['Company Name'] = fileCon[fileNum + 1].replace(
                                         'Please quote this number on all inquiries and payments.', '').replace(
                                         'Invoice No.', '')
