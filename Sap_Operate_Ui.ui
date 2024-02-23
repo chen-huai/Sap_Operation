@@ -1174,8 +1174,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>486</width>
-             <height>556</height>
+             <width>277</width>
+             <height>402</height>
             </rect>
            </property>
            <attribute name="label">
@@ -1944,7 +1944,14 @@
                  <string>命名规则，按顺序</string>
                 </property>
                 <property name="text">
-                 <string>Invoice No + Company Name</string>
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2" colspan="2">
+               <widget class="QCheckBox" name="checkBox_26">
+                <property name="text">
+                 <string>Client Contact Name</string>
                 </property>
                </widget>
               </item>

@@ -66,6 +66,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.checkBox_24.toggled.connect(lambda: self.pdfNameRule('Revenue', 'Electron'))
         self.checkBox_25.toggled.connect(lambda: self.pdfNameRule('CS', 'invoice'))
         self.checkBox_25.toggled.connect(lambda: self.pdfNameRule('CS', 'Electron'))
+        self.checkBox_26.toggled.connect(lambda: self.pdfNameRule('Client Contact Name', 'invoice'))
         self.pushButton_56.clicked.connect(lambda: self.orderUnlockOrLock('Unlock'))
         self.pushButton_57.clicked.connect(lambda: self.orderUnlockOrLock('Lock'))
         self.filesUrl = []
@@ -1427,7 +1428,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             fileCon = pdfOperate.readPdf(pdfFile)
                             fileNum = 0
                             for fileCon[fileNum] in fileCon:
-                                if re.match('.*P. R. China', fileCon[fileNum]) or re.match('.*P.R. China', fileCon[fileNum]):
+                                if re.match('.*P. R. China', fileCon[fileNum]) or re.match('.*P.R. China', fileCon[fileNum]) or re.match('Pleasequotethisnumberonallinquiriesandpayments', fileCon[fileNum]) or re.match('请在项目咨询或付款时提示此帐单号', fileCon[fileNum]):
                                     msg['Company Name'] = fileCon[fileNum + 1].replace(
                                         'Please quote this number on all inquiries and payments.', '').replace(
                                         'Invoice No.', '')
@@ -1441,7 +1442,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                         if re.search('\d{2}.\d{3}.\d{2}.\d{4,5}', each):
                                             msg['Project No'] = each
                                         elif re.search(
-                                                '%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - 1),
+                                                '%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - len(str(guiData['invoiceStsrtNum']))),
                                                 each) and msg['Invoice No'] == '':
                                             msg['Invoice No'] = each
                                 elif re.search('%s\d{%s}' % (
@@ -1451,9 +1452,15 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                     res = fileCon[fileNum].split(' ')
                                     if len(res[1]) == int(guiData['orderBits']):
                                         msg['Order No'] = res[1]
+                                elif 'Client Contact Name' in fileCon[fileNum] or 'ClientContactName' in fileCon[fileNum]:
+                                    msg['Client Contact Name'] = fileCon[fileNum].replace('Client Contact Name:', '').replace('ClientContactName:', '')
                                 fileNum += 1
+                            if msg['Invoice No'] in msg['Company Name']:
+                                msg['Company Name'] = msg['Company Name'].replace(' %s' % msg['Invoice No'], '')
+                            if 'Client Contact Name' not in msg:
+                                msg['Client Contact Name'] = ''
                             if self.checkBox_25.isChecked():
-                                cs = list(billing_df[billing_df['Final Invoice No.'].astype(int) == int(msg['Invoice No'])]['CS'])
+                                cs = list(billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['CS'])
                                 if cs == []:
                                     msg['CS'] = ''
                                 else:
@@ -1473,6 +1480,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                     outputFlieName += msg['Project No']
                                 elif eachName == 'CS':
                                     outputFlieName += msg['CS']
+                                elif eachName == 'Client Contact Name':
+                                    outputFlieName += msg['Client Contact Name']
                             outputFlie = outputFlieName + '.pdf'
                             # outputFlie = msg['Invoice No'] + '-' + msg['Company Name'] + '.pdf'
                             pdfOperate.saveAs(fileUrl, '%s\\%s' % (configContent['Invoice_Files_Export_URL'], outputFlie))
@@ -1586,12 +1595,13 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                                                                  str(adminGuiData['eleInvoiceStsrtNum']))),
                                                                fileUrl)[0]
                             if self.checkBox_25.isChecked():
+                                # pandas中有int32和int64的格式区别
                                 cs = list(
-                                    billing_df[billing_df['Final Invoice No.'].astype(int) == int(msg['Invoice No'])]['CS'])
+                                    billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['CS'])
                                 odmRe = list(
-                                    billing_df[billing_df['Final Invoice No.'].astype(int) == int(msg['Invoice No'])]['求和项:Amount with VAT'])
+                                    billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['求和项:Amount with VAT'])
                                 customerName = list(
-                                    billing_df[billing_df['Final Invoice No.'].astype(int) == int(msg['Invoice No'])]['Customer Name'])
+                                    billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['Customer Name'])
                                 if cs == []:
                                     msg['CS'] = ''
                                     msg['odmRe'] = 0.00
