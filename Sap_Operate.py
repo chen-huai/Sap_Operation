@@ -193,6 +193,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ['Invoice_Num', 9, 'Invoice的总位数'],
             ['Company_Name_Selected', 1, '是否默认被选中,1选中，0未选中'],
             ['Order_No_Selected', 0, '是否默认被选中,1选中，0未选中'],
+            ['Invoice_Contact_Selected', 0, '是否默认被选中,1选中，0未选中'],
             ['Order_Start_Num', 7, 'Order的起始数字'],
             ['Order_Num', 9, 'Order的总位数'],
             ['Project_No_Selected', 0, '是否默认被选中,1选中，0未选中'],
@@ -298,6 +299,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.spinBox_2.setValue(int(configContent['Invoice_Num']))
             self.checkBox_10.setChecked(int(configContent['Company_Name_Selected']))
             self.checkBox_12.setChecked(int(configContent['Order_No_Selected']))
+            self.checkBox_26.setChecked(int(configContent['Invoice_Contact_Selected']))
             self.spinBox_3.setValue(int(configContent['Order_Start_Num']))
             self.spinBox_4.setValue(int(configContent['Order_Num']))
             self.checkBox_11.setChecked(int(configContent['Project_No_Selected']))
