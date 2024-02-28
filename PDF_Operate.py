@@ -8,7 +8,11 @@ class PDF_Operate():
         text = []
         with pdfplumber.open(inputFile) as pdf:
             for page in pdf.pages:
-                text += page.extract_text().split("\n")  # 提取文本
+                page_text = page.extract_text(x_tolerance=2)
+
+                page_text_list = page_text.split("\n")
+
+                text += page_text_list
         return text
 
     def saveAs(inputFile, outputFile):

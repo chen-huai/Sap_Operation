@@ -187,22 +187,57 @@ import time
 # pdf_updater.update_pdf_name('Invoice2', 'invoice')
 # invoice_name = pdf_updater.get_pdf_name('invoice')
 # print("Updated Invoice Name:", invoice_name)
-from Get_Data import *
-from Test_Data import *
-import pandas as pd
-import os
-os.chdir('C:\\Users\\chen-fr\\Desktop\\临时文件\\sap')
-#读入数据
-#读入数据
-rawData = pd.read_excel('20230331.xlsx')
 
-# rawData['合并'] = rawData['Project No.'] + '\t' + rawData['Currency']
-# test = Test()
-# combineProject = rawData.groupby(["Invoices' name (Chinese)",'CS', 'Sales', 'Currency', 'Material Code', 'Buyer(GPC)', 'Month']).apply(test.concat_func).reset_index()
 
-rawData['row_msg'] = rawData['Project No.'] + '\t' + rawData['Currency']
-test = Get_Data()
-combineProject = rawData.groupby(["Invoices' name (Chinese)",'CS', 'Sales', 'Currency', 'Material Code', 'Buyer(GPC)', 'Month']).apply(test.row_concat_func).reset_index()
 
-result = pd.merge(rawData, combineProject, on=["Invoices' name (Chinese)",'CS', 'Sales', 'Currency', 'Material Code', 'Buyer(GPC)', 'Month'],how='right')
-print(result)
+# # 数据读取问题
+#
+# from Get_Data import *
+# from Test_Data import *
+# import pandas as pd
+# import os
+# os.chdir('C:\\Users\\chen-fr\\Desktop\\临时文件\\sap')
+# #读入数据
+# #读入数据
+# rawData = pd.read_excel('20230331.xlsx')
+#
+# # rawData['合并'] = rawData['Project No.'] + '\t' + rawData['Currency']
+# # test = Test()
+# # combineProject = rawData.groupby(["Invoices' name (Chinese)",'CS', 'Sales', 'Currency', 'Material Code', 'Buyer(GPC)', 'Month']).apply(test.concat_func).reset_index()
+#
+# rawData['row_msg'] = rawData['Project No.'] + '\t' + rawData['Currency']
+# test = Get_Data()
+# combineProject = rawData.groupby(["Invoices' name (Chinese)",'CS', 'Sales', 'Currency', 'Material Code', 'Buyer(GPC)', 'Month']).apply(test.row_concat_func).reset_index()
+#
+# result = pd.merge(rawData, combineProject, on=["Invoices' name (Chinese)",'CS', 'Sales', 'Currency', 'Material Code', 'Buyer(GPC)', 'Month'],how='right')
+# print(result)
+
+
+import PyPDF2
+
+class PDF_Operate():
+    def __init__(self, pdf_file):
+        self.pdf_file = pdf_file
+        self.text = ""
+
+    def extract_text(self):
+        with open(self.pdf_file, "rb") as file:
+            pdf_reader = PyPDF2.PdfReader(file)
+            for page_num in range(len(pdf_reader.pages)):
+                page = pdf_reader.pages[page_num]
+                self.text += page.extract_text()
+
+    def get_text(self):
+        return self.text
+
+# 创建PDF_Operate类的实例
+pdf_operator = PDF_Operate("C:\\Users\\chen-fr\\Desktop\\nb\\SPOOL_782910.pdf")
+
+# 提取PDF文件中的文本内容
+pdf_operator.extract_text()
+
+# 获取提取的文本内容
+extracted_text = pdf_operator.get_text()
+
+# 打印提取的文本内容
+print(extracted_text)

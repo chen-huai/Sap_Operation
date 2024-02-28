@@ -1457,16 +1457,26 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                 elif 'Client Contact Name' in fileCon[fileNum] or 'ClientContactName' in fileCon[fileNum]:
                                     msg['Client Contact Name'] = fileCon[fileNum].replace('Client Contact Name:', '').replace('ClientContactName:', '')
                                 fileNum += 1
-                            if msg['Invoice No'] in msg['Company Name']:
-                                msg['Company Name'] = msg['Company Name'].replace(' %s' % msg['Invoice No'], '')
+
                             if 'Client Contact Name' not in msg:
                                 msg['Client Contact Name'] = ''
                             if self.checkBox_25.isChecked():
                                 cs = list(billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['CS'])
+                                # NB的Company Name需要在这边操作
+                                customerName = list(
+                                    billing_df[
+                                        billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])][
+                                        'Customer Name'])
                                 if cs == []:
                                     msg['CS'] = ''
+                                    msg['Customer Name'] = ''
                                 else:
                                     msg['CS'] = cs[0]
+                                    msg['Customer Name'] = customerName[0]
+                                if 'Company Name' not in msg:
+                                    msg['Company Name'] = msg['Customer Name']
+                            if msg['Invoice No'] in msg['Company Name']:
+                                msg['Company Name'] = msg['Company Name'].replace(' %s' % msg['Invoice No'], '')
                             pdfNameRule = guiData['pdfName'].split(' + ')
                             outputFlieName = ''
                             for eachName in pdfNameRule:
@@ -1578,7 +1588,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                     try:
                                         msg['Invoice No'] = int(text[-1])
                                     except :
-                                        pass
+                                        msg['Invoice No'] = re.sub(r'[^0-9]', '', text[-1])
                                 elif re.search('%s\d{%s}' % (adminGuiData['eleOrderStsrtNum'],
                                                              int(adminGuiData['eleOrderBits']) - len(
                                                                  str(adminGuiData['eleOrderStsrtNum']))),
