@@ -634,7 +634,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     "'Project No.', 'CS', 'Sales', 'Currency', 'GPC Glo. Par. Code', 'Material Code','SAP No.', 'Amount', 'Amount with VAT', 'Exchange Rate'都是必须填写的")
                 self.textBrowser.append('----------------------------------')
                 app.processEvents()
-                QMessageBox.information(self, "提示信息", "有关键信息未填", QMessageBox.Yes)
+                if guiData['everyCheck']:
+                    QMessageBox.information(self, "提示信息", "有关键信息未填", QMessageBox.Yes)
             else:
                 revenueData = MyMainWindow.getRevenueData(self, guiData)
                 messageFlag = 1
