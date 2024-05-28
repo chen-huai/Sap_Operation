@@ -1435,20 +1435,20 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                     msg['Company Name'] = fileCon[fileNum + 1].replace(
                                         'Please quote this number on all inquiries and payments.', '').replace(
                                         'Invoice No.', '')
-                                elif re.match('%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - len(
+                                elif re.match(r'%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - len(
                                         str(guiData['invoiceStsrtNum']))),
                                               fileCon[fileNum]):
                                     msg['Invoice No'] = fileCon[fileNum]
-                                elif re.search('\d{2}.\d{3}.\d{2}.\d{4,5}', fileCon[fileNum]):
+                                elif re.search(r'\d{2}.\d{3}.\d{2}.\d{4,5}', fileCon[fileNum]):
                                     res = fileCon[fileNum].split(' ')
                                     for each in res:
-                                        if re.search('\d{2}.\d{3}.\d{2}.\d{4,5}', each):
+                                        if re.search(r'\d{2}.\d{3}.\d{2}.\d{4,5}', each):
                                             msg['Project No'] = each
                                         elif re.search(
-                                                '%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - len(str(guiData['invoiceStsrtNum']))),
+                                                r'%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - len(str(guiData['invoiceStsrtNum']))),
                                                 each) and msg['Invoice No'] == '':
                                             msg['Invoice No'] = each
-                                elif re.search('%s\d{%s}' % (
+                                elif re.search(r'%s\d{%s}' % (
                                         guiData['orderStsrtNum'],
                                         int(guiData['orderBits']) - len(str(guiData['orderStsrtNum']))),
                                                fileCon[fileNum]):
@@ -1581,7 +1581,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                     msg['Revenue'] = fileCon[fileNum].split('（小写）')[1]
                                 elif '发票号码：' in fileCon[fileNum]:
                                     msg['fapiao'] = str(fileCon[fileNum].split('：')[1])
-                                elif re.search('%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'],
+                                elif re.search(r'%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'],
                                                              int(adminGuiData['eleInvoiceBits']) - len(
                                                                  str(adminGuiData['eleInvoiceStsrtNum']))),
                                                fileCon[fileNum]):
@@ -1590,7 +1590,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                         msg['Invoice No'] = int(text[-1])
                                     except :
                                         msg['Invoice No'] = re.sub(r'[^0-9]', '', text[-1])
-                                elif re.search('%s\d{%s}' % (adminGuiData['eleOrderStsrtNum'],
+                                elif re.search(r'%s\d{%s}' % (adminGuiData['eleOrderStsrtNum'],
                                                              int(adminGuiData['eleOrderBits']) - len(
                                                                  str(adminGuiData['eleOrderStsrtNum']))),
                                                fileCon[fileNum]):
@@ -1603,7 +1603,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             if 'Order No' not in msg:
                                 msg['Order No'] = ''
                             if 'Invoice No' not in msg:
-                                msg['Invoice No'] = re.findall('%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'],
+                                msg['Invoice No'] = re.findall(r'%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'],
                                                                              int(adminGuiData['eleInvoiceBits']) - len(
                                                                                  str(adminGuiData['eleInvoiceStsrtNum']))),
                                                                fileUrl)[0]
