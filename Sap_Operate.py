@@ -1211,7 +1211,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     fillNanColumnKey = {'Material Code': ["PHY Material Code", "CHM Material Code"]}
                     newData.fillNanColumn(fillNanColumnKey)
                 # 将联系人空值填上
-                newData.fileData['Client Contact Name'].fillna("******", inplace=True)
+                newData.fileData['Client Contact Name'].fillna("XXXXXX", inplace=True)
                 # 单个数据保留原始数据
                 if self.checkBox_17.isChecked():
                     newData.fileData = myWin.addRowMsg(newData.fileData)
@@ -1256,7 +1256,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     newData[self.comboBox_5.currentText()] = newData['combine_row_msg']
                 elif self.checkBox_18.isChecked():
                     newData[self.comboBox_5.currentText()] = newData['combine_column_msg']
-
+                #  替换无用字符
+                if self.checkBox_17.isChecked() or self.checkBox_18.isChecked():
+                    newData[self.comboBox_5.currentText()] = newData[self.comboBox_5.currentText()].str.replace('nan', '')
+                    newData[self.comboBox_5.currentText()] = newData[self.comboBox_5.currentText()].str.replace('XXXXXX', '')
                 # merge数据，combine和原始数据
                 onData = combineKeyFieldsList
                 # onData = ['CS', 'Sales', 'Currency', 'Material Code', "Invoices' name (Chinese)", 'Buyer(GPC)', 'Month', 'Exchange Rate']
@@ -1322,7 +1325,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 mergeData = pd.merge(combineFile.fileData, logFile.fileData, on=onData, how='outer', indicator=True)
                 mergeData.sort_values(by=['Order No.'], axis=0, ascending=[True], inplace=True)
                 # 保留数据
-                leaveDataList = ["_merge", 'Project No._x', 'Order No.', 'Text', 'Long Text', 'Total Cost_x',
+                leaveDataList = ["_merge", 'Proforma No.', 'Project No._x', 'Order No.', 'Text', 'Long Text', 'Total Cost_x',
                                  'Revenue\n(RMB)', 'SAP No._x', 'Project No._y', 'Remark', 'Update Time']
                 leaveDataList += mergekeyFieldsList
                 mergeData = mergeData[leaveDataList]
