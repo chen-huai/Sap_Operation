@@ -173,6 +173,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ['Data_A_E1', '5010815347;5010427355;5010913488;5010685589;5010829635;5010817524', 'Data A录E1,新添加用;隔开即可'],
             ['Data_A_Z2', '5010908478;5010823259', 'Data A录Z2,新添加用;隔开即可'],
             ['SAP操作', '内容', '备注'],
+            ['Cost_VAT_Selected', 1, '是否默认被选中,1选中，0未选中'],
             ['NVA01_Selected', 1, '是否默认被选中,1选中，0未选中'],
             ['NVA02_Selected', 1, '是否默认被选中,1选中，0未选中'],
             ['NVF01_Selected', 0, '是否默认被选中,1选中，0未选中'],
@@ -280,6 +281,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             # DATA A选择
             self.lineEdit_21.setText(configContent['Data_A_E1'])
             self.lineEdit_22.setText(configContent['Data_A_Z2'])
+            # COST是否含税
+            self.checkBox_27.setChecked(int(configContent['Cost_VAT_Selected']))
             # SAP操作
             self.checkBox.setChecked(int(configContent['NVA01_Selected']))
             self.checkBox_2.setChecked(int(configContent['NVA02_Selected']))
@@ -378,7 +381,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         if guiData['salesName'] != '':
             guiData['salesCode'] = configContent[guiData['salesName']]
         guiData['amount'] = float(self.doubleSpinBox_2.text())
-        guiData['cost'] = float(self.doubleSpinBox_3.text())
+        if self.checkBox_27.isChecked():
+            guiData['cost'] = float(self.doubleSpinBox_3.text())/1.06
+        else:
+            guiData['cost'] = float(self.doubleSpinBox_3.text())
         guiData['amountVat'] = float(self.doubleSpinBox_4.text())
         guiData['csHourlyRate'] = float(self.doubleSpinBox_5.text())
         guiData['chmHourlyRate'] = float(self.doubleSpinBox_6.text())
@@ -1164,6 +1170,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         newData.fileData[column_name] = newData.fileData['row_msg']
                     else:
                         newData.fileData[column_name] = newData.fileData['column_msg']
+                    if self.checkBox_17.isChecked() or self.checkBox_18.isChecked():
+                        newData[column_name] = newData[self.comboBox_5.currentText()].str.replace(
+                            'nan', '')
+                        newData[column_name] = newData[self.comboBox_5.currentText()].str.replace(
+                            'XXXXXX', '')
                     csvFileType = 'xlsx'
                     odmFileName = '添加信息后的数据'
                     odmDataPath = MyMainWindow.getFileName(self, filepath, odmFileName, csvFileType)
@@ -1317,7 +1328,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 # 原来根据多个字段meger
                 # combineFile.fileData['SAP No.'] = combineFile.fileData['SAP No.'].apply(int)
                 # logFile['SAP No.'] = logFile['SAP No.'].apply(int)
-                delColums = ['Text', 'Long Text']
+                delColums = ['Text', 'Long Text', 'Proforma No.']
                 for col in delColums:
                     if col in combineFile.fileData.columns:
                         combineFile.fileData = combineFile.fileData.drop(columns=col, axis=1)

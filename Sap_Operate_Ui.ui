@@ -686,15 +686,15 @@
            </sizepolicy>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="page_3">
            <property name="geometry">
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>429</width>
-             <height>492</height>
+             <width>499</width>
+             <height>556</height>
             </rect>
            </property>
            <attribute name="label">
@@ -1167,6 +1167,32 @@
               </layout>
              </widget>
             </item>
+            <item row="5" column="0" colspan="2">
+             <widget class="QGroupBox" name="groupBox_21">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="title">
+               <string>Cost</string>
+              </property>
+              <widget class="QCheckBox" name="checkBox_27">
+               <property name="geometry">
+                <rect>
+                 <x>10</x>
+                 <y>10</y>
+                 <width>131</width>
+                 <height>41</height>
+                </rect>
+               </property>
+               <property name="text">
+                <string>Cost with VAT</string>
+               </property>
+              </widget>
+             </widget>
+            </item>
            </layout>
           </widget>
           <widget class="QWidget" name="page_4">
@@ -1174,8 +1200,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>277</width>
-             <height>402</height>
+             <width>486</width>
+             <height>556</height>
             </rect>
            </property>
            <attribute name="label">
