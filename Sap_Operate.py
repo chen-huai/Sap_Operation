@@ -1153,7 +1153,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             rowChecked = self.checkBox_17.isChecked()
             columnChecked = self.checkBox_18.isChecked()
             if rowChecked or columnChecked:
-                try:
+                # try:
                     column_name = self.comboBox_5.currentText()
                     key = self.lineEdit_24.text().replace(';', '\t')
                     newData = Get_Data()
@@ -1171,10 +1171,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     else:
                         newData.fileData[column_name] = newData.fileData['column_msg']
                     if self.checkBox_17.isChecked() or self.checkBox_18.isChecked():
-                        newData[column_name] = newData[self.comboBox_5.currentText()].str.replace(
-                            'nan', '')
-                        newData[column_name] = newData[self.comboBox_5.currentText()].str.replace(
-                            'XXXXXX', '')
+                        newData.fileData[column_name] = newData.fileData[self.comboBox_5.currentText()].str.replace('nan', '')
+                        newData.fileData[column_name] = newData.fileData[self.comboBox_5.currentText()].str.replace('XXXXXX', '')
                     csvFileType = 'xlsx'
                     odmFileName = '添加信息后的数据'
                     odmDataPath = MyMainWindow.getFileName(self, filepath, odmFileName, csvFileType)
@@ -1184,19 +1182,19 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     self.textBrowser_2.append('文件保存在：%s' % odmDataPath)
                     self.textBrowser_2.append('----------------------------------')
                     app.processEvents()
-                except Exception as msg:
-                    self.textBrowser_2.append('这份%s的ODM获取数据有问题' % fileUrl)
-                    self.textBrowser_2.append('错误信息：%s' % msg)
-                    self.textBrowser_2.append('----------------------------------')
-                    app.processEvents()
-            else:
-                self.textBrowser_2.append('没有选中要添加的信息，请选择')
-                self.textBrowser_2.append('----------------------------------')
-                app.processEvents()
-        else:
-            self.textBrowser_2.append('没有文件，请重新选择')
-            self.textBrowser_2.append('----------------------------------')
-            app.processEvents()
+        #         except Exception as msg:
+        #             self.textBrowser_2.append('这份%s的ODM获取数据有问题' % fileUrl)
+        #             self.textBrowser_2.append('错误信息：%s' % msg)
+        #             self.textBrowser_2.append('----------------------------------')
+        #             app.processEvents()
+        #     else:
+        #         self.textBrowser_2.append('没有选中要添加的信息，请选择')
+        #         self.textBrowser_2.append('----------------------------------')
+        #         app.processEvents()
+        # else:
+        #     self.textBrowser_2.append('没有文件，请重新选择')
+        #     self.textBrowser_2.append('----------------------------------')
+        #     app.processEvents()
 
 
     # 数据透视并合并
