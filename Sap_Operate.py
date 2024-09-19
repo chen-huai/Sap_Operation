@@ -1467,7 +1467,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                     if len(res[1]) == int(guiData['orderBits']):
                                         msg['Order No'] = res[1]
                                 elif 'Client Contact Name' in fileCon[fileNum] or 'ClientContactName' in fileCon[fileNum]:
-                                    msg['Client Contact Name'] = fileCon[fileNum].replace('Client Contact Name:', '').replace('ClientContactName:', '')
+                                    msg['Client Contact Name'] = fileCon[fileNum].replace('Client Contact Name:', '').replace('ClientContactName:', '').replace('/', '&')
                                 fileNum += 1
 
                             if 'Client Contact Name' not in msg:
