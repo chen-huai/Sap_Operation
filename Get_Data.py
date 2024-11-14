@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from Excel_Field_Mapper import excel_field_mapper
 
 class Get_Data():
     # def __init__(self,fileDataUrl):
@@ -21,6 +22,8 @@ class Get_Data():
             # self.fileData = pd.read_csv(self.fileDataUrl, dtype='str')
             # self.fileData = pd.read_csv(self.fileDataUrl, keep_default_na=False)
         height, width = self.fileData.shape
+
+        self.fileData = excel_field_mapper.transform_dataframe(self.fileData)
         return self.fileData
 
     def getFileMoreSheetData(self, fileDataUrl, sheet_name=[]):

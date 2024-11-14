@@ -34,8 +34,9 @@ class ExcelFieldMapper:
             'GPC Glo. Par. Code': ['global_partner_code', 'gpc_code', 'GPC', 'partner_code', '全球合作伙伴代码'],
             'Material Code': ['material_code', 'product_code', 'MaterialCode', 'item_code', '物料代码'],
             'SAP No.': ['sap_no', 'sap_number', 'SAPNo', 'sap_id', 'SAP编号'],
-            'Amount': ['amount', 'total_amount', 'Amount_Money', 'money_amount', '金额'],
+            'Amount': ['amount', 'total_amount', 'Amount_Money', 'money_amount', '未税金额'],
             'Amount with VAT': ['amount_with_vat', 'total_amount_with_tax', 'AmountWithVAT', 'vat_amount', '含税金额'],
+            "Revenue\n(RMB)": ["Revenue (RMB)", "Revenue", "未税金额CNY"],
             'Total Cost': ['total_cost', 'cost', 'TotalCost', 'full_cost', '总成本'],
             'Exchange Rate': ['exchange_rate', 'currency_rate', 'ExchangeRate', 'rate', '汇率'],
             "Invoices' name (Chinese)": ['invoices_name_chinese', 'invoice_name_cn', 'InvoiceName', 'invoice_title', '发票名称(中文)'],
@@ -43,7 +44,7 @@ class ExcelFieldMapper:
             'Month': ['month', 'billing_month', 'MonthPeriod', 'month_period', '月份'],
             'Text': ['text', 'description', 'ShortText', 'brief_desc', '文本'],
             'Long Text': ['long_text', 'detailed_description', 'LongText', 'full_description', '长文本'],
-            'Client Contact Name': ['client_contact_name', 'contact_person', 'ClientContact', 'contact_name', '客户联系人名称']
+            'Client Contact Name': ['client_contact_name', 'contact_person', 'ClientContact', 'contact_name', 'Client Contact', '客户联系人名称']
         }
 
     def match_columns(self, dataframe):
