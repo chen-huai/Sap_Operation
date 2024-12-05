@@ -22,7 +22,7 @@ class PDF_Operate():
             fp2.write(b1)
 
 # if __name__ == '__main__':
-#     dirUrl = "C:\\Users\\chen-fr\\Desktop\\test2"  # 文件夹目录
+#     dirUrl = r"C:\Users\chen-fr\Desktop\临时文件\invoice"  # 文件夹目录
 #     files = os.listdir(dirUrl)  # 得到文件夹下的所有文件名称
 #     n = 1
 #     invoiceNoStar = 4
@@ -39,8 +39,14 @@ class PDF_Operate():
 #                 print(fileCon)
 #                 fileNum = 0
 #                 for fileCon[fileNum] in fileCon:
-#                     if re.match('.*Invoice No.', fileCon[fileNum]):
-#                         msg['Company Name'] = fileCon[fileNum].replace('Invoice No.', '')
+#                     if re.match('.*P. R. China', fileCon[fileNum]) or re.match('.*P.R. China',
+#                                                                                fileCon[fileNum]) or re.match(
+#                             'Pleasequotethisnumberonallinquiriesandpayments', fileCon[fileNum]) or re.match(
+#                             '请在项目咨询或付款时提示此帐单号', fileCon[fileNum]) or re.match(
+#                             'Please quote this number on all inquiries and payments.', fileCon[fileNum]):
+#                         msg['Company Name'] = fileCon[fileNum + 1].replace(
+#                             'Please quote this number on all inquiries and payments.', '').replace(
+#                             'Invoice No.', '')
 #                     elif re.match('%s\d{8}'%invoiceNoStar, fileCon[fileNum]):
 #                         print(fileCon[fileNum], 22)
 #                         msg['Invoice No'] = fileCon[fileNum]
@@ -52,7 +58,7 @@ class PDF_Operate():
 #                         msg['Project No'] = fileCon[fileNum]
 #                     fileNum += 1
 #                 n += 1
-#                 outputFlie = msg['Project No'] + '.pdf'
+#                 outputFlie = msg['Project No'] + msg['Company Name'] + '.pdf'
 #                 # outputFlie = msg['Invoice No'] + '-' + msg['Company Name'] + '.pdf'
 #                 pdfOperate.saveAs(fileUrl,'%s\\test\\%s' % (dirUrl, outputFlie))
 #
