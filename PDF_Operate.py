@@ -41,10 +41,18 @@ class PDF_Operate():
 #                 for fileCon[fileNum] in fileCon:
 #                     if re.match('.*P. R. China', fileCon[fileNum]) or re.match('.*P.R. China',
 #                                                                                fileCon[fileNum]) or re.match(
-#                             'Pleasequotethisnumberonallinquiriesandpayments', fileCon[fileNum]) or re.match(
-#                             '请在项目咨询或付款时提示此帐单号', fileCon[fileNum]) or re.match(
+#                             'Pleasequotethisnumberonallinquiriesandpayments', fileCon[fileNum]) or  re.match(
 #                             'Please quote this number on all inquiries and payments.', fileCon[fileNum]):
-#                         msg['Company Name'] = fileCon[fileNum + 1].replace(
+#                         if str(invoiceNoStar) in fileCon[fileNum + 1]:
+#                             msg['Company Name'] = fileCon[fileNum + 2].replace(
+#                                 'Please quote this number on all inquiries and payments.', '').replace(
+#                                 'Invoice No.', '')
+#                         else:
+#                             msg['Company Name'] = fileCon[fileNum + 1].replace(
+#                                 'Please quote this number on all inquiries and payments.', '').replace(
+#                                 'Invoice No.', '')
+#                     elif re.match('请在项目咨询或付款时提示此帐单号', fileCon[fileNum]):
+#                         msg['Company Name'] = fileCon[fileNum + 2].replace(
 #                             'Please quote this number on all inquiries and payments.', '').replace(
 #                             'Invoice No.', '')
 #                     elif re.match('%s\d{8}'%invoiceNoStar, fileCon[fileNum]):
