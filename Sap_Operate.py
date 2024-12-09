@@ -1579,6 +1579,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 fileMsg['id'] = []
                 fileMsg['Company Name'] = []
                 fileMsg['Invoice No'] = []
+                fileMsg['File Name'] = []
                 fileMsg['Order No'] = []
                 fileMsg['Revenue'] = []
                 fileMsg['fapiao'] = []
@@ -1587,6 +1588,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 fileMsg['CS'] = []
                 fileMsg['ODM Revenue'] = []
                 fileMsg['ODM Customer Name'] = []
+
                 for fileUrl in fileUrls:
                     try:
                         self.textBrowser_3.append('第%s份文件：' % i)
@@ -1677,6 +1679,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             fileMsg['id'].append(i)
                             fileMsg['Company Name'].append(msg['Company Name'])
                             fileMsg['Invoice No'].append(msg['Invoice No'])
+                            fileMsg['File Name'].append(outputFlie)
                             fileMsg['Order No'].append(msg['Order No'])
                             fileMsg['Revenue'].append(float(msg['Revenue'].replace('¥', '')))
                             fileMsg['fapiao'].append('发票号码:' + msg['fapiao'])
