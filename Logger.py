@@ -13,6 +13,8 @@ class Logger:
             raise ValueError("Data length does not match the number of columns.")
         timestamp = datetime.datetime.now()
         log_data = {'Update': timestamp, **data}
+        # pandas DataFrame中添加一行新数据,self.log_df 是一个pandas DataFrame对象，可能用于存储日志数据,len(self.log_df) 获取当前DataFrame的行数
+        # self.log_df.loc[len(self.log_df)] 指定了一个新行，其索引等于当前DataFrame的长度
         self.log_df.loc[len(self.log_df)] = log_data
 
     def save_log_to_csv(self):

@@ -1433,8 +1433,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 if self.checkBox_25.isChecked():
                     billing_df = myWin.getBillingListData()
                 i = 1
+                # 新增加log
+                log_file_name = 'log %s.csv' % time.strftime('%Y-%m-%d %H.%M.%S')
+                Log_file = '%s\\%s' % (configContent['Invoice_Files_Export_URL'], log_file_name)
+                log_obj = Logger(Log_file, ['Update', 'Invoice No', 'File Name', 'Company Name', 'CS', 'Project No', 'Customer Name', 'Client Contact Name', 'Remark'])
                 for fileUrl in fileUrls:
                     try:
+                        log_list = {}
+
                         self.textBrowser_3.append('第%s份文件：' % i)
                         msg = {}
                         msg['Invoice No'] = ''
@@ -1518,6 +1524,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                 elif eachName == 'Client Contact Name':
                                     outputFlieName += msg['Client Contact Name']
                             outputFlie = outputFlieName + '.pdf'
+                            log_list['Invoice No'] = msg['Invoice No']
+                            log_list['Company Name'] = msg['Company Name']
+                            log_list['Project No'] = msg['Project No']
+                            log_list['Client Contact Name'] = msg['Client Contact Name']
+                            log_list['File Name'] = outputFlie
+                            if 'CS' in msg:
+                                log_list['CS'] = msg['CS']
+                                log_list['Customer Name'] = msg['Customer Name']
+                            else:
+                                log_list['CS'] = ''
+                                log_list['Customer Name'] = ''
+                            if 'Remark' in msg:
+                                log_list['Remark'] = msg['Remark']
+                            else:
+                                log_list['Remark'] = ''
+                            log_obj.log(log_list)
                             # outputFlie = msg['Invoice No'] + '-' + msg['Company Name'] + '.pdf'
                             pdfOperate.saveAs(fileUrl, '%s\\%s' % (configContent['Invoice_Files_Export_URL'], outputFlie))
                         self.textBrowser_3.append('%s' % outputFlie)
@@ -1527,6 +1549,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
                         self.textBrowser_3.append("<font color='red'>出错的文件：%s </font>" % fileUrl)
                     i += 1
+                log_obj.save_log_to_csv()
                 self.textBrowser_3.append('----------------------------------')
 
     # 获取电子发票文件
