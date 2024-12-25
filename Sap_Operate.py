@@ -20,6 +20,7 @@ from Sap_Function import *
 from Sap_Operate_Ui import Ui_MainWindow
 from Data_Table import *
 from Logger import *
+from Excel_Field_Mapper import excel_field_mapper
 
 
 class MyMainWindow(QMainWindow, Ui_MainWindow):
@@ -897,6 +898,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 combinekeyFields = self.lineEdit_15.text()
                 combineKeyFieldsList += combinekeyFields.split(';')
                 combineKeyFieldsList.append('Project No.')
+                combineKeyFieldsList = excel_field_mapper.update_field_names(combineKeyFieldsList)
                 logFile = newData.fileData[combineKeyFieldsList]
                 logFile['Order No.'] = ''
                 logFile['Remark'] = ''
@@ -1126,6 +1128,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     # 数据添加列信息
     def addColumnMsg(self, data):
         key = self.lineEdit_24.text().split(';')
+        key = excel_field_mapper.update_field_names(key)
         df = data
         df['column_msg'] = df[key].apply(lambda row: '\t'.join(map(str, row)), axis=1)
         return df
@@ -1133,6 +1136,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     # 数据添加行信息
     def addRowMsg(self, data):
         key = self.lineEdit_23.text().split(';')
+        key = excel_field_mapper.update_field_names(key)
         df = data
         df['row_msg'] = df[key].apply(lambda row: '\n'.join(f"{col}:{val}" for col, val in zip(df[key], row)),
                                       axis=1)
@@ -1155,7 +1159,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             if rowChecked or columnChecked:
                 # try:
                     column_name = self.comboBox_5.currentText()
-                    key = self.lineEdit_24.text().replace(';', '\t')
+                    # 转关键词
+                    column_key = self.lineEdit_24.text().split(';')
+                    column_key_list = excel_field_mapper.update_field_names(column_key)
+                    column_key_str = ';'.join(column_key_list)
+                    key = column_key_str.replace(';', '\t')
                     newData = Get_Data()
                     newData.getFileData(fileUrl)
                     if rowChecked:
@@ -1236,6 +1244,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 # 数据透视并保存
                 combinekeyFields = self.lineEdit_15.text()
                 combineKeyFieldsList = combinekeyFields.split(';')
+                combineKeyFieldsList = excel_field_mapper.update_field_names(combineKeyFieldsList)
                 pivotTableKey = combineKeyFieldsList
                 # pivotTableKey = ['CS', 'Sales', 'Currency', 'Material Code', "Invoices' name (Chinese)", 'Buyer(GPC)', 'Month', 'Exchange Rate']
                 valusKey = ['Amount', 'Amount with VAT', 'Total Cost', 'Revenue\n(RMB)']
@@ -1256,7 +1265,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 if self.checkBox_18.isChecked():
                     combineRcData = newData.groupby(combineKeyFieldsList).apply(Get_Data().column_concat_func).reset_index()
                     newData = pd.merge(newData, combineRcData, on=combineKeyFieldsList, how='right')
-                    key = self.lineEdit_24.text().replace(';', '\t')
+                    # 转关键词
+                    column_key = self.lineEdit_24.text().split(';')
+                    column_key_list = excel_field_mapper.update_field_names(column_key)
+                    column_key_str = ';'.join(column_key_list)
+                    key = column_key_str.replace(';', '\t')
+                    # key = self.lineEdit_24.text().replace(';', '\t')
                     newData['combine_column_msg'] = key + '\n' + newData['combine_column_msg']
                 # 合并两列数据
                 if self.checkBox_17.isChecked() and self.checkBox_18.isChecked():
@@ -1323,6 +1337,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 # merge数据，combine和原始数据
                 mergekeyFields = self.lineEdit_16.text()
                 mergekeyFieldsList = mergekeyFields.split(';')
+                mergekeyFieldsList = excel_field_mapper.update_field_names(mergekeyFieldsList)
                 # 原来根据多个字段meger
                 # combineFile.fileData['SAP No.'] = combineFile.fileData['SAP No.'].apply(int)
                 # logFile['SAP No.'] = logFile['SAP No.'].apply(int)

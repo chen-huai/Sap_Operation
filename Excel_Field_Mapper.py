@@ -27,24 +27,27 @@ class ExcelFieldMapper:
         - 方便后续扩展        
         """
         self.excel_fields_map = {
-            'Project No.': ['project_no', 'project_number', 'ProjectNo', 'project_num', '项目编号'],
-            'CS': ['cs', 'customer_support', 'support_person', 'CustomerSupport', '客户支持'],
-            'Sales': ['sales', 'sale_person', 'SalesPerson', 'sales_rep', '销售'],
-            'Currency': ['currency', 'money_type', 'CurrencyType', 'cur_type', '货币'],
-            'GPC Glo. Par. Code': ['global_partner_code', 'gpc_code', 'GPC', 'partner_code', '全球合作伙伴代码'],
-            'Material Code': ['material_code', 'product_code', 'MaterialCode', 'item_code', '物料代码'],
-            'SAP No.': ['sap_no', 'sap_number', 'SAPNo', 'sap_id', 'SAP编号'],
-            'Amount': ['amount', 'total_amount', 'Amount_Money', 'money_amount', '未税金额'],
-            'Amount with VAT': ['amount_with_vat', 'total_amount_with_tax', 'AmountWithVAT', 'vat_amount', '含税金额'],
+            'Project No.': ['Request_No', 'Request No.', 'RequestNo', 'project_num', '项目编号'],
+            'ProjectNo(Tlims)': ['Project_No', 'ProjectNo', 'Project No.', 'project_num', '项目编号'],
+            'CS': ['CS', 'cs', 'Primary CS', 'CustomerSupport', '客户支持'],
+            'Sales': ['Sales', 'sales', 'SalesPerson', 'sales_rep', '销售'],
+            'Currency': ['currency', 'Order_Currency', 'CurrencyType', 'Currency', '货币'],
+            'GPC Glo. Par. Code': ['global_partner_code', 'gpc_code', 'Gpc_Code', 'GPC Code', '全球合作伙伴代码'],
+            'Material Code': ['material_code', 'Material_Code', 'MaterialCode', 'Material Code', '物料代码'],
+            'SAP No.': ['sap_no', 'SAP_No', 'SAPNo', 'SAP Custom Code', 'SAP编号'],
+            'Amount': ['Untaxed amount', 'Amount', 'Amount_Money', 'money_amount', '未税金额'],
+            'Amount with VAT': ['amount_with_vat', 'Amount_With_VAT', 'Tax-inclusive amount', 'vat_amount', '含税金额'],
             "Revenue\n(RMB)": ["Revenue (RMB)", "Revenue", "未税金额CNY"],
-            'Total Cost': ['total_cost', 'cost', 'TotalCost', 'full_cost', '总成本'],
-            'Exchange Rate': ['exchange_rate', 'currency_rate', 'ExchangeRate', 'rate', '汇率'],
-            "Invoices' name (Chinese)": ['invoices_name_chinese', 'invoice_name_cn', 'InvoiceName', 'invoice_title', '发票名称(中文)'],
-            'Buyer(GPC)': ['buyer_gpc', 'buyer_code', 'BuyerGPC', 'gpc_buyer', '买家(GPC)'],
-            'Month': ['month', 'billing_month', 'MonthPeriod', 'month_period', '月份'],
+            'Total Cost': ['total_cost', 'Total Subcon Cost', 'TotalCost', 'Total_Cost', '总成本'],
+            'Exchange Rate': ['exchange_rate', 'Exchange_Rate', 'ExchangeRate', 'Rate', '汇率'],
+            "Invoices' name (Chinese)": ['invoices_name_chinese', 'Invoices_Name', 'InvoiceName', 'Payer Name', '发票名称(中文)'],
+            'Buyer(GPC)': ['buyer_gpc', 'Gpc_name', 'BuyerGPC', 'GPC', '买家(GPC)'],
+            'Month': ['month', 'Month', 'MonthPeriod', 'month_period', '月份'],
+            'SAP Order No.': ['SAP Order No.', 'SAPOrderNo', 'SAP_Order_No', 'Order Number', '订单号'],
+            'Reference No.': ['Reference_No', 'Reference No', 'Reference Number', 'reference no', 'Reference_No'],
             'Text': ['text', 'description', 'ShortText', 'brief_desc', '文本'],
             'Long Text': ['long_text', 'detailed_description', 'LongText', 'full_description', '长文本'],
-            'Client Contact Name': ['client_contact_name', 'contact_person', 'ClientContact', 'contact_name', 'Client Contact', '客户联系人名称']
+            'Client Contact Name': ['client_contact_name', 'contact', 'Customer contact', 'contact_name', 'Client Contact', '客户联系人名称']
         }
 
     def match_columns(self, dataframe):
@@ -115,7 +118,6 @@ class ExcelFieldMapper:
     
     def transform_dataframe(self, dataframe, mapping=None):
         """
-        转换DataFrame的列名为中文名
 
         Args:
             dataframe (pd.DataFrame): 原始数据框
@@ -135,6 +137,7 @@ class ExcelFieldMapper:
         
         rename_dict = {v: k for k, v in mapping.items()}
         return dataframe.rename(columns=rename_dict)
+
 
     def validate_dataframe(self, dataframe, required_fields=None):
         """
@@ -194,6 +197,35 @@ class ExcelFieldMapper:
             list: 该字段的所有可能名称列表
         """
         return self.excel_fields_map.get(standard_name, [])
+    
+    
+    def update_field_names(self, field_list):
+        """
+        更新传入的字段列表，将列表中的元素替换为self.excel_fields_map中对应的键名
+
+        Args:
+            field_list (list): 需要更新的字段列表
+
+        Returns:
+            list: 更新后的字段列表
+
+        更新逻辑：
+        1. 遍历传入的字段列表
+        2. 对于每个字段，在self.excel_fields_map中查找匹配的键名
+        3. 如果找到匹配，则用键名替换原字段名
+        4. 如果没有找到匹配，保持原字段名不变
+        """
+        updated_list = []
+        for field in field_list:
+            matched = False
+            for key, value_list in self.excel_fields_map.items():
+                if field in value_list:
+                    updated_list.append(key)
+                    matched = True
+                    break
+            if not matched:
+                updated_list.append(field)
+        return updated_list
 
 # 创建全局单例，便于直接调用
 excel_field_mapper = ExcelFieldMapper()
