@@ -27,8 +27,8 @@ class ExcelFieldMapper:
         - 方便后续扩展        
         """
         self.excel_fields_map = {
-            'Project No.': ['Request_No', 'Request No.', 'RequestNo', 'project_num', '项目编号'],
-            'ProjectNo(Tlims)': ['Project_No', 'ProjectNo', 'Project No.', 'project_num', '项目编号'],
+            'Project No.': ['Request_No', 'Request No.', 'RequestNo', 'Request Number', '项目编号'],
+            'ProjectNo(Tlims)': ['Project_No', 'ProjectNo', 'Project Number', 'project_num', '项目编号'],
             'CS': ['CS', 'cs', 'Primary CS', 'CustomerSupport', '客户支持'],
             'Sales': ['Sales', 'sales', 'SalesPerson', 'sales_rep', '销售'],
             'Currency': ['currency', 'Order_Currency', 'CurrencyType', 'Currency', '货币'],
@@ -40,7 +40,7 @@ class ExcelFieldMapper:
             "Revenue\n(RMB)": ["Revenue (RMB)", "Revenue", "未税金额CNY"],
             'Total Cost': ['total_cost', 'Total Subcon Cost', 'TotalCost', 'Total_Cost', '总成本'],
             'Exchange Rate': ['exchange_rate', 'Exchange_Rate', 'ExchangeRate', 'Rate', '汇率'],
-            "Invoices' name (Chinese)": ['invoices_name_chinese', 'Invoices_Name', 'InvoiceName', 'Payer Name', '发票名称(中文)'],
+            "Invoices' name (Chinese)": ['invoices_name_chinese', 'Invoices_Name', 'InvoiceName', 'Payer', '发票名称(中文)'],
             'Buyer(GPC)': ['buyer_gpc', 'Gpc_name', 'BuyerGPC', 'GPC', '买家(GPC)'],
             'Month': ['month', 'Month', 'MonthPeriod', 'month_period', '月份'],
             'SAP Order No.': ['SAP Order No.', 'SAPOrderNo', 'SAP_Order_No', 'Order Number', '订单号'],

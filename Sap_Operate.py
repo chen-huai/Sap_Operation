@@ -1161,8 +1161,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     column_name = self.comboBox_5.currentText()
                     # 转关键词
                     column_key = self.lineEdit_24.text().split(';')
-                    column_key_list = excel_field_mapper.update_field_names(column_key)
-                    column_key_str = ';'.join(column_key_list)
+                    # # 老的数据名称
+                    # column_key_list = excel_field_mapper.update_field_names(column_key)
+                    # column_key_str = ';'.join(column_key_list)
+                    # 新的数据名称
+                    column_key_str = ';'.join(column_key)
                     key = column_key_str.replace(';', '\t')
                     newData = Get_Data()
                     newData.getFileData(fileUrl)
@@ -1244,6 +1247,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 # 数据透视并保存
                 combinekeyFields = self.lineEdit_15.text()
                 combineKeyFieldsList = combinekeyFields.split(';')
+                # 老的数据名称
                 combineKeyFieldsList = excel_field_mapper.update_field_names(combineKeyFieldsList)
                 pivotTableKey = combineKeyFieldsList
                 # pivotTableKey = ['CS', 'Sales', 'Currency', 'Material Code', "Invoices' name (Chinese)", 'Buyer(GPC)', 'Month', 'Exchange Rate']
@@ -1267,8 +1271,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     newData = pd.merge(newData, combineRcData, on=combineKeyFieldsList, how='right')
                     # 转关键词
                     column_key = self.lineEdit_24.text().split(';')
-                    column_key_list = excel_field_mapper.update_field_names(column_key)
-                    column_key_str = ';'.join(column_key_list)
+                    # # 老的数据名称
+                    # column_key_list = excel_field_mapper.update_field_names(column_key)
+                    # column_key_str = ';'.join(column_key_list)
+                    # 新字段
+                    column_key_str = ';'.join(column_key)
                     key = column_key_str.replace(';', '\t')
                     # key = self.lineEdit_24.text().replace(';', '\t')
                     newData['combine_column_msg'] = key + '\n' + newData['combine_column_msg']
