@@ -509,6 +509,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         # planCost = revenueData['revenue'] * guiData['exchangeRate'] * 0.9 - guiData['cost']
         revenueData['planCost'] = revenueData['revenue'] * guiData['exchangeRate']
         revenueData['revenueForCny'] = revenueData['revenue'] * guiData['exchangeRate']
+
+        # 405-A2的计算公式
         if ('405' in guiData['materialCode']) and (
                 ("A2" in guiData['materialCode']) or ("D2" in guiData['materialCode']) or (
                 "D3" in guiData['materialCode'])):
@@ -550,6 +552,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * guiData[
                     'phyCostRate'] /
                 guiData['phyHourlyRate'], '.%sf' % guiData['significantDigits'])
+
+        # 441-A2计算公式
         elif ('441' in guiData['materialCode']) and ((
                 "A2" in guiData['materialCode'] or ("D2" in guiData['materialCode']) or (
                 "D3" in guiData['materialCode']))):
@@ -587,6 +591,46 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             # PHY的Item2000-Cost
             revenueData['phyLabCostAccounting'] = format(
                 (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.2 * guiData[
+                    'phyCostRate'] /
+                guiData['phyHourlyRate'], '.%sf' % guiData['significantDigits'])
+
+        # 430-A2计算公式
+        elif ('430' in guiData['materialCode']) and (
+                "A2" in guiData['materialCode']):
+            # DataB-CHM成本
+            revenueData['chmCost'] = format(
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['chmCostRate'] * 0.2, '.2f')
+            # DataB-PHY成本
+            revenueData['phyCost'] = format(
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['phyCostRate'] * 0.8, '.2f')
+            # Item1000 的revenue
+            revenueData['chmRe'] = format(revenueData['revenue'] * 0.2, '.2f')
+            # Item2000 的revenue
+            revenueData['phyRe'] = format(revenueData['revenue'] * 0.8, '.2f')
+            # plan cost总算法
+            # revenueData['chmCsCostAccounting'] = format(revenueData['planCost'] * 0.8 * (1 - 0.3  - (1 - guiData['planCostRate'] )) / guiData['csHourlyRate'], '.%sf' % guiData['significantDigits'])
+            # revenueData['chmLabCostAccounting'] = format(revenueData['planCost'] * 0.8 * 0.3 / guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
+            # revenueData['phyCsCostAccounting'] = format(revenueData['planCost'] * 0.2 * (1 - 0.3  - (1 - guiData['planCostRate'] )) / guiData['csHourlyRate'], '.%sf' % guiData['significantDigits'])
+            # revenueData['phyLabCostAccounting'] = format(revenueData['planCost'] * 0.2 * 0.3 / guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
+
+            # CS的Item1000-Cost
+            revenueData['chmCsCostAccounting'] = format(
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.2 * (
+                        1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
+                '.%sf' % guiData['significantDigits'])
+            # CHM的Item1000-Cost
+            revenueData['chmLabCostAccounting'] = format(
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.2 * guiData[
+                    'chmCostRate'] /
+                guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
+            # CS的Item2000-Cost
+            revenueData['phyCsCostAccounting'] = format(
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.8 * (
+                        1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
+                '.%sf' % guiData['significantDigits'])
+            # PHY的Item2000-Cost
+            revenueData['phyLabCostAccounting'] = format(
+                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.8 * guiData[
                     'phyCostRate'] /
                 guiData['phyHourlyRate'], '.%sf' % guiData['significantDigits'])
         else:
