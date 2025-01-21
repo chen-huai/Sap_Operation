@@ -1487,136 +1487,145 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 QMessageBox.information(self, "提示信息", "没有选中文件，请重新选择文件", QMessageBox.Yes)
                 flag = 'N'
         if flag == 'Y':
-            if self.checkBox_25.isChecked() and self.lineEdit_25.text() == '':
-                self.textBrowser_3.append('未选择Billing List文件')
-                self.textBrowser_3.append('----------------------------------')
-                app.processEvents()
-            else:
-                guiData = MyMainWindow.getAdminGuiData(self)
-                pdfOperate = PDF_Operate
-                self.textBrowser_3.append('导出文件夹：%s' % configContent['Invoice_Files_Export_URL'])
-                self.textBrowser_3.append('导出文件名称：')
-                if self.checkBox_25.isChecked():
-                    billing_df = myWin.getBillingListData()
-                i = 1
-                # 新增加log
-                log_file_name = 'log %s.csv' % time.strftime('%Y-%m-%d %H.%M.%S')
-                Log_file = '%s\\%s' % (configContent['Invoice_Files_Export_URL'], log_file_name)
-                log_obj = Logger(Log_file, ['Update', 'Invoice No', 'File Name', 'Company Name', 'CS', 'Project No', 'Customer Name', 'Client Contact Name', 'Remark'])
-                for fileUrl in fileUrls:
-                    try:
-                        log_list = {}
+            try:
+                if self.checkBox_25.isChecked() and self.lineEdit_25.text() == '':
+                    self.textBrowser_3.append('未选择Billing List文件')
+                    self.textBrowser_3.append('----------------------------------')
+                    app.processEvents()
+                else:
+                    guiData = MyMainWindow.getAdminGuiData(self)
+                    pdfOperate = PDF_Operate
+                    self.textBrowser_3.append('导出文件夹：%s' % configContent['Invoice_Files_Export_URL'])
+                    self.textBrowser_3.append('导出文件名称：')
+                    if self.checkBox_25.isChecked():
+                        billing_df = myWin.getBillingListData()
+                    i = 1
+                    # 新增加log
+                    log_file_name = 'Invoice %s.csv' % time.strftime('%Y-%m-%d %H.%M.%S')
+                    Log_file = '%s\\%s' % (configContent['Invoice_Files_Export_URL'], log_file_name)
+                    log_obj = Logger(Log_file, ['Update', 'Invoice No', 'File Name', 'Company Name', 'CS', 'Project No', 'Customer Name', 'Client Contact Name', 'Remark'])
+                    for fileUrl in fileUrls:
+                        try:
+                            log_list = {}
 
-                        self.textBrowser_3.append('第%s份文件：' % i)
-                        msg = {}
-                        msg['Invoice No'] = ''
-                        with open(fileUrl, 'rb') as pdfFile:
-                            fileCon = pdfOperate.readPdf(pdfFile)
-                            fileNum = 0
-                            for fileCon[fileNum] in fileCon:
-                                if re.match('.*P. R. China', fileCon[fileNum]) or re.match('.*P.R. China', fileCon[fileNum]) or re.match('Pleasequotethisnumberonallinquiriesandpayments', fileCon[fileNum]) or re.match('请在项目咨询或付款时提示此帐单号', fileCon[fileNum]) or re.match(
-                            'Please quote this number on all inquiries and payments.', fileCon[fileNum]):
-
-                                    if str(guiData['invoiceStsrtNum']) in fileCon[fileNum + 1]:
+                            self.textBrowser_3.append('第%s份文件：' % i)
+                            msg = {}
+                            msg['Invoice No'] = ''
+                            with open(fileUrl, 'rb') as pdfFile:
+                                fileCon = pdfOperate.readPdf(pdfFile)
+                                fileNum = 0
+                                for fileCon[fileNum] in fileCon:
+                                    if re.match('.*P. R. China', fileCon[fileNum]) or re.match('.*P.R. China', fileCon[fileNum]) or re.match('Pleasequotethisnumberonallinquiriesandpayments', fileCon[fileNum]) or re.match('请在项目咨询或付款时提示此帐单号', fileCon[fileNum]) or re.match(
+                                'Please quote this number on all inquiries and payments.', fileCon[fileNum]):
+                                        # DG还是+1，包含invoice no；NB是invoice no后是公司名称
+                                        if '487' in str(guiData['invoiceStsrtNum']):
+                                            msg['Company Name'] = fileCon[fileNum + 2].replace(
+                                                'Please quote this number on all inquiries and payments.', '').replace(
+                                                'Invoice No.', '')
+                                        else:
+                                            # XM+1，不包含invoice no；DG还是+1，包含invoice no；
+                                            msg['Company Name'] = fileCon[fileNum + 1].replace(
+                                                'Please quote this number on all inquiries and payments.', '').replace(
+                                                'Invoice No.', '')
+                                    elif re.match('请在项目咨询或付款时提示此帐单号', fileCon[fileNum]):
                                         msg['Company Name'] = fileCon[fileNum + 2].replace(
                                             'Please quote this number on all inquiries and payments.', '').replace(
                                             'Invoice No.', '')
-                                    else:
-                                        msg['Company Name'] = fileCon[fileNum + 1].replace(
-                                            'Please quote this number on all inquiries and payments.', '').replace(
-                                            'Invoice No.', '')
-                                elif re.match('请在项目咨询或付款时提示此帐单号', fileCon[fileNum]):
-                                    msg['Company Name'] = fileCon[fileNum + 2].replace(
-                                        'Please quote this number on all inquiries and payments.', '').replace(
-                                        'Invoice No.', '')
-                                elif re.match(r'%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - len(
-                                        str(guiData['invoiceStsrtNum']))),
-                                              fileCon[fileNum]):
-                                    msg['Invoice No'] = fileCon[fileNum]
-                                elif re.search(r'\d{2}.\d{3}.\d{2}.\d{4,5}', fileCon[fileNum]):
-                                    res = fileCon[fileNum].split(' ')
-                                    for each in res:
-                                        if re.search(r'\d{2}.\d{3}.\d{2}.\d{4,5}', each):
-                                            msg['Project No'] = each
-                                        elif re.search(
-                                                r'%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - len(str(guiData['invoiceStsrtNum']))),
-                                                each) and msg['Invoice No'] == '':
-                                            msg['Invoice No'] = each
-                                elif re.search(r'%s\d{%s}' % (
-                                        guiData['orderStsrtNum'],
-                                        int(guiData['orderBits']) - len(str(guiData['orderStsrtNum']))),
-                                               fileCon[fileNum]):
-                                    res = fileCon[fileNum].split(' ')
-                                    if len(res[1]) == int(guiData['orderBits']):
-                                        msg['Order No'] = res[1]
-                                elif 'Client Contact Name' in fileCon[fileNum] or 'ClientContactName' in fileCon[fileNum]:
-                                    msg['Client Contact Name'] = fileCon[fileNum].replace('Client Contact Name:', '').replace('ClientContactName:', '').replace('/', '&')
-                                fileNum += 1
+                                    elif re.match(r'%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - len(
+                                            str(guiData['invoiceStsrtNum']))),
+                                                  fileCon[fileNum]):
+                                        msg['Invoice No'] = fileCon[fileNum]
+                                    elif re.search(r'\d{2}.\d{3}.\d{2}.\d{4,5}', fileCon[fileNum]):
+                                        res = fileCon[fileNum].split(' ')
+                                        for each in res:
+                                            if re.search(r'\d{2}.\d{3}.\d{2}.\d{4,5}', each):
+                                                msg['Project No'] = each
+                                            elif re.search(
+                                                    r'%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - len(str(guiData['invoiceStsrtNum']))),
+                                                    each) and msg['Invoice No'] == '':
+                                                msg['Invoice No'] = each
+                                    elif re.search(r'%s\d{%s}' % (
+                                            guiData['orderStsrtNum'],
+                                            int(guiData['orderBits']) - len(str(guiData['orderStsrtNum']))),
+                                                   fileCon[fileNum]):
+                                        res = fileCon[fileNum].split(' ')
+                                        if len(res[1]) == int(guiData['orderBits']):
+                                            msg['Order No'] = res[1]
+                                    elif 'Client Contact Name' in fileCon[fileNum] or 'ClientContactName' in fileCon[fileNum]:
+                                        msg['Client Contact Name'] = fileCon[fileNum].replace('Client Contact Name:', '').replace('ClientContactName:', '').replace('/', '&')
+                                    fileNum += 1
 
-                            if 'Client Contact Name' not in msg:
-                                msg['Client Contact Name'] = ''
-                            if self.checkBox_25.isChecked():
-                                cs = list(billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['CS'])
-                                # NB的Company Name需要在这边操作
-                                customerName = list(
-                                    billing_df[
-                                        billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])][
-                                        'Customer Name'])
-                                if cs == []:
-                                    msg['CS'] = ''
-                                    msg['Customer Name'] = ''
+                                if 'Client Contact Name' not in msg:
+                                    msg['Client Contact Name'] = ''
+                                if self.checkBox_25.isChecked():
+                                    cs = list(billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['CS'])
+                                    # NB的Company Name需要在这边操作
+                                    customerName = list(
+                                        billing_df[
+                                            billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])][
+                                            'Customer Name'])
+                                    if cs == []:
+                                        msg['CS'] = ''
+                                        msg['Customer Name'] = ''
+                                    else:
+                                        msg['CS'] = cs[0]
+                                        msg['Customer Name'] = customerName[0]
+                                    if 'Company Name' not in msg:
+                                        msg['Company Name'] = msg['Customer Name']
+                                if msg['Invoice No'] in msg['Company Name']:
+                                    msg['Company Name'] = msg['Company Name'].replace(' %s' % msg['Invoice No'], '')
+                                pdfNameRule = guiData['pdfName'].split(' + ')
+                                outputFlieName = ''
+                                for eachName in pdfNameRule:
+                                    if outputFlieName != '':
+                                        outputFlieName += '-'
+                                    if eachName == 'Invoice No':
+                                        outputFlieName += msg['Invoice No']
+                                    elif eachName == 'Company Name':
+                                        outputFlieName += msg['Company Name']
+                                    elif eachName == 'Order No':
+                                        outputFlieName += msg['Order No']
+                                    elif eachName == 'Project No':
+                                        outputFlieName += msg['Project No']
+                                    elif eachName == 'CS':
+                                        outputFlieName += msg['CS']
+                                    elif eachName == 'Client Contact Name':
+                                        outputFlieName += msg['Client Contact Name']
+                                outputFlie = outputFlieName + '.pdf'
+                                log_list['Invoice No'] = msg['Invoice No']
+                                log_list['Company Name'] = msg['Company Name']
+                                log_list['Project No'] = msg['Project No']
+                                log_list['Client Contact Name'] = msg['Client Contact Name']
+                                log_list['File Name'] = outputFlie
+                                if 'CS' in msg:
+                                    log_list['CS'] = msg['CS']
+                                    log_list['Customer Name'] = msg['Customer Name']
                                 else:
-                                    msg['CS'] = cs[0]
-                                    msg['Customer Name'] = customerName[0]
-                                if 'Company Name' not in msg:
-                                    msg['Company Name'] = msg['Customer Name']
-                            if msg['Invoice No'] in msg['Company Name']:
-                                msg['Company Name'] = msg['Company Name'].replace(' %s' % msg['Invoice No'], '')
-                            pdfNameRule = guiData['pdfName'].split(' + ')
-                            outputFlieName = ''
-                            for eachName in pdfNameRule:
-                                if outputFlieName != '':
-                                    outputFlieName += '-'
-                                if eachName == 'Invoice No':
-                                    outputFlieName += msg['Invoice No']
-                                elif eachName == 'Company Name':
-                                    outputFlieName += msg['Company Name']
-                                elif eachName == 'Order No':
-                                    outputFlieName += msg['Order No']
-                                elif eachName == 'Project No':
-                                    outputFlieName += msg['Project No']
-                                elif eachName == 'CS':
-                                    outputFlieName += msg['CS']
-                                elif eachName == 'Client Contact Name':
-                                    outputFlieName += msg['Client Contact Name']
-                            outputFlie = outputFlieName + '.pdf'
-                            log_list['Invoice No'] = msg['Invoice No']
-                            log_list['Company Name'] = msg['Company Name']
-                            log_list['Project No'] = msg['Project No']
-                            log_list['Client Contact Name'] = msg['Client Contact Name']
-                            log_list['File Name'] = outputFlie
-                            if 'CS' in msg:
-                                log_list['CS'] = msg['CS']
-                                log_list['Customer Name'] = msg['Customer Name']
-                            else:
-                                log_list['CS'] = ''
-                                log_list['Customer Name'] = ''
-                            if 'Remark' in msg:
-                                log_list['Remark'] = msg['Remark']
-                            else:
-                                log_list['Remark'] = ''
-                            log_obj.log(log_list)
-                            # outputFlie = msg['Invoice No'] + '-' + msg['Company Name'] + '.pdf'
-                            pdfOperate.saveAs(fileUrl, '%s\\%s' % (configContent['Invoice_Files_Export_URL'], outputFlie))
-                        self.textBrowser_3.append('%s' % outputFlie)
-                        app.processEvents()
-                    except Exception as errorMsg:
-                        # self.textBrowser_3.append("<font color='red'>第%s份文件：</font>" % i)
-                        self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
-                        self.textBrowser_3.append("<font color='red'>出错的文件：%s </font>" % fileUrl)
-                    i += 1
-                log_obj.save_log_to_csv()
-                self.textBrowser_3.append('----------------------------------')
+                                    log_list['CS'] = ''
+                                    log_list['Customer Name'] = ''
+                                if 'Remark' in msg:
+                                    log_list['Remark'] = msg['Remark']
+                                else:
+                                    log_list['Remark'] = ''
+                                log_obj.log(log_list)
+                                # outputFlie = msg['Invoice No'] + '-' + msg['Company Name'] + '.pdf'
+                                pdfOperate.saveAs(fileUrl, '%s\\%s' % (configContent['Invoice_Files_Export_URL'], outputFlie))
+                            self.textBrowser_3.append('%s' % outputFlie)
+                            app.processEvents()
+                        except Exception as errorMsg:
+                            # self.textBrowser_3.append("<font color='red'>第%s份文件：</font>" % i)
+                            self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
+                            self.textBrowser_3.append("<font color='red'>出错的文件：%s </font>" % fileUrl)
+                        i += 1
+                    log_obj.save_log_to_csv()
+                    os.startfile(Log_file)
+                    os.startfile(configContent['Invoice_Files_Export_URL'])
+                    self.textBrowser_3.append('生成的数据文件：%s' % Log_file)
+                    self.textBrowser_3.append('----------------------------------')
+            except Exception as errorMsg:
+                # self.textBrowser_3.append("<font color='red'>第%s份文件：</font>" % i)
+                self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
+                app.processEvents()
 
     # 获取电子发票文件
     def getEleInvoiceFiles(self):
@@ -1791,8 +1800,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 invoiceFile = pd.DataFrame(fileMsg)
                 invoiceFile['ODMRe - Re'] = invoiceFile['ODM Revenue'] - invoiceFile['Revenue']
                 invoiceFile['判断客户名称是否正确'] = pd.Series(invoiceFile['Company Name']==invoiceFile['ODM Customer Name'])
-                filePath = '%s/invoice %s.csv' % (configContent['Ele_Invoice_Files_Export_URL'], today)
+                filePath = '%s/Electronic invoice %s.csv' % (configContent['Ele_Invoice_Files_Export_URL'], today)
                 invoiceFile.to_csv(filePath, index=False, mode='a', encoding='utf_8_sig')
+                os.startfile(filePath)
+                os.startfile(filePath)
                 self.textBrowser_3.append('已生成数据文件：%s' % filePath)
                 self.textBrowser_3.append('----------------------------------')
                 os.startfile(configContent['Ele_Invoice_Files_Export_URL'])
