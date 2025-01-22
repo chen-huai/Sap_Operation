@@ -966,7 +966,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             break
                         else:
                             materialCode = fileDataList['Material Code'][n]
-                        self.lineEdit_2.setText(fileDataList['Project No.'][n])
+                        self.lineEdit_2.setText(str(fileDataList['Project No.'][n]))
                         self.lineEdit_3.setText(str(int(fileDataList['GPC Glo. Par. Code'][n])))
                         self.textBrowser.append("No.:%s" % (n + 1))
                         # if pd.isnull(fileDataList['SAP No.'][n]):
