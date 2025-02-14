@@ -34,7 +34,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.theme_manager = ThemeManager(QApplication.instance())
         self.init_theme_action()
 
-        self.setWindowTitle("主题化应用")
         self.setGeometry(100, 100, 300, 200)
 
         self.theme_manager = ThemeManager(QApplication.instance())

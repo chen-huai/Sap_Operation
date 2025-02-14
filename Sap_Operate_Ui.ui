@@ -7,8 +7,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1283</width>
-    <height>943</height>
+    <width>1123</width>
+    <height>754</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -44,7 +44,7 @@
         <item row="1" column="0">
          <widget class="QGroupBox" name="groupBox_9">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -136,12 +136,25 @@
         </item>
         <item row="2" column="0">
          <widget class="QGroupBox" name="groupBox_6">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="title">
            <string>Messages</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_6">
            <item row="0" column="0">
-            <widget class="QTextBrowser" name="textBrowser_2"/>
+            <widget class="QTextBrowser" name="textBrowser_2">
+             <property name="minimumSize">
+              <size>
+               <width>200</width>
+               <height>230</height>
+              </size>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -686,15 +699,15 @@
            </sizepolicy>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="page_3">
            <property name="geometry">
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>585</width>
-             <height>687</height>
+             <width>538</width>
+             <height>578</height>
             </rect>
            </property>
            <attribute name="label">
@@ -1196,8 +1209,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>352</width>
-             <height>496</height>
+             <width>538</width>
+             <height>580</height>
             </rect>
            </property>
            <attribute name="label">
@@ -1515,7 +1528,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Amount</string>
+               <string>Untaxed amount</string>
               </property>
              </widget>
             </item>
@@ -1552,7 +1565,7 @@
                </sizepolicy>
               </property>
               <property name="text">
-               <string>Amount with VAT</string>
+               <string>Tax-inclusive amount</string>
               </property>
              </widget>
             </item>
@@ -1589,7 +1602,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Cost</string>
+               <string>Total Subcon Cost</string>
               </property>
              </widget>
             </item>
@@ -2306,8 +2319,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1283</width>
-     <height>29</height>
+     <width>1123</width>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
