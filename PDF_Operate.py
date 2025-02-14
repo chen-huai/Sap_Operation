@@ -21,6 +21,25 @@ class PDF_Operate():
         with open(outputFile, 'wb') as fp2:
             fp2.write(b1)
 
+    def sanitize_filename(filename):
+        """
+        将文件名中的非法字符替换为下划线。
+
+        Parameters:
+        filename (str): 需要处理的文件名字符串。
+
+        Returns:
+        str: 替换非法字符后的文件名字符串。
+        """
+        # 定义 Windows 文件名中非法的字符
+        invalid_chars = '<>:"/\\|?*'
+
+        # 替换非法字符为下划线
+        for char in invalid_chars:
+            filename = filename.replace(char, '')
+
+        return filename
+
 # if __name__ == '__main__':
 #     dirUrl = r"C:\Users\chen-fr\Desktop\临时文件\invoice"  # 文件夹目录
 #     files = os.listdir(dirUrl)  # 得到文件夹下的所有文件名称

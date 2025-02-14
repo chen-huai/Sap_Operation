@@ -1631,6 +1631,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                     elif eachName == 'Client Contact Name':
                                         outputFlieName += msg['Client Contact Name']
                                 outputFlie = outputFlieName + '.pdf'
+                                # 替换非法字符后的文件名字符串
+                                outputFlie = PDF_Operate.sanitize_filename(outputFlie)
                                 log_list['Invoice No'] = msg['Invoice No']
                                 log_list['Company Name'] = msg['Company Name']
                                 log_list['Project No'] = msg['Project No']
@@ -1648,7 +1650,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                     log_list['Remark'] = ''
                                 log_obj.log(log_list)
                                 # outputFlie = msg['Invoice No'] + '-' + msg['Company Name'] + '.pdf'
-                                pdfOperate.saveAs(fileUrl, '%s\\%s' % (configContent['Invoice_Files_Export_URL'], outputFlie))
+                                pdfOperate.saveAs(r'%s' % fileUrl, '%s\\%s' % (configContent['Invoice_Files_Export_URL'], outputFlie))
                             self.textBrowser_3.append('%s' % outputFlie)
                             app.processEvents()
                         except Exception as errorMsg:
