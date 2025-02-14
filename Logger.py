@@ -18,7 +18,7 @@ class Logger:
         self.log_df.loc[len(self.log_df)] = log_data
 
     def save_log_to_excel(self):
-        self.log_df.to_excel(self.log_file, index=False, encoding='utf_8_sig')
+        self.log_df.to_excel(self.log_file, index=False, merge_cells=False)
 
 # # 创建Logger对象，传递列名作为参数
 # logger = Logger("log.csv", ["Timestamp", "Message", "Value"])
