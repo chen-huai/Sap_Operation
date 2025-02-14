@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QApplication
 from qt_material import apply_stylesheet, list_themes
+import random
 
 class ThemeManager:
     def __init__(self, app):
@@ -29,6 +30,11 @@ class ThemeManager:
     def get_available_themes(self):
         return self.themes
 
+    def set_random_theme(self):
+        """随机设置一个主题"""
+        random_theme = random.choice(self.themes)
+        self.set_theme(random_theme)
+
     def _adjust_button_style(self):
         if "light" in self.current_theme:
             self.app.setStyleSheet(self.app.styleSheet() + """
@@ -38,6 +44,24 @@ class ThemeManager:
                 QPushButton[enabled="false"] {
                     color: #808080;
                 }
+                QDoubleSpinBox {
+                    color: black;
+                }
+                QSpinBox {
+                    color: black;
+                }
+                QLineEdit {
+                    color: black;
+                }
+                QComboBox {
+                    color: black;
+                }
+                QComboBox QAbstractItemView {
+                    color: black;
+                }
+                QTextBrowser {
+                    color: black;
+                }
             """)
         else:
             self.app.setStyleSheet(self.app.styleSheet() + """
@@ -46,5 +70,23 @@ class ThemeManager:
                 }
                 QPushButton[enabled="false"] {
                     color: #808080;
+                }
+                QDoubleSpinBox {
+                    color: white;
+                }
+                QSpinBox {
+                    color: white;
+                }
+                QLineEdit {
+                    color: white;
+                }
+                QComboBox {
+                    color: white;
+                }
+                QComboBox QAbstractItemView {
+                    color: white;
+                }
+                QTextBrowser {
+                    color: white;
                 }
             """)
