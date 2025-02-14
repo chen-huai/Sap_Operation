@@ -17,8 +17,8 @@ class Logger:
         # self.log_df.loc[len(self.log_df)] 指定了一个新行，其索引等于当前DataFrame的长度
         self.log_df.loc[len(self.log_df)] = log_data
 
-    def save_log_to_csv(self):
-        self.log_df.to_csv(self.log_file, index=False, encoding='utf_8_sig')
+    def save_log_to_excel(self):
+        self.log_df.to_excel(self.log_file, index=False, encoding='utf_8_sig')
 
 # # 创建Logger对象，传递列名作为参数
 # logger = Logger("log.csv", ["Timestamp", "Message", "Value"])

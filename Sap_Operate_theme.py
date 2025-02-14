@@ -105,7 +105,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         # toolbar.addAction(theme_action)
 
     def toggle_theme(self):
-        self.theme_manager.toggle_theme()
+        self.theme_manager.set_random_theme()
         # 可以在这里添加其他需要在主题切换后更新的UI元素
 
     def getConfig(self):
@@ -947,9 +947,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 # log文件
                 logFileUrl = '%s/log' % filepath
                 MyMainWindow.createFolder(self, logFileUrl)
-                csvFileType = 'csv'
+                excelFileType = 'xlsx'
                 logFileName = 'log'
-                logDataPath = MyMainWindow.getFileName(self, logFileUrl, logFileName, csvFileType)
+                logDataPath = MyMainWindow.getFileName(self, logFileUrl, logFileName, excelFileType)
 
                 # 获取最终ODM数据
                 newData = Get_Data()
@@ -1067,7 +1067,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         logFile.loc[logIndex, 'Proforma No.'] = logMsg['Proforma No.']
                         nowDate = datetime.datetime.today()
                         logFile.loc[logIndex, 'Update Time'] = nowDate
-                        logDataFile = logFile.to_csv('%s' % logDataPath, encoding='utf_8_sig')
+                        logDataFile = logFile.to_excel('%s' % logDataPath)
                         self.lineEdit_9.setText(logDataPath)
                         if n < len(fileDataList['Amount']) - 1:
                             if self.checkBox_5.isChecked():
@@ -1175,14 +1175,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 newFolderUrl = '%s/%s' % (filepath, today)
                 newFolder = File_Opetate()
                 newFolder.createFolder(newFolderUrl)
-                csvFileType = 'csv'
+                ExcelFileType = 'xlsx'
                 if generalData.empty:
                     pass
                 else:
                     invoiceFileName = '1.正常合并'
-                    invoiceFilePath = newFolder.getFileName(newFolderUrl, invoiceFileName, csvFileType)
+                    invoiceFilePath = newFolder.getFileName(newFolderUrl, invoiceFileName, ExcelFileType)
                     self.textBrowser_2.append('1:%s' % invoiceFilePath)
-                    generalFile = generalData.to_csv('%s' % invoiceFilePath, encoding='utf_8_sig')
+                    generalFile = generalData.to_excel('%s' % invoiceFilePath)
                 specialData = newData.fileData[newData.fileData["Invoices' name (Chinese)"].isin(invoiceName)]
                 fileNum = 2
                 for each in specialInvoiceMsg:
@@ -1192,9 +1192,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         pass
                     else:
                         invoiceFileName = str(fileNum) + '.' + each
-                        invoiceFilePath = newFolder.getFileName(newFolderUrl, invoiceFileName, csvFileType)
+                        invoiceFilePath = newFolder.getFileName(newFolderUrl, invoiceFileName, ExcelFileType)
                         self.textBrowser_2.append('%s:%s' % (fileNum, invoiceFilePath))
-                        specialFile = eachSpecialData.to_csv('%s' % invoiceFilePath, encoding='utf_8_sig')
+                        specialFile = eachSpecialData.to_excel('%s' % invoiceFilePath)
                         fileNum += 1
                 os.startfile(newFolderUrl)
                 self.textBrowser_2.append('处理好特殊数据')
@@ -1265,9 +1265,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     if self.checkBox_17.isChecked() or self.checkBox_18.isChecked():
                         newData.fileData[column_name] = newData.fileData[self.comboBox_5.currentText()].str.replace('nan', '')
                         newData.fileData[column_name] = newData.fileData[self.comboBox_5.currentText()].str.replace('XXXXXX', '')
-                    csvFileType = 'xlsx'
+                    ExcelFileType = 'xlsx'
                     odmFileName = '添加信息后的数据'
-                    odmDataPath = MyMainWindow.getFileName(self, filepath, odmFileName, csvFileType)
+                    odmDataPath = MyMainWindow.getFileName(self, filepath, odmFileName, ExcelFileType)
                     # newData.fileData = newData.fileData.applymap(lambda x: x.strip('"') if isinstance(x, str) else x)
                     odmDataFile = newData.fileData.to_excel('%s' % (odmDataPath))
                     self.textBrowser_2.append('已完成该文件的信息添加')
@@ -1321,10 +1321,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 # 保存原始数据
                 fileUrl = '%s/%s' % (filepath, today)
                 MyMainWindow.createFolder(self, fileUrl)
-                csvFileType = 'csv'
+                ExcelFileType = 'xlsx'
                 odmFileName = '1.ODM Raw Data'
-                odmDataPath = MyMainWindow.getFileName(self, fileUrl, odmFileName, csvFileType)
-                odmDataFile = newData.fileData.to_csv('%s' % (odmDataPath), encoding='utf_8_sig')
+                odmDataPath = MyMainWindow.getFileName(self, fileUrl, odmFileName, ExcelFileType)
+                odmDataFile = newData.fileData.to_excel('%s' % (odmDataPath))
                 # 数据透视并保存
                 combinekeyFields = self.lineEdit_15.text()
                 combineKeyFieldsList = combinekeyFields.split(';')
@@ -1335,8 +1335,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 valusKey = ['Amount', 'Amount with VAT', 'Total Cost', 'Revenue\n(RMB)']
                 pivotTable = newData.pivotTable(pivotTableKey, valusKey)
                 combineFileName = '2.Combine'
-                combineFileNamePath = MyMainWindow.getFileName(self, fileUrl, combineFileName, csvFileType)
-                combineFile = pivotTable.to_csv('%s' % (combineFileNamePath), encoding='utf_8_sig')
+                combineFileNamePath = MyMainWindow.getFileName(self, fileUrl, combineFileName, ExcelFileType)
+                combineFile = pivotTable.to_excel('%s' % (combineFileNamePath))
                 # 读取数据透视数据
                 combineData = Get_Data()
                 combineData = combineData.getFileData(combineFileNamePath)
@@ -1376,17 +1376,19 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 # onData = ['CS', 'Sales', 'Currency', 'Material Code', "Invoices' name (Chinese)", 'Buyer(GPC)', 'Month', 'Exchange Rate']
                 mergeData = pd.merge(combineData, newData, on=onData, how='right')
                 mergeDataName = '3.Merge to Project'
-                mergeFileNamePath = MyMainWindow.getFileName(self, fileUrl, mergeDataName, csvFileType)
-                mergeFile = mergeData.to_csv('%s' % (mergeFileNamePath), encoding='utf_8_sig')
+                mergeFileNamePath = MyMainWindow.getFileName(self, fileUrl, mergeDataName, ExcelFileType)
+                mergeFile = mergeData.to_excel('%s' % (mergeFileNamePath))
                 self.lineEdit_8.setText(mergeFileNamePath)
                 # merge数据去重得到最终数据
                 mergeData.drop_duplicates(subset=pivotTableKey, keep='first', inplace=True)
+                # mergeData['Project No.'] = mergeData['Project No.'].astype(str)
+                # mergeData['Project No.'] = mergeData['Project No.'].apply(lambda x: '{:.8f}'.format(float(x)))
                 finalDataName = '4.final'
-                finalFileNamePath = MyMainWindow.getFileName(self, fileUrl, finalDataName, csvFileType)
+                finalFileNamePath = MyMainWindow.getFileName(self, fileUrl, finalDataName, ExcelFileType)
                 ascendingList = [True] * len(combineKeyFieldsList)
                 mergeData.sort_values(by=combineKeyFieldsList, axis=0, ascending=ascendingList, inplace=True)
                 # mergeData.sort_values(by=["Invoices' name (Chinese)", 'CS', 'Sales', 'Currency', 'Material Code', 'Buyer(GPC)', 'Month', 'Exchange Rate'], axis=0, ascending=[True, True, True, True, True, True, True, True], inplace=True)
-                finalFile = mergeData.to_csv('%s' % (finalFileNamePath), encoding='utf_8_sig')
+                finalFile = mergeData.to_excel('%s' % (finalFileNamePath))
                 self.textBrowser_2.append('ODM原始数据：%s' % odmDataPath)
                 self.textBrowser_2.append('数据透视数据：%s' % combineFileNamePath)
                 self.textBrowser_2.append('添加Project No.的数据：%s' % mergeFileNamePath)
@@ -1416,7 +1418,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             logFileUrl = self.lineEdit_9.text()
             (logFilepath, logFilename) = os.path.split(logFileUrl)
             if combineFileUrl and logFileUrl:
-                csvFileType = 'csv'
+                ExcelFileType = 'xlsx'
                 fileUrl = combineFilepath
                 combineFile = Get_Data()
                 combineFile.getFileData(combineFileUrl)
@@ -1445,8 +1447,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 mergeData.sort_values(by=leaveDataList, axis=0, ascending=ascendingList, inplace=True)
 
                 mergeDataName = '5.Order Merge Project'
-                mergeFileNamePath = MyMainWindow.getFileName(self, fileUrl, mergeDataName, csvFileType)
-                mergeFile = mergeData.to_csv('%s' % (mergeFileNamePath), encoding='utf_8_sig')
+                mergeFileNamePath = MyMainWindow.getFileName(self, fileUrl, mergeDataName, ExcelFileType)
+                mergeFile = mergeData.to_excel('%s' % (mergeFileNamePath))
                 self.textBrowser_2.append('Order NO 与 Project No合并的数据：%s' % mergeFileNamePath)
                 self.textBrowser_2.append(
                     'Order Merge Project 数据,根据Order No数据透视算Amount with VAT的平均数值与ODM导出数据算Amount with VAT总值比较大小，有差说明错误。')
@@ -1538,7 +1540,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         billing_df = myWin.getBillingListData()
                     i = 1
                     # 新增加log
-                    log_file_name = 'Invoice %s.csv' % time.strftime('%Y-%m-%d %H.%M.%S')
+                    log_file_name = 'Invoice %s.xlsx' % time.strftime('%Y-%m-%d %H.%M.%S')
                     Log_file = '%s\\%s' % (configContent['Invoice_Files_Export_URL'], log_file_name)
                     log_obj = Logger(Log_file, ['Update', 'Invoice No', 'File Name', 'Company Name', 'CS', 'Project No', 'Customer Name', 'Client Contact Name', 'Remark'])
                     for fileUrl in fileUrls:
@@ -1654,7 +1656,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
                             self.textBrowser_3.append("<font color='red'>出错的文件：%s </font>" % fileUrl)
                         i += 1
-                    log_obj.save_log_to_csv()
+                    log_obj.save_log_to_excel()
                     os.startfile(Log_file)
                     os.startfile(configContent['Invoice_Files_Export_URL'])
                     self.textBrowser_3.append('生成的数据文件：%s' % Log_file)
@@ -1837,8 +1839,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 invoiceFile = pd.DataFrame(fileMsg)
                 invoiceFile['ODMRe - Re'] = invoiceFile['ODM Revenue'] - invoiceFile['Revenue']
                 invoiceFile['判断客户名称是否正确'] = pd.Series(invoiceFile['Company Name']==invoiceFile['ODM Customer Name'])
-                filePath = '%s/Electronic invoice %s.csv' % (configContent['Ele_Invoice_Files_Export_URL'], today)
-                invoiceFile.to_csv(filePath, index=False, mode='a', encoding='utf_8_sig')
+                filePath = '%s/Electronic invoice %s.xlsx' % (configContent['Ele_Invoice_Files_Export_URL'], today)
+                invoiceFile.to_excel(filePath, index=False, mode='a')
                 os.startfile(filePath)
                 os.startfile(filePath)
                 self.textBrowser_3.append('已生成数据文件：%s' % filePath)
@@ -1850,7 +1852,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         fileUrl = self.lineEdit_6.text()
         (filepath, filename) = os.path.split(fileUrl)
         if fileUrl:
-            log_file_name = 'log %s.csv' % time.strftime('%Y-%m-%d %H.%M.%S')
+            log_file_name = 'log %s.xlsx' % time.strftime('%Y-%m-%d %H.%M.%S')
             Log_file = '%s\\%s' % (filepath, log_file_name)
             log_obj = Logger(Log_file, ['Update', 'Order No', 'Type', 'Remark'])
             newData = Get_Data()
@@ -1881,7 +1883,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 except:
                     self.textBrowser.append("<font color='red'>该Order: %s 有问题</font>" % orderNo)
                     app.processEvents()
-            log_obj.save_log_to_csv()
+            log_obj.save_log_to_excel()
             self.textBrowser.append('%s' % Log_file)
             app.processEvents()
             os.startfile(Log_file)
