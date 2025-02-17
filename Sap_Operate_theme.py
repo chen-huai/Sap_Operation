@@ -1841,8 +1841,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 invoiceFile = pd.DataFrame(fileMsg)
                 invoiceFile['ODMRe - Re'] = invoiceFile['ODM Revenue'] - invoiceFile['Revenue']
                 invoiceFile['判断客户名称是否正确'] = pd.Series(invoiceFile['Company Name']==invoiceFile['ODM Customer Name'])
-                filePath = '%s/Electronic invoice %s.xlsx' % (configContent['Ele_Invoice_Files_Export_URL'], today)
-                invoiceFile.to_excel(filePath, index=False, mode='a', merge_cells=False)
+                now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+                filePath = '%s/Electronic invoice %s.xlsx' % (configContent['Ele_Invoice_Files_Export_URL'], now)
+                invoiceFile.to_excel(filePath, index=False, merge_cells=False)
                 os.startfile(filePath)
                 os.startfile(filePath)
                 self.textBrowser_3.append('已生成数据文件：%s' % filePath)
