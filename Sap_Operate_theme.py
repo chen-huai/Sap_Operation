@@ -8,7 +8,7 @@ import csv
 import numpy as np
 import win32com.client
 import datetime
-# import chicon  # 引用图标
+import chicon  # 引用图标
 # from PyQt5 import QtCore, QtGui, QtWidgets
 # from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QVBoxLayout, QPushButton, QAction
@@ -1707,148 +1707,161 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.textBrowser_3.append('----------------------------------')
                 app.processEvents()
             else:
-                pdfOperate = PDF_Operate
-                adminGuiData = MyMainWindow.getAdminGuiData(self)
-                self.textBrowser_3.append('导出文件夹：%s' % configContent['Ele_Invoice_Files_Export_URL'])
-                self.textBrowser_3.append('导出文件名称：')
-                if self.checkBox_25.isChecked():
-                    billing_df = myWin.getBillingListData()
-                i = 1
-                fileMsg = {}
-                fileMsg['id'] = []
-                fileMsg['Company Name'] = []
-                fileMsg['Invoice No'] = []
-                fileMsg['File Name'] = []
-                fileMsg['Order No'] = []
-                fileMsg['Revenue'] = []
-                fileMsg['fapiao'] = []
-                fileMsg['update'] = []
-                fileMsg['path'] = []
-                fileMsg['CS'] = []
-                fileMsg['ODM Revenue'] = []
-                fileMsg['ODM Customer Name'] = []
+                log_file_name = 'Electronic Invoice %s.xlsx' % time.strftime('%Y-%m-%d %H.%M.%S')
+                log_file = '%s\\%s' % (configContent['Ele_Invoice_Files_Export_URL'], log_file_name)
+                log_obj = Logger(log_file, [
+                    'Update',
+                    'id',
+                    'Company Name',
+                    'Invoice No',
+                    'File Name',
+                    'Order No',
+                    'Revenue',
+                    'fapiao',
+                    'update',
+                    'path',
+                    'CS',
+                    'ODM Revenue',
+                    'ODM Customer Name',
+                    'ODMRe - Re',
+                    '判断客户名称是否正确'
+                ])
+                try:
+                    pdfOperate = PDF_Operate
+                    adminGuiData = MyMainWindow.getAdminGuiData(self)
+                    self.textBrowser_3.append('导出文件夹：%s' % configContent['Ele_Invoice_Files_Export_URL'])
+                    self.textBrowser_3.append('导出文件名称：')
+                    if self.checkBox_25.isChecked():
+                        billing_df = myWin.getBillingListData()
+                    i = 1
 
-                for fileUrl in fileUrls:
-                    try:
-                        self.textBrowser_3.append('第%s份文件：' % i)
-                        msg = {}
-                        with open(fileUrl, 'rb') as pdfFile:
-                            fileCon = pdfOperate.readPdf(pdfFile)
-                            fileNum = 0
+                    for fileUrl in fileUrls:
+                        try:
+                            self.textBrowser_3.append('第%s份文件：' % i)
+                            msg = {}
+                            with open(fileUrl, 'rb') as pdfFile:
+                                fileCon = pdfOperate.readPdf(pdfFile)
+                                fileNum = 0
 
-                            # 获取文件内容
-                            for fileCon[fileNum] in fileCon:
-                                if '名称：' in fileCon[fileNum]:
-                                    msg['Company Name'] = fileCon[fileNum].split('：')[1].split(' ')[0]
-                                elif '（小写）' in fileCon[fileNum]:
-                                    msg['Revenue'] = fileCon[fileNum].split('（小写）')[1]
-                                elif '发票号码：' in fileCon[fileNum]:
-                                    msg['fapiao'] = str(fileCon[fileNum].split('：')[1])
-                                elif re.search(r'%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'],
-                                                             int(adminGuiData['eleInvoiceBits']) - len(
-                                                                 str(adminGuiData['eleInvoiceStsrtNum']))),
-                                               fileCon[fileNum]):
-                                    text = fileCon[fileNum].split('/')
-                                    try:
-                                        msg['Invoice No'] = int(text[-1])
-                                    except :
-                                        msg['Invoice No'] = re.sub(r'[^0-9]', '', text[-1])
-                                elif re.search(r'%s\d{%s}' % (adminGuiData['eleOrderStsrtNum'],
-                                                             int(adminGuiData['eleOrderBits']) - len(
-                                                                 str(adminGuiData['eleOrderStsrtNum']))),
-                                               fileCon[fileNum]):
-                                    text = fileCon[fileNum].split('/')
-                                    try:
-                                        msg['Order No'] = text[1]
-                                    except:
-                                        msg['Order No'] = ''
-                                fileNum += 1
-                            if 'Order No' not in msg:
-                                msg['Order No'] = ''
-                            if 'Invoice No' not in msg:
-                                msg['Invoice No'] = re.findall(r'%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'],
-                                                                             int(adminGuiData['eleInvoiceBits']) - len(
-                                                                                 str(adminGuiData['eleInvoiceStsrtNum']))),
-                                                               fileUrl)[0]
-                            if self.checkBox_25.isChecked():
-                                # pandas中有int32和int64的格式区别
-                                cs = list(
-                                    billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['CS'])
-                                odmRe = list(
-                                    billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['求和项:Amount with VAT'])
-                                customerName = list(
-                                    billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['Customer Name'])
-                                if cs == []:
+                                # 获取文件内容
+                                for fileCon[fileNum] in fileCon:
+                                    if '名称：' in fileCon[fileNum]:
+                                        msg['Company Name'] = fileCon[fileNum].split('：')[1].split(' ')[0]
+                                    elif '（小写）' in fileCon[fileNum]:
+                                        msg['Revenue'] = fileCon[fileNum].split('（小写）')[1]
+                                    elif '发票号码：' in fileCon[fileNum]:
+                                        msg['fapiao'] = str(fileCon[fileNum].split('：')[1])
+                                    elif re.search(r'%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'],
+                                                                 int(adminGuiData['eleInvoiceBits']) - len(
+                                                                     str(adminGuiData['eleInvoiceStsrtNum']))),
+                                                   fileCon[fileNum]):
+                                        text = fileCon[fileNum].split('/')
+                                        try:
+                                            msg['Invoice No'] = int(text[-1])
+                                        except :
+                                            msg['Invoice No'] = re.sub(r'[^0-9]', '', text[-1])
+                                    elif re.search(r'%s\d{%s}' % (adminGuiData['eleOrderStsrtNum'],
+                                                                 int(adminGuiData['eleOrderBits']) - len(
+                                                                     str(adminGuiData['eleOrderStsrtNum']))),
+                                                   fileCon[fileNum]):
+                                        text = fileCon[fileNum].split('/')
+                                        try:
+                                            msg['Order No'] = text[1]
+                                        except:
+                                            msg['Order No'] = ''
+                                    fileNum += 1
+                                if 'Order No' not in msg:
+                                    msg['Order No'] = ''
+                                if 'Invoice No' not in msg:
+                                    msg['Invoice No'] = re.findall(r'%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'],
+                                                                                 int(adminGuiData['eleInvoiceBits']) - len(
+                                                                                     str(adminGuiData['eleInvoiceStsrtNum']))),
+                                                                   fileUrl)[0]
+                                if self.checkBox_25.isChecked():
+                                    # pandas中有int32和int64的格式区别
+                                    cs = list(
+                                        billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['CS'])
+                                    odmRe = list(
+                                        billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['求和项:Amount with VAT'])
+                                    customerName = list(
+                                        billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['Customer Name'])
+                                    if cs == []:
+                                        msg['CS'] = ''
+                                        msg['odmRe'] = 0.00
+                                        msg['Customer Name'] = ''
+                                    else:
+                                        msg['CS'] = cs[0]
+                                        msg['odmRe'] = odmRe[0]
+                                        msg['Customer Name'] = customerName[0]
+                                else:
                                     msg['CS'] = ''
                                     msg['odmRe'] = 0.00
                                     msg['Customer Name'] = ''
-                                else:
-                                    msg['CS'] = cs[0]
-                                    msg['odmRe'] = odmRe[0]
-                                    msg['Customer Name'] = customerName[0]
-                            else:
-                                msg['CS'] = ''
-                                msg['odmRe'] = 0.00
-                                msg['Customer Name'] = ''
-                            # 文件命名规则
-                            pdfNameRule = adminGuiData['fapiaoName'].split(' + ')
-                            outputFlieName = ''
-                            for eachName in pdfNameRule:
-                                if outputFlieName != '':
-                                    outputFlieName += '-'
-                                if eachName == 'Invoice No':
-                                    outputFlieName += str(msg['Invoice No'])
-                                elif eachName == 'Company Name':
-                                    outputFlieName += msg['Company Name']
-                                elif eachName == 'Order No':
-                                    outputFlieName += str(msg['Order No'])
-                                elif eachName == 'FaPiao No':
-                                    outputFlieName += msg['fapiao']
-                                elif eachName == 'Revenue':
-                                    outputFlieName += msg['Revenue']
-                                elif eachName == 'CS':
-                                    outputFlieName += msg['CS']
+                                # 文件命名规则
+                                pdfNameRule = adminGuiData['fapiaoName'].split(' + ')
+                                outputFlieName = ''
+                                for eachName in pdfNameRule:
+                                    if outputFlieName != '':
+                                        outputFlieName += '-'
+                                    if eachName == 'Invoice No':
+                                        outputFlieName += str(msg['Invoice No'])
+                                    elif eachName == 'Company Name':
+                                        outputFlieName += msg['Company Name']
+                                    elif eachName == 'Order No':
+                                        outputFlieName += str(msg['Order No'])
+                                    elif eachName == 'FaPiao No':
+                                        outputFlieName += msg['fapiao']
+                                    elif eachName == 'Revenue':
+                                        outputFlieName += msg['Revenue']
+                                    elif eachName == 'CS':
+                                        outputFlieName += msg['CS']
 
-                            # outputFlieName = msg['Company Name'] + '-' + msg['Revenue'] + '-' + msg['fapiao']
-                            outputFlie = outputFlieName + '.pdf'
-                            exportUrl = configContent['Ele_Invoice_Files_Export_URL']
-                            newFolder = File_Opetate()
-                            newFolder.createFolder(exportUrl)
-                            pdfOperate.saveAs(fileUrl, '%s\\%s' % (exportUrl, outputFlie))
-                            fileMsg['id'].append(i)
-                            fileMsg['Company Name'].append(msg['Company Name'])
-                            fileMsg['Invoice No'].append(msg['Invoice No'])
-                            fileMsg['File Name'].append(outputFlie)
-                            fileMsg['Order No'].append(msg['Order No'])
-                            fileMsg['Revenue'].append(float(msg['Revenue'].replace('¥', '')))
-                            fileMsg['fapiao'].append('发票号码:' + msg['fapiao'])
-                            fileMsg['update'].append(time.strftime('%Y-%m-%d %H.%M.%S'))
-                            fileMsg['path'].append('%s\\%s' % (exportUrl, outputFlie))
-                            fileMsg['CS'].append(msg['CS'])
-                            fileMsg['ODM Customer Name'].append(msg['Customer Name'])
-                            fileMsg['ODM Revenue'].append(msg['odmRe'])
+                                # outputFlieName = msg['Company Name'] + '-' + msg['Revenue'] + '-' + msg['fapiao']
+                                outputFlie = outputFlieName + '.pdf'
+                                exportUrl = configContent['Ele_Invoice_Files_Export_URL']
+                                newFolder = File_Opetate()
+                                newFolder.createFolder(exportUrl)
+                                pdfOperate.saveAs(fileUrl, '%s\\%s' % (exportUrl, outputFlie))
+                                log_list = {
+                                    'id': i,
+                                    'Company Name': msg.get('Company Name', ''),
+                                    'Invoice No': msg.get('Invoice No', ''),
+                                    'File Name': outputFlie,
+                                    'Order No': msg.get('Order No', ''),
+                                    'Revenue': float(msg.get('Revenue', '0.0').replace('¥', '')),
+                                    'fapiao': msg.get('fapiao', ''),
+                                    'update': time.strftime('%Y-%m-%d %H.%M.%S'),
+                                    'path': '%s\\%s' % (exportUrl, outputFlie),
+                                    'CS': msg.get('CS', ''),
+                                    'ODM Revenue': msg.get('odmRe', 0.00),
+                                    'ODM Customer Name': msg.get('Customer Name', ''),
+                                    'ODMRe - Re': msg.get('odmRe', 0.00) - float(
+                                        msg.get('Revenue', '0.0').replace('¥', '')),
+                                    '判断客户名称是否正确': msg.get('Company Name', '') == msg.get('Customer Name', '')
+                                }
+                                log_obj.log(log_list)
+                            log_obj.save_log_to_excel()
+                            self.textBrowser_3.append('%s' % outputFlie)
+                            app.processEvents()
 
-                        self.textBrowser_3.append('%s' % outputFlie)
-                        app.processEvents()
+                        except Exception as errorMsg:
 
-                    except Exception as errorMsg:
-                        # self.textBrowser_3.append("<font color='red'>第%s份文件：</font>" % i)
-                        self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
-                        self.textBrowser_3.append("<font color='red'>出错的文件：%s </font>" % fileUrl)
-                        app.processEvents()
-                    i += 1
+                            log_obj.save_log_to_excel()
+                            # self.textBrowser_3.append("<font color='red'>第%s份文件：</font>" % i)
+                            self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
+                            self.textBrowser_3.append("<font color='red'>出错的文件：%s </font>" % fileUrl)
+                            app.processEvents()
+                        i += 1
 
-                invoiceFile = pd.DataFrame(fileMsg)
-                invoiceFile['ODMRe - Re'] = invoiceFile['ODM Revenue'] - invoiceFile['Revenue']
-                invoiceFile['判断客户名称是否正确'] = pd.Series(invoiceFile['Company Name']==invoiceFile['ODM Customer Name'])
-                now = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-                filePath = '%s/Electronic invoice %s.xlsx' % (configContent['Ele_Invoice_Files_Export_URL'], now)
-                invoiceFile.to_excel(filePath, index=False, merge_cells=False)
-                os.startfile(filePath)
-                os.startfile(filePath)
-                self.textBrowser_3.append('已生成数据文件：%s' % filePath)
-                self.textBrowser_3.append('----------------------------------')
-                os.startfile(configContent['Ele_Invoice_Files_Export_URL'])
+                    os.startfile(log_file)
+                    self.textBrowser_3.append('已生成数据文件：%s' % log_file)
+                    self.textBrowser_3.append('----------------------------------')
+                    os.startfile(configContent['Ele_Invoice_Files_Export_URL'])
+                except Exception as errorMsg:
+                    log_obj.save_log_to_excel()
+                    os.startfile(log_file)
+                    self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
+                    app.processEvents()
 
     # Order解锁或关闭操作
     def orderUnlockOrLock(self, flag):
