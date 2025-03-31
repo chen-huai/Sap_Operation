@@ -540,6 +540,28 @@ class Sap():
                         self.session.findById("wnd[0]").sendVKey(0)
 
                         # self.session.findById("wnd[0]").sendVKey(0)
+                        if '430' in guiData['materialCode']:
+                            if guiData['cost'] > 0:
+                                if guiData['chmCheck']:
+                                    n = 2
+                                else:
+                                    n = 1
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,%s]" % n).text = "E"
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,%s]" % n).text = guiData[
+                                    'csCostCenter']
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,%s]" % n).text = "FREMDL"
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).text = format(
+                                    guiData['cost'] / 1.06, '.2f')
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).setFocus()
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).caretPosition = 20
+                                self.session.findById("wnd[0]").sendVKey(0)
+
                         self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
 
                         # self.session.findById("wnd[0]/tbar[0]/btn[11]").press()
@@ -591,26 +613,28 @@ class Sap():
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").caretPosition = 20
                         self.session.findById("wnd[0]").sendVKey(0)
-                        if guiData['cost'] > 0:
-                            if guiData['chmCheck']:
-                                n = 2
-                            else:
-                                n = 1
-                            self.session.findById(
-                                "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,%s]" % n).text = "E"
-                            self.session.findById(
-                                "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,%s]" % n).text = guiData[
-                                'csCostCenter']
-                            self.session.findById(
-                                "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,%s]" % n).text = "FREMDL"
-                            self.session.findById(
-                                "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).text = format(
-                                guiData['cost'] / 1.06, '.2f')
-                            self.session.findById(
-                                "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).setFocus()
-                            self.session.findById(
-                                "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).caretPosition = 20
-                            self.session.findById("wnd[0]").sendVKey(0)
+                        #
+                        if '430' not in guiData['materialCode']:
+                            if guiData['cost'] > 0:
+                                if guiData['chmCheck']:
+                                    n = 2
+                                else:
+                                    n = 1
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,%s]" % n).text = "E"
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,%s]" % n).text = guiData[
+                                    'csCostCenter']
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,%s]" % n).text = "FREMDL"
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).text = format(
+                                    guiData['cost'] / 1.06, '.2f')
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).setFocus()
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).caretPosition = 20
+                                self.session.findById("wnd[0]").sendVKey(0)
 
                         # self.session.findById("wnd[0]/tbar[0]/btn[11]").press()
                         self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
