@@ -190,10 +190,16 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
              '以;分隔，数据透视字段'],
             ['SAP登入信息', '内容', '备注'],
             ['Login_msg', 'DR-0486-01->601-240', '订单类型-销售组织-分销渠道-销售办事处-销售组'],
+            ['Business_Department', 'CS', '业务部门,名称会用于后续'],
+            ['T20', 'PHY', '代表实验室，会用于后续'],
+            ['T75', 'CHM', '代表实验室，会用于后续'],
             ['Hourly Rate', '金额', '备注'],
-            ["Hourly Rate(PC)", 315, '每年更新'],
-            ['Hourly Rate(CHM)', 342, '每年更新'],
-            ['Hourly Rate(PHY)', 342, '每年更新'],
+            ['CS_Hourly_Rate', 300, '客服时薪'],
+            ['PHY_Hourly_Rate', 300, '物理时薪'],
+            ['CHM_Hourly_Rate', 300, '化学时薪'],
+            # ["Hourly Rate(PC)", 315, '每年更新'],
+            # ['Hourly Rate(CHM)', 342, '每年更新'],
+            # ['Hourly Rate(PHY)', 342, '每年更新'],
             ['成本中心', '编号', '备注'],
             ['CS_Selected', 1, '是否默认被选中,1选中，0未选中'],
             ['PHY_Selected', 1, '是否默认被选中,1选中，0未选中'],
@@ -207,6 +213,19 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ['实验室成本比例', '数值', '备注'],
             ['CHM_Cost_Parameter', 0.3, '给到CHM30%'],
             ['PHY_Cost_Parameter', 0.3, '给到PHY30%'],
+            # 新增分配规则参数
+            ['405_Item_1000', 0.5, '405分配规则'],
+            ['405_Item_2000', 0.5, '405分配规则'],
+            ['441_Item_1000', 0.8, '441分配规则'],
+            ['441_Item_2000', 0.2, '441分配规则'],
+            ['430_Item_1000', 0.8, '430分配规则'],
+            ['430_Item_2000', 0.2, '430分配规则'],
+            # 新增特殊MC规则
+            ['T20-430-A2', 'PHY_1000/CHM_2000', 'T20-430-00/T75-430-00'],
+            ['T75-441-A2', 'CHM_1000/PHY_2000', 'T75-441-00/T20-441-00'],
+            ['T75-405-A2', 'CHM_1000/PHY_2000', 'T75-405-00/T20-405-00'],
+            # 新增公共参数
+            ['Max_Hour', 8, '最大工作时长'],
             ['DATA A数据填写', '判断依据', '备注'],
             ['Data_A_E1', '5010815347;5010427355;5010913488;5010685589;5010829635;5010817524', 'Data A录E1,新添加用;隔开即可'],
             ['Data_A_Z2', '5010908478;5010823259', 'Data A录Z2,新添加用;隔开即可'],
@@ -300,9 +319,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.lineEdit_13.setText(loginMsgList[3])
             self.lineEdit_14.setText(loginMsgList[4])
             # 每小时成本
-            self.doubleSpinBox_5.setValue(float(format(float(configContent['Hourly Rate(PC)']), '.2f')))
-            self.doubleSpinBox_6.setValue(float(format(float(configContent['Hourly Rate(CHM)']), '.2f')))
-            self.doubleSpinBox_8.setValue(float(format(float(configContent['Hourly Rate(PHY)']), '.2f')))
+            self.doubleSpinBox_5.setValue(float(format(float(configContent['CS_Hourly_Rate']), '.2f')))
+            self.doubleSpinBox_6.setValue(float(format(float(configContent['CHM_Hourly_Rate']), '.2f')))
+            self.doubleSpinBox_8.setValue(float(format(float(configContent['PHY_Hourly_Rate']), '.2f')))
             # 成本中心
             self.checkBox_13.setChecked(int(configContent['CS_Selected']))
             self.checkBox_14.setChecked(int(configContent['CHM_Selected']))
