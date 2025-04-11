@@ -148,11 +148,23 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         global username
         global role
         configContent = {}
+        # configContent[configContent.get('Business_Department','CS')] = []
+        # configContent[configContent.get('Lab_1','PHY')] = []
+        # configContent[configContent.get('Lab_2','CHM')] = []
         username = list(csvFile['A'])
         number = list(csvFile['B'])
         role = list(csvFile['C'])
         for i in range(len(username)):
             configContent['%s' % username[i]] = number[i]
+            if role[i] == configContent.get('Business_Department', 'CS'):
+                # 使用 setdefault 确保键存在且为列表类型
+                configContent.setdefault(configContent.get('Business_Department', 'CS'), []).append(username[i])
+            if role[i] == configContent.get('Lab_1', 'PHY'):
+                # 使用 setdefault 确保键存在且为列表类型
+                configContent.setdefault(configContent.get('Lab_1', 'PHY'), []).append(username[i])
+            if role[i] == configContent.get('Lab_2', 'CHM'):
+                # 使用 setdefault 确保键存在且为列表类型
+                configContent.setdefault(configContent.get('Lab_2', 'CHM'), []).append(username[i])
         MyMainWindow.csItem(self)
         MyMainWindow.salesItem(self)
         MyMainWindow.getDefaultInformation(self)
@@ -191,6 +203,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ['SAP登入信息', '内容', '备注'],
             ['Login_msg', 'DR-0486-01->601-240', '订单类型-销售组织-分销渠道-销售办事处-销售组'],
             ['Business_Department', 'CS', '业务部门,名称会用于后续'],
+            ['Lab_1', 'PHY', '代表实验室，会用于后续'],
+            ['Lab_2', 'CHM', '代表实验室，会用于后续'],
             ['T20', 'PHY', '代表实验室，会用于后续'],
             ['T75', 'CHM', '代表实验室，会用于后续'],
             ['Hourly Rate', '金额', '备注'],
