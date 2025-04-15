@@ -147,7 +147,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         global configContent
         global username
         global role
+        global staff_dict
         configContent = {}
+        staff_dict = {}
         # configContent[configContent.get('Business_Department','CS')] = []
         # configContent[configContent.get('Lab_1','PHY')] = []
         # configContent[configContent.get('Lab_2','CHM')] = []
@@ -158,13 +160,13 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             configContent['%s' % username[i]] = number[i]
             if role[i] == configContent.get('Business_Department', 'CS'):
                 # 使用 setdefault 确保键存在且为列表类型
-                configContent.setdefault(configContent.get('Business_Department', 'CS'), []).append(username[i])
+                staff_dict.setdefault(configContent.get('Business_Department', 'CS'), []).append(username[i])
             if role[i] == configContent.get('Lab_1', 'PHY'):
                 # 使用 setdefault 确保键存在且为列表类型
-                configContent.setdefault(configContent.get('Lab_1', 'PHY'), []).append(username[i])
+                staff_dict.setdefault(configContent.get('Lab_1', 'PHY'), []).append(username[i])
             if role[i] == configContent.get('Lab_2', 'CHM'):
                 # 使用 setdefault 确保键存在且为列表类型
-                configContent.setdefault(configContent.get('Lab_2', 'CHM'), []).append(username[i])
+                staff_dict.setdefault(configContent.get('Lab_2', 'CHM'), []).append(username[i])
         MyMainWindow.csItem(self)
         MyMainWindow.salesItem(self)
         MyMainWindow.getDefaultInformation(self)
