@@ -5,6 +5,7 @@ import time
 import math
 import pandas as pd
 import csv
+import copy
 import numpy as np
 import win32com.client
 import datetime
@@ -23,6 +24,9 @@ from Data_Table import *
 from Logger import *
 from Excel_Field_Mapper import excel_field_mapper
 from theme_manager_theme import ThemeManager
+from Revenue_Operate import *
+
+
 
 
 
@@ -88,6 +92,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.checkBox_26.toggled.connect(lambda: self.pdfNameRule('Client Contact Name', 'invoice'))
         self.pushButton_56.clicked.connect(lambda: self.orderUnlockOrLock('Unlock'))
         self.pushButton_57.clicked.connect(lambda: self.orderUnlockOrLock('Lock'))
+        self.pushButton_63.clicked.connect(lambda: self.get_hour_file_url(self.lineEdit_30))
+        self.pushButton_71.clicked.connect(lambda: self.get_hour_file_url(self.lineEdit_38))
+        self.pushButton_76.clicked.connect(lambda: self.get_hour_file_url(self.lineEdit_37))
+        self.pushButton_72.clicked.connect(self.get_hour_combine_file)
         self.filesUrl = []
 
     def init_theme_action(self):
@@ -950,16 +958,16 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             return logMsg
 
     # 获取文件
-    def getFile(self):
+    def getFile(self, path):
         selectBatchFile = QFileDialog.getOpenFileName(self, '选择ODM导出文件',
-                                                      '%s\\%s' % (configContent['SAP_Date_URL'], today),
+                                                      '%s\\%s' % (path, today),
                                                       'files(*.docx;*.xls*;*.csv)')
         fileUrl = selectBatchFile[0]
         return fileUrl
 
     # SAP数据路径
     def getFileUrl(self):
-        fileUrl = MyMainWindow.getFile(self)
+        fileUrl = MyMainWindow.getFile(self, configContent['SAP_Date_URL'])
         if fileUrl:
             self.lineEdit_6.setText(fileUrl)
             app.processEvents()
@@ -969,7 +977,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     # ODM数据路径
     def getODMDataFileUrl(self):
-        fileUrl = MyMainWindow.getFile(self)
+        fileUrl = MyMainWindow.getFile(self, configContent['SAP_Date_URL'])
         if fileUrl:
             self.lineEdit_7.setText(fileUrl)
             app.processEvents()
@@ -979,7 +987,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     # 获取需要Combine文件的路径
     def getCombineFileUrl(self):
-        fileUrl = MyMainWindow.getFile(self)
+        fileUrl = MyMainWindow.getFile(self, configContent['SAP_Date_URL'])
         if fileUrl:
             self.lineEdit_8.setText(fileUrl)
             app.processEvents()
@@ -989,7 +997,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     # 获取Log文件路径
     def getLogFileUrl(self):
-        fileUrl = MyMainWindow.getFile(self)
+        fileUrl = MyMainWindow.getFile(self, configContent['SAP_Date_URL'])
         if fileUrl:
             self.lineEdit_9.setText(fileUrl)
             app.processEvents()
@@ -2040,6 +2048,79 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.textBrowser_3.append('无选中文件')
             self.textBrowser_3.append('----------------------------------')
+            app.processEvents()
+
+
+
+    def get_hour_file_url(self, position):
+        fileUrl = myWin.getFile(configContent['Hour_Files_Import_URL'])
+        if fileUrl:
+            position.setText(fileUrl)
+            app.processEvents()
+        else:
+            self.textBrowser_2.append("请重新选择ODM文件")
+            QMessageBox.information(self, "提示信息", "请重新选择ODM文件", QMessageBox.Yes)
+
+    def get_hour_combine_file(self):
+        fileUrl = self.lineEdit_30.text()
+        pivot_table_key = self.lineEdit_39.text().split(';')
+        if fileUrl and pivot_table_key:
+            try:
+                self.textBrowser_4.append("开始合并")
+                app.processEvents()
+                newData = Get_Data()
+                file_data = newData.getFileTableData(fileUrl)
+                # 删除
+                deleteRowList = {'Order Number': ''}
+                newData.deleteTheRows(deleteRowList)
+                # 合并
+                valus_key = ['Revenue', 'Total Subcon Cost']
+                pivot_table_data = newData.pivotTable(pivot_table_key, valus_key)
+                current_time = datetime.now().strftime('%Y-%m-%d %H.%M.%S')
+                pivot_table_data_path = '%s\\%s' % (configContent['Hour_Files_Export_URL'], '1.order data %s.xlsx' % current_time)
+                pivot_table_data_file = pivot_table_data.to_excel(pivot_table_data_path, merge_cells=False)
+                self.lineEdit_37.setText(pivot_table_data_path)
+                os.startfile(pivot_table_data_path)
+                self.textBrowser_4.append("合并完成")
+            except Exception as errorMsg:
+                self.textBrowser_4.append("<font color='red'>出错信息：%s </font>" % errorMsg)
+                app.processEvents()
+        elif pivot_table_key == []:
+            self.textBrowser_4.append("请输入合并的key")
+        else:
+            self.textBrowser_4.append("请重新选择ODM文件")
+
+    def update_config_content(self, update_data):
+        # 创建配置字典的深拷贝以避免污染原始配置
+        config_content = copy.deepcopy(configContent)
+        config_content.update(update_data)
+        return config_content  # 返回修改后的副本
+    def get_calculate_revenue_allocation_data(self):
+        order_data_path = self.lineEdit_37.text()
+        hour_gui_data = myWin.getHourGuiData()
+        if order_data_path:
+            config_content = self.update_config_content(hour_gui_data)
+            max_hours_per_day = config_content['Max_Hour']
+            start_date = config_content['Start_Date']
+            end_date = config_content['End_Date']
+            # 获取order数据
+            order_data_obj = Get_Data()
+            order_datas = order_data_obj.getFileTableData(order_data_path)
+            # 调用hour方法
+            revenue_allocator_obj = RevenueAllocator()
+            for order_data in order_datas:
+                order_revenue_data = revenue_allocator_obj.calculate_revenue_allocation(order_data, max_hours_per_day, start_date, end_date, staff_dict, config_content)
+                order_df = pd.DataFrame(order_revenue_data)
+                current_time = datetime.now().strftime('%Y-%m-%d %H.%M.%S')
+                dept_hour_path = '%s\\%s' % (configContent['Hour_Files_Export_URL'], 'dept hour %s.xlsx'% current_time)
+                order_df.to_csv(dept_hour_path, index=False, mode='a', header=True)
+            os.startfile(dept_hour_path)
+            self.lineEdit_38.setText(dept_hour_path)
+            self.textBrowser_4.append("计算完成")
+            self.textBrowser_4.append("文件路径：%s" % dept_hour_path)
+            app.processEvents()
+        else:
+            self.textBrowser_4.append("请重新选择合并后的文件")
             app.processEvents()
 
 
