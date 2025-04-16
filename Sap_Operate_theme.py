@@ -12,7 +12,7 @@ import chicon  # 引用图标
 # from PyQt5 import QtCore, QtGui, QtWidgets
 # from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QVBoxLayout, QPushButton, QAction
-# from PyQt5.QtCore import *
+from PyQt5.QtCore import QDate
 from PyQt5.QtGui import QIcon
 from Get_Data import *
 from File_Operate import *
@@ -213,9 +213,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ['CS_Hourly_Rate', 300, '客服时薪'],
             ['PHY_Hourly_Rate', 300, '物理时薪'],
             ['CHM_Hourly_Rate', 300, '化学时薪'],
-            # ["Hourly Rate(PC)", 315, '每年更新'],
-            # ['Hourly Rate(CHM)', 342, '每年更新'],
-            # ['Hourly Rate(PHY)', 342, '每年更新'],
             ['成本中心', '编号', '备注'],
             ['CS_Selected', 1, '是否默认被选中,1选中，0未选中'],
             ['PHY_Selected', 1, '是否默认被选中,1选中，0未选中'],
@@ -245,6 +242,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ['T75-405-A2_mc', 'T75-405-00/T20-405-00', '1000/2000对应的mc'],
             # 新增公共参数
             ['Max_Hour', 8, '最大工作时长'],
+            ['Hours_Combine_Key', "Order Number;Material Code",'以;分隔，数据透视字段'],
+            ['Hour_Files_Import_URL', "N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\2.财务\\2.SAP\\1.ODM Data - XM\\3.Hours",'Invoice文件导入路径'],
+            ['Hour_Files_Export_URL', "N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\2.财务\\2.SAP\\1.ODM Data - XM\\3.Hours",'Invoice文件导入路径'],
             ['DATA A数据填写', '判断依据', '备注'],
             ['Data_A_E1', '5010815347;5010427355;5010913488;5010685589;5010829635;5010817524', 'Data A录E1,新添加用;隔开即可'],
             ['Data_A_Z2', '5010908478;5010823259', 'Data A录Z2,新添加用;隔开即可'],
@@ -392,6 +392,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.checkBox_23.setChecked(int(configContent['Ele_Fapiao_No_Selected']))
             self.checkBox_24.setChecked(int(configContent['Ele_Revenue_Selected']))
             self.lineEdit_27.setText(configContent['Ele_Invoice_Name'])
+            # hour界面操作
+            self.spinBox_10.setValue(int(configContent['Max_Hour']))
+            self.lineEdit_39.setText(configContent['Hours_Combine_Key'])
+            today_hours = datetime.date.today()
+            first_day = today_hours.replace(day=1)
+            self.dateEdit.setDate(QDate(first_day.year, first_day.month, first_day.day))  # 当月第一天
+            self.dateEdit_2.setDate(QDate.currentDate())  # 当天日期
+            self.doubleSpinBox_12.setValue(float(format(float(configContent['CS_Hourly_Rate']), '.2f')))
+            self.doubleSpinBox_16.setValue(float(format(float(configContent['CHM_Hourly_Rate']), '.2f')))
+            self.doubleSpinBox_15.setValue(float(format(float(configContent['PHY_Hourly_Rate']), '.2f')))
+            self.doubleSpinBox_11.setValue(float(format(float(configContent['Plan_Cost_Parameter']), '.2f')))
+            self.doubleSpinBox_13.setValue(float(format(float(configContent['CHM_Cost_Parameter']), '.2f')))
+            self.doubleSpinBox_12.setValue(float(format(float(configContent['PHY_Cost_Parameter']), '.2f')))
+            self.spinBox_11.setValue(int(configContent['Significant_Digits']))
+            self.lineEdit_28.setText(configContent['Lab_1'])
+            self.lineEdit_29.setText(configContent['Lab_2'])
         except Exception as msg:
             self.textBrowser_2.append("错误信息：%s" % msg)
             self.textBrowser_2.append('----------------------------------')
@@ -573,6 +589,24 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         guiAdminData['eleOrderBits'] = int(self.spinBox_7.text())
         guiAdminData['fapiaoName'] = self.lineEdit_27.text()
         return guiAdminData
+
+    def getHourGuiData(self):
+        guiHourData = {}
+        guiHourData['Hours_Combine_Key'] = self.lineEdit_39.text()
+        guiHourData['Max_Hour'] = int(self.spinBox_10.text())
+        guiHourData['CS_Hourly_Rate'] = float(self.doubleSpinBox_14.text())
+        guiHourData['CHM_Hourly_Rate'] = float(self.doubleSpinBox_16.text())
+        guiHourData['PHY_Hourly_Rate'] = float(self.doubleSpinBox_15.text())
+        guiHourData['Plan_Cost_Parameter'] = float(self.doubleSpinBox_11.text())
+        guiHourData['significantDigits'] = float(self.spinBox_11.text())
+        guiHourData['CHM_Cost_Parameter'] = float(self.doubleSpinBox_13.text())
+        guiHourData['PHY_Cost_Parameter'] = float(self.doubleSpinBox_12.text())
+        guiHourData['Lab_1'] = self.lineEdit_28.text()
+        guiHourData['Lab_2'] = self.lineEdit_29.text()
+        guiHourData['Business_Department'] = self.lineEdit_26.text()
+        guiHourData['Start_Date'] = self.dateEdit.date().toString("yyyy.MM.dd")
+        guiHourData['End_Date'] = self.dateEdit_2.date().toString("yyyy.MM.dd")
+        return guiHourData
 
     # 计算Order所需数据
     def getRevenueData(self, guiData):
