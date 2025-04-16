@@ -81,9 +81,9 @@ class RevenueAllocator:
         current_hours = self._get_staff_daily_hours(date, staff_name)
         return max(0, max_hours_per_day - current_hours)
 
-    def calculate_revenue_allocation(self, revenueData, configContent):
+    def allocate_department_hours(self, revenueData, configContent):
         """动态配置的收入分配计算方法"""
-        material_code = revenueData.get('materialCode', '')
+        material_code = revenueData.get('Material Code', '')
         base = (float(revenueData['Revenue']) * float(configContent.get('Plan_Cost_Parameter')) - float(revenueData['Total Subcon Cost']) / 1.06)
 
         result = {
@@ -208,7 +208,7 @@ class RevenueAllocator:
         """
         return date.isocalendar()[1]
 
-    def allocate_working_hours(self, results, max_hours_per_day, start_date, end_date, staff_dict, configContent):
+    def allocate_person_hours(self, results, max_hours_per_day, start_date, end_date, staff_dict, configContent):
         """
         增强版工时分配方法（集成节假日和人员分配）
         :param results: 需要分配工时的记录列表
@@ -235,7 +235,7 @@ class RevenueAllocator:
         order_staff = {}  # {order_no: staff_name}
 
         final_results = []
-        
+
         # 按订单号和部门分组处理工时
         order_dept_groups = {}
         for record in filtered:
@@ -248,14 +248,14 @@ class RevenueAllocator:
         for (order_no, dept), order_records in order_dept_groups.items():
             # 获取对应部门的员工列表
             staff_list = staff_dict.get(dept, [])
-            
+
             if not staff_list:
                 print(f"Warning: No staff found for department {dept}")
                 continue
 
             # 获取当前订单的已分配员工（如果有）
             current_staff_name = order_staff.get(order_no)
-            
+
             # 遍历每个工作日进行分配
             for work_day in work_days:
                 # 如果当前订单已经有分配的员工，优先使用该员工
@@ -269,12 +269,12 @@ class RevenueAllocator:
                             for record in order_records:
                                 if record['dept_hours'] <= 0:
                                     continue
-                                
+
                                 # 计算该记录可分配的工时
                                 record_hours = min(allocate_hours, record['dept_hours'])
                                 if record_hours <= 0:
                                     continue
-                                
+
                                 new_record = record.copy()
                                 new_record.update({
                                     'allocated_date': work_day,
@@ -284,22 +284,22 @@ class RevenueAllocator:
                                     'week': self._get_week_number(work_day)
                                 })
                                 final_results.append(new_record)
-                                
+
                                 # 更新工时记录
                                 self._update_staff_daily_hours(work_day, current_staff_name, record_hours, order_no, dept)
                                 record['dept_hours'] -= record_hours
                                 allocate_hours -= record_hours
-                                
+
                                 if allocate_hours <= 0:
                                     break
                         continue
-                
+
                 # 如果没有已分配的员工或当前员工已满，寻找新员工
                 staff_namex = dept_pointers[dept] % len(staff_list)
                 for _ in range(len(staff_list)):  # 尝试所有员工
                     staff_name = staff_list[staff_namex]
                     available_hours = self._get_available_hours(work_day, staff_name, max_hours_per_day)
-                    
+
                     if available_hours > 0:
                         # 尝试分配最大可能的工时
                         allocate_hours = min(available_hours, sum(record['dept_hours'] for record in order_records))
@@ -308,12 +308,12 @@ class RevenueAllocator:
                             for record in order_records:
                                 if record['dept_hours'] <= 0:
                                     continue
-                                
+
                                 # 计算该记录可分配的工时
                                 record_hours = min(allocate_hours, record['dept_hours'])
                                 if record_hours <= 0:
                                     continue
-                                
+
                                 new_record = record.copy()
                                 new_record.update({
                                     'allocated_date': work_day,
@@ -323,21 +323,21 @@ class RevenueAllocator:
                                     'week': self._get_week_number(work_day)
                                 })
                                 final_results.append(new_record)
-                                
+
                                 # 更新工时记录
                                 self._update_staff_daily_hours(work_day, staff_name, record_hours, order_no, dept)
                                 record['dept_hours'] -= record_hours
                                 allocate_hours -= record_hours
-                                
+
                                 # 记录该订单的分配员工
                                 order_staff[order_no] = staff_name
-                                
+
                                 if allocate_hours <= 0:
                                     break
                             break
-                    
+
                     staff_namex = (staff_namex + 1) % len(staff_list)
-                
+
                 dept_pointers[dept] += 1
 
         return final_results
@@ -348,19 +348,19 @@ class RevenueAllocator:
 #
 #     revenueDatas = [
 #         {'orderNo': 'ORD123',
-#          'materialCode': 'T20-430-A2',
+#          'Material Code': 'T20-430-A2',
 #          'Revenue': 20000,
 #          'Total Subcon Cost': 2000},
 #         {'orderNo': 'ORD124',
-#          'materialCode': 'T75-405-A2',
+#          'Material Code': 'T75-405-A2',
 #          'Revenue': 10000,
 #          'Total Subcon Cost': 2000},
 #         {'orderNo': 'ORD125',
-#          'materialCode': 'T75-441-A2',
+#          'Material Code': 'T75-441-A2',
 #          'Revenue': 30000,
 #          'Total Subcon Cost': 2000},
 #         {'orderNo': 'ORD126',
-#          'materialCode': 'T20-441-00',
+#          'Material Code': 'T20-441-00',
 #          'Revenue': 35000,
 #          'Total Subcon Cost': 2000},
 #
@@ -438,7 +438,7 @@ class RevenueAllocator:
 #                      'Chen, Leah': '6375324', 'Ji, Sunny': '6375329', 'Li, Roy': '6375339', 'Liu, Josie': '6375341',
 #                      'Zhang, Yvette': '6375349', 'Lin, Charlotte': '6375354', 'Pan, James': '6375355',
 #                      'Yan, Alex': '6375356', 'Lin, Carl': '6375360', 'Xiao, Dennis': '6375362',
-#                      'Cheng, Ethan': '6375369', 'Chen, Jacy': '6375372'}
+#                      'Cheng, Ethan': '6375369', 'Chen, Jacy': '6375372', 'Hour_Files_Export_URL': "N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\2.财务\\2.SAP\\1.ODM Data - XM\\3.Hours"}
 #     staff_dict = {
 #         'CHM': ['Chen, Nemo', 'Xu, Jimmy', 'Su, Lucky', 'Dai, Jocelyn', 'Yang, Alisa', 'Zou, Rudi',
 #                 'Wang, Carry', 'Zhang, Lynn', 'Wu, Alan', 'Li, Jesse', 'Ou, Ida', 'Miao, Molly',
@@ -471,9 +471,9 @@ class RevenueAllocator:
 #     first_write = True
 #
 #     for revenueData in revenueDatas:
-#         res = allocator.calculate_revenue_allocation(revenueData, configContent)
-#         res2 = allocator.allocate_working_hours(res, 8, datetime.date(2025, 4, 1), datetime.date(2025, 4, 30),
-#                                      staff_dict)
+#         res = allocator.allocate_department_hours(revenueData, configContent)
+#         res2 = allocator.allocate_person_hours(res, 8, datetime.date(2025, 4, 1), datetime.date(2025, 4, 30),
+#                                      staff_dict,configContent)
 #         res_df = pd.DataFrame(res)
 #         res_df2 = pd.DataFrame(res2)
 #
