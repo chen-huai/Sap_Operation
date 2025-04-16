@@ -89,7 +89,7 @@ class RevenueAllocator:
         result = {
             'business_dept_1000_revenue': 0, 'lab_1000_revenue': 0, 'business_dept_1000_hours': 0, 'lab_1000_hours': 0,
             'business_dept_2000_revenue': 0, 'lab_2000_revenue': 0, 'business_dept_2000_hours': 0, 'lab_2000_hours': 0,
-            'lab_1000': '', 'lab_2000': '', 'order_no': revenueData.get('orderNo', ''),
+            'lab_1000': '', 'lab_2000': '', 'order_no': revenueData.get('Order Number', ''),
             'material_code_1000': '',
             'material_code_2000': ''
         }
@@ -151,7 +151,7 @@ class RevenueAllocator:
         # 在返回结果前增加数据结构整理
         return [
             {  # 1000业务部门
-                'order_no': revenueData['orderNo'],
+                'order_no': revenueData['Order Number'],
                 'material_code': result.get("material_code_1000"),  # 添加后缀
                 'item': '1000',
                 'dept': business_dept,
@@ -160,7 +160,7 @@ class RevenueAllocator:
                 'original_hours': result['business_dept_1000_hours']  # 保存原始工时
             },
             {  # 1000实验室
-                'order_no': revenueData['orderNo'],
+                'order_no': revenueData['Order Number'],
                 'material_code': result.get("material_code_1000"),  # 相同分组共用后缀
                 'item': '1000',
                 'dept': result['lab_1000'],
@@ -169,7 +169,7 @@ class RevenueAllocator:
                 'original_hours': result['lab_1000_hours']  # 保存原始工时
             },
             {  # 2000业务部门
-                'order_no': revenueData['orderNo'],
+                'order_no': revenueData['Order Number'],
                 'material_code': result.get("material_code_2000"),  # 添加不同后缀
                 'item': '2000',
                 'dept': business_dept,
@@ -178,7 +178,7 @@ class RevenueAllocator:
                 'original_hours': result['business_dept_2000_hours']  # 保存原始工时
             },
             {  # 2000实验室
-                'order_no': revenueData['orderNo'],
+                'order_no': revenueData['Order Number'],
                 'material_code': result.get("material_code_2000"),  # 相同分组共用后缀
                 'item': '2000',
                 'dept': result['lab_2000'],
@@ -343,145 +343,145 @@ class RevenueAllocator:
         return final_results
 
 
-# if __name__ == "__main__":
-#     # 示例数据
-#
-#     revenueDatas = [
-#         {'orderNo': 'ORD123',
-#          'Material Code': 'T20-430-A2',
-#          'Revenue': 20000,
-#          'Total Subcon Cost': 2000},
-#         {'orderNo': 'ORD124',
-#          'Material Code': 'T75-405-A2',
-#          'Revenue': 10000,
-#          'Total Subcon Cost': 2000},
-#         {'orderNo': 'ORD125',
-#          'Material Code': 'T75-441-A2',
-#          'Revenue': 30000,
-#          'Total Subcon Cost': 2000},
-#         {'orderNo': 'ORD126',
-#          'Material Code': 'T20-441-00',
-#          'Revenue': 35000,
-#          'Total Subcon Cost': 2000},
-#
-#     ]
-#     configContent = {'特殊开票': '内容',
-#                      'SAP_Date_URL': 'N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\收样\\3.Sap\\ODM Data - XM',
-#                      'Invoice_File_URL': 'N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\收样\\3.Sap\\ODM Data - XM\\2.特殊开票',
-#                      'Invoice_File_Name': '特殊开票要求2022.xlsx', 'Data数据处理': '内容',
-#                      'Row Data': 'Client Contact Name',
-#                      'Column Data': 'Project No.;Currency;Amount with VAT;Reference No.', 'Row Check': '0',
-#                      'Column Check': '0',
-#                      'Combine Key': "CS;Sales;Currency;Material Code;Invoices' name (Chinese);Buyer(GPC);Month;Exchange Rate",
-#                      'SAP登入信息': '内容', 'Login_msg': 'DR-0486-01->601-240', 'Business_Department': 'CS',
-#                      'Lab_1': 'PHY', 'Lab_2': 'CHM', 'T20': 'PHY', 'T75': 'CHM', 'Hourly Rate': '金额',
-#                      'CS_Hourly_Rate': '300', 'PHY_Hourly_Rate': '300', 'CHM_Hourly_Rate': '300', '成本中心': '编号',
-#                      'CS_Selected': '1', 'PHY_Selected': '1', 'CHM_Selected': '1', 'CS_Cost_Center': '48601240',
-#                      'CHM_Cost_Center': '48601293', 'PHY_Cost_Center': '48601294', '计划成本': '数值',
-#                      'Plan_Cost_Parameter': '0.9', 'Significant_Digits': '0', '实验室成本比例': '数值',
-#                      'CHM_Cost_Parameter': '0.3', 'PHY_Cost_Parameter': '0.3', '405_Item_1000': '0.5',
-#                      '405_Item_2000': '0.5', '441_Item_1000': '0.8', '441_Item_2000': '0.2', '430_Item_1000': '0.8',
-#                      '430_Item_2000': '0.2', 'T20-430-A2': 'PHY_1000/CHM_2000',
-#                      'T20-430-A2_mc': 'T20-430-00/T75-430-00', 'T75-441-A2': 'CHM_1000/PHY_2000',
-#                      'T75-441-A2_mc': 'T75-441-00/T20-441-00', 'T75-405-A2': 'CHM_1000/PHY_2000',
-#                      'T75-405-A2_mc': 'T75-405-00/T20-405-00', 'Max_Hour': '8', 'DATA A数据填写': '判断依据',
-#                      'Data_A_E1': '5010815347;5010427355;5010913488;5010685589;5010829635;5010817524',
-#                      'Data_A_Z2': '5010908478;5010823259', 'SAP操作': '内容', 'Cost_VAT_Selected': '1',
-#                      'NVA01_Selected': '1', 'NVA02_Selected': '1', 'NVF01_Selected': '0', 'NVF03_Selected': '0',
-#                      'DataB_Selected': '1', 'Plan_Cost_Selected': '25', 'Save_Selected': '1', 'Every_Selected': '1',
-#                      'Contact_Selected': '0', '管理操作': '内容',
-#                      'Billing_List_URL': 'N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\2.财务\\3.Billing存档\\4.XM-billing list\\2023',
-#                      'Add_CS_Msg_Selected': '1', 'Invoice_No_Selected': '1', 'Invoice_Start_Num': '4',
-#                      'Invoice_Num': '9', 'Company_Name_Selected': '1', 'Order_No_Selected': '0',
-#                      'Invoice_Contact_Selected': '0', 'Order_Start_Num': '7', 'Order_Num': '9',
-#                      'Project_No_Selected': '0', 'Invoice_Name': 'CS + Invoice No + Company Name',
-#                      'Invoice_Files_Import_URL': 'C:\\Users\\chen-fr\\Desktop',
-#                      'Invoice_Files_Export_URL': 'N:\\XM Softlines\\1. Project\\3. Finance\\02. WIP',
-#                      'Ele_Invoice_No_Selected': '1', 'Ele_Invoice_Start_Num': '486', 'Ele_Invoice_Num': '9',
-#                      'Ele_Order_No_Selected': '0', 'Ele_Order_Start_Num': '7486', 'Ele_Order_Num': '9',
-#                      'Ele_Company_Name_Selected': '1', 'Ele_Revenue_Selected': '1', 'Ele_Fapiao_No_Selected': '0',
-#                      'Ele_Invoice_Name': 'CS + Company Name + Invoice No + Revenue',
-#                      'Ele_Invoice_Files_Import_URL': 'N:\\Company Data\\FCO\\11.全电发票',
-#                      'Ele_Invoice_Files_Export_URL': 'N:\\XM Softlines\\1. Project\\3. Finance\\02. WIP\\全电发票 2023\\10',
-#                      '名称': '编号', 'Chen, Iris': '6375287',
-#                      'Chen, Eunice': '6375162',
-#                      'Ding, Daisy': '6160431', 'Du, Miley': '6375211', 'Guan, Elaine': '6375125',
-#                      'Huang, Mary': '6375104', 'Jiao, Joyce': '6375079', 'Lai, Tailor': '6375014',
-#                      'Lao, Keely': '6375134', 'Lin, Tina': '6375091', 'Lv, Rita': '6375135', 'Ma, Ella': '6160372',
-#                      'Qiu, Dora': '6375241', 'Qiu, Emily': '6375235', 'Shen, Jewel': '6375124', 'Weng, Cora': '6375134',
-#                      'Yang, Stacey': '6375142', 'Zhang, Judy': '6375176', 'Zhang, Wendy': '6375210',
-#                      'Zhuo, Mia': '6375260', 'Huang, Holly': '6375162', 'Li, Cathy': '6375166', 'Yeh, Lynne': '6375134',
-#                      'Zhang, Lyndon': '6375294', 'Wu, Jemma': '6375134', 'Luo, Luca': '6160275',
-#                      'Ruan, Nicole': '6375183', 'Zhou, Judith': '6160350', 'Gan, Jasper': '6160244',
-#                      'Ma, Ada': '6160185', 'You, Sofia': '6375105', 'Su, Layla': '6160385', 'Yang, Beauty': '6375308',
-#                      'Huang, May': '6160385', 'Chen, Claudia': '6375162', 'Cai, Barry': '6375313',
-#                      'Gong, Joy': '6375176', 'chen, sarah': '6375312', 'Chen, Raney': '6375162', 'Pan, Peki': '6375201',
-#                      'Liu, Amber': '6375342', 'Chen, Kate': '6375337', 'Liu, Mia': '6375162', 'Liu, Morita': '6375336',
-#                      'Peng, Penny': '6375351', 'Zhang, Alaia': '6375350', 'Huang, Even': '6375359',
-#                      'Lin, Linda': '6375134', 'Lu, Joanna': '6375347', 'Wei, Wynne': '6375358',
-#                      'Chen, Sarah': '6375312', 'Chen, Nemo': '6160291',
-#                      'Xu, Jimmy': '6160343',
-#                      'Su, Lucky': '6181557', 'Dai, Jocelyn': '6375017', 'Yang, Alisa': '6375038',
-#                      'Zou, Rudi': '6375039', 'Wang, Carry': '6375064', 'Zhang, Lynn': '6375089', 'Wu, Alan': '6375092',
-#                      'Li, Jesse': '6375093', 'Ou, Ida': '6375112', 'Miao, Molly': '6375158', 'Ye, Anne': '6375182',
-#                      'Zeng, Cris': '6375184', 'Lin, Jenny': '6375252', 'Lin, Lucy': '6375253', 'Chen, Limi': '6375275',
-#                      'Chen, Nikki': '6375277', 'Ye, Carter': '6375279', 'Wu, Mindy': '6375286', 'Han, Amy': '6375299',
-#                      'Shen, Rocy': '6375302', 'Chen, Bella': '6375304', 'Ke, Coco': '6375314', 'Chen, Helen': '6375326',
-#                      'Huang, Edwina': '6375330', 'Ma, Even': '6375331', 'Zhong, Teddy': '6375023',
-#                      'Ou, Yedda': '6375024',
-#                      'Zhang, Cathy': '6375043', 'Yang, Trison': '6375062', 'Huang, Moon': '6375084',
-#                      'Qin, Bruce': '6375119', 'Zheng, Damon': '6375122', 'Ye, Valentine': '6375150',
-#                      'Zhang, Dragon': '6375177', 'Zheng, Ariel': '6375196', 'Lu, Esther': '6375231',
-#                      'Yang, Miya': '6375249', 'Zhan, Milla': '6375271', 'Lv, Linda': '6375273', 'Zeng, Tim': '6375280',
-#                      'Xu, Simba': '6375282', 'Wang, Peter': '6375292', 'Zhou, Sean': '6375306',
-#                      'Zeng, Winnie': '6375320', 'Chen, Echo': '6375321', 'Yu, Coley': '6375323',
-#                      'Chen, Leah': '6375324', 'Ji, Sunny': '6375329', 'Li, Roy': '6375339', 'Liu, Josie': '6375341',
-#                      'Zhang, Yvette': '6375349', 'Lin, Charlotte': '6375354', 'Pan, James': '6375355',
-#                      'Yan, Alex': '6375356', 'Lin, Carl': '6375360', 'Xiao, Dennis': '6375362',
-#                      'Cheng, Ethan': '6375369', 'Chen, Jacy': '6375372', 'Hour_Files_Export_URL': "N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\2.财务\\2.SAP\\1.ODM Data - XM\\3.Hours"}
-#     staff_dict = {
-#         'CHM': ['Chen, Nemo', 'Xu, Jimmy', 'Su, Lucky', 'Dai, Jocelyn', 'Yang, Alisa', 'Zou, Rudi',
-#                 'Wang, Carry', 'Zhang, Lynn', 'Wu, Alan', 'Li, Jesse', 'Ou, Ida', 'Miao, Molly',
-#                 'Ye, Anne', 'Zeng, Cris', 'Lin, Jenny', 'Lin, Lucy', 'Chen, Limi', 'Chen, Nikki',
-#                 'Ye, Carter', 'Wu, Mindy', 'Han, Amy', 'Shen, Rocy', 'Chen, Bella', 'Ke, Coco',
-#                 'Chen, Helen', 'Huang, Edwina', 'Ma, Even'],
-#         'PHY': ['Zhong, Teddy', 'Ou, Yedda', 'Zhang, Cathy', 'Yang, Trison', 'Huang, Moon', 'Qin, Bruce',
-#                 'Zheng, Damon', 'Ye, Valentine', 'Zhang, Dragon', 'Zheng, Ariel', 'Lu, Esther',
-#                 'Yang, Miya', 'Zhan, Milla', 'Lv, Linda', 'Zeng, Tim', 'Xu, Simba', 'Wang, Peter',
-#                 'Zhou, Sean', 'Zeng, Winnie', 'Chen, Echo', 'Yu, Coley', 'Chen, Leah', 'Ji, Sunny',
-#                 'Li, Roy', 'Liu, Josie', 'Zhang, Yvette', 'Lin, Charlotte', 'Pan, James', 'Yan, Alex',
-#                 'Lin, Carl', 'Xiao, Dennis', 'Cheng, Ethan', 'Chen, Jacy'],
-#         'CS': ['Chen, Iris', 'Chen, Eunice', 'Ding, Daisy', 'Du, Miley', 'Guan, Elaine', 'Huang, Mary',
-#                'Jiao, Joyce', 'Lai, Tailor', 'Lao, Keely', 'Lin, Tina', 'Lv, Rita', 'Ma, Ella',
-#                'Qiu, Dora', 'Qiu, Emily', 'Shen, Jewel', 'Weng, Cora', 'Yang, Stacey', 'Zhang, Judy',
-#                'Zhang, Wendy', 'Zhuo, Mia', 'Huang, Holly', 'Li, Cathy', 'Yeh, Lynne', 'Zhang, Lyndon',
-#                'Wu, Jemma', 'Su, Layla', 'Yang, Beauty', 'Huang, May', 'Chen, Claudia', 'Cai, Barry',
-#                'Gong, Joy', 'chen, sarah', 'Chen, Raney', 'Pan, Peki', 'Liu, Amber', 'Chen, Kate',
-#                'Liu, Mia', 'Liu, Morita', 'Peng, Penny', 'Zhang, Alaia', 'Huang, Even', 'Lin, Linda',
-#                'Lu, Joanna', 'Wei, Wynne', 'Chen, Sarah'],
-#     }
-#     allocator = RevenueAllocator()
-#
-#     # 定义CSV文件的表头
-#     res_headers = ['order_no', 'material_code', 'item', 'dept', 'dept_revenue', 'dept_hours']
-#     res2_headers = ['order_no', 'material_code', 'item', 'dept', 'dept_revenue', 'dept_hours',
-#                    'allocated_date', 'allocated_hours', 'staff_name']
-#
-#     # 第一次写入时包含表头
-#     first_write = True
-#
-#     for revenueData in revenueDatas:
-#         res = allocator.allocate_department_hours(revenueData, configContent)
-#         res2 = allocator.allocate_person_hours(res, 8, datetime.date(2025, 4, 1), datetime.date(2025, 4, 30),
-#                                      staff_dict,configContent)
-#         res_df = pd.DataFrame(res)
-#         res_df2 = pd.DataFrame(res2)
-#
-#         # 写入CSV文件，第一次写入时包含表头
-#         res_df.to_csv('res.csv', index=False, mode='a', header=first_write)
-#         res_df2.to_csv('res2.csv', index=False, mode='a', header=first_write)
-#
-#         # 第一次写入后设置为False
-#         first_write = False
-#
-#     print(res)
+if __name__ == "__main__":
+    # 示例数据
+
+    revenueDatas = [
+        {'Order Number': 'ORD123',
+         'Material Code': 'T20-430-A2',
+         'Revenue': 20000,
+         'Total Subcon Cost': 2000},
+        {'Order Number': 'ORD124',
+         'Material Code': 'T75-405-A2',
+         'Revenue': 10000,
+         'Total Subcon Cost': 2000},
+        {'Order Number': 'ORD125',
+         'Material Code': 'T75-441-A2',
+         'Revenue': 30000,
+         'Total Subcon Cost': 2000},
+        {'Order Number': 'ORD126',
+         'Material Code': 'T20-441-00',
+         'Revenue': 35000,
+         'Total Subcon Cost': 2000},
+
+    ]
+    configContent = {'特殊开票': '内容',
+                     'SAP_Date_URL': 'N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\收样\\3.Sap\\ODM Data - XM',
+                     'Invoice_File_URL': 'N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\收样\\3.Sap\\ODM Data - XM\\2.特殊开票',
+                     'Invoice_File_Name': '特殊开票要求2022.xlsx', 'Data数据处理': '内容',
+                     'Row Data': 'Client Contact Name',
+                     'Column Data': 'Project No.;Currency;Amount with VAT;Reference No.', 'Row Check': '0',
+                     'Column Check': '0',
+                     'Combine Key': "CS;Sales;Currency;Material Code;Invoices' name (Chinese);Buyer(GPC);Month;Exchange Rate",
+                     'SAP登入信息': '内容', 'Login_msg': 'DR-0486-01->601-240', 'Business_Department': 'CS',
+                     'Lab_1': 'PHY', 'Lab_2': 'CHM', 'T20': 'PHY', 'T75': 'CHM', 'Hourly Rate': '金额',
+                     'CS_Hourly_Rate': '300', 'PHY_Hourly_Rate': '300', 'CHM_Hourly_Rate': '300', '成本中心': '编号',
+                     'CS_Selected': '1', 'PHY_Selected': '1', 'CHM_Selected': '1', 'CS_Cost_Center': '48601240',
+                     'CHM_Cost_Center': '48601293', 'PHY_Cost_Center': '48601294', '计划成本': '数值',
+                     'Plan_Cost_Parameter': '0.9', 'Significant_Digits': '0', '实验室成本比例': '数值',
+                     'CHM_Cost_Parameter': '0.3', 'PHY_Cost_Parameter': '0.3', '405_Item_1000': '0.5',
+                     '405_Item_2000': '0.5', '441_Item_1000': '0.8', '441_Item_2000': '0.2', '430_Item_1000': '0.8',
+                     '430_Item_2000': '0.2', 'T20-430-A2': 'PHY_1000/CHM_2000',
+                     'T20-430-A2_mc': 'T20-430-00/T75-430-00', 'T75-441-A2': 'CHM_1000/PHY_2000',
+                     'T75-441-A2_mc': 'T75-441-00/T20-441-00', 'T75-405-A2': 'CHM_1000/PHY_2000',
+                     'T75-405-A2_mc': 'T75-405-00/T20-405-00', 'Max_Hour': '8', 'DATA A数据填写': '判断依据',
+                     'Data_A_E1': '5010815347;5010427355;5010913488;5010685589;5010829635;5010817524',
+                     'Data_A_Z2': '5010908478;5010823259', 'SAP操作': '内容', 'Cost_VAT_Selected': '1',
+                     'NVA01_Selected': '1', 'NVA02_Selected': '1', 'NVF01_Selected': '0', 'NVF03_Selected': '0',
+                     'DataB_Selected': '1', 'Plan_Cost_Selected': '25', 'Save_Selected': '1', 'Every_Selected': '1',
+                     'Contact_Selected': '0', '管理操作': '内容',
+                     'Billing_List_URL': 'N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\2.财务\\3.Billing存档\\4.XM-billing list\\2023',
+                     'Add_CS_Msg_Selected': '1', 'Invoice_No_Selected': '1', 'Invoice_Start_Num': '4',
+                     'Invoice_Num': '9', 'Company_Name_Selected': '1', 'Order_No_Selected': '0',
+                     'Invoice_Contact_Selected': '0', 'Order_Start_Num': '7', 'Order_Num': '9',
+                     'Project_No_Selected': '0', 'Invoice_Name': 'CS + Invoice No + Company Name',
+                     'Invoice_Files_Import_URL': 'C:\\Users\\chen-fr\\Desktop',
+                     'Invoice_Files_Export_URL': 'N:\\XM Softlines\\1. Project\\3. Finance\\02. WIP',
+                     'Ele_Invoice_No_Selected': '1', 'Ele_Invoice_Start_Num': '486', 'Ele_Invoice_Num': '9',
+                     'Ele_Order_No_Selected': '0', 'Ele_Order_Start_Num': '7486', 'Ele_Order_Num': '9',
+                     'Ele_Company_Name_Selected': '1', 'Ele_Revenue_Selected': '1', 'Ele_Fapiao_No_Selected': '0',
+                     'Ele_Invoice_Name': 'CS + Company Name + Invoice No + Revenue',
+                     'Ele_Invoice_Files_Import_URL': 'N:\\Company Data\\FCO\\11.全电发票',
+                     'Ele_Invoice_Files_Export_URL': 'N:\\XM Softlines\\1. Project\\3. Finance\\02. WIP\\全电发票 2023\\10',
+                     '名称': '编号', 'Chen, Iris': '6375287',
+                     'Chen, Eunice': '6375162',
+                     'Ding, Daisy': '6160431', 'Du, Miley': '6375211', 'Guan, Elaine': '6375125',
+                     'Huang, Mary': '6375104', 'Jiao, Joyce': '6375079', 'Lai, Tailor': '6375014',
+                     'Lao, Keely': '6375134', 'Lin, Tina': '6375091', 'Lv, Rita': '6375135', 'Ma, Ella': '6160372',
+                     'Qiu, Dora': '6375241', 'Qiu, Emily': '6375235', 'Shen, Jewel': '6375124', 'Weng, Cora': '6375134',
+                     'Yang, Stacey': '6375142', 'Zhang, Judy': '6375176', 'Zhang, Wendy': '6375210',
+                     'Zhuo, Mia': '6375260', 'Huang, Holly': '6375162', 'Li, Cathy': '6375166', 'Yeh, Lynne': '6375134',
+                     'Zhang, Lyndon': '6375294', 'Wu, Jemma': '6375134', 'Luo, Luca': '6160275',
+                     'Ruan, Nicole': '6375183', 'Zhou, Judith': '6160350', 'Gan, Jasper': '6160244',
+                     'Ma, Ada': '6160185', 'You, Sofia': '6375105', 'Su, Layla': '6160385', 'Yang, Beauty': '6375308',
+                     'Huang, May': '6160385', 'Chen, Claudia': '6375162', 'Cai, Barry': '6375313',
+                     'Gong, Joy': '6375176', 'chen, sarah': '6375312', 'Chen, Raney': '6375162', 'Pan, Peki': '6375201',
+                     'Liu, Amber': '6375342', 'Chen, Kate': '6375337', 'Liu, Mia': '6375162', 'Liu, Morita': '6375336',
+                     'Peng, Penny': '6375351', 'Zhang, Alaia': '6375350', 'Huang, Even': '6375359',
+                     'Lin, Linda': '6375134', 'Lu, Joanna': '6375347', 'Wei, Wynne': '6375358',
+                     'Chen, Sarah': '6375312', 'Chen, Nemo': '6160291',
+                     'Xu, Jimmy': '6160343',
+                     'Su, Lucky': '6181557', 'Dai, Jocelyn': '6375017', 'Yang, Alisa': '6375038',
+                     'Zou, Rudi': '6375039', 'Wang, Carry': '6375064', 'Zhang, Lynn': '6375089', 'Wu, Alan': '6375092',
+                     'Li, Jesse': '6375093', 'Ou, Ida': '6375112', 'Miao, Molly': '6375158', 'Ye, Anne': '6375182',
+                     'Zeng, Cris': '6375184', 'Lin, Jenny': '6375252', 'Lin, Lucy': '6375253', 'Chen, Limi': '6375275',
+                     'Chen, Nikki': '6375277', 'Ye, Carter': '6375279', 'Wu, Mindy': '6375286', 'Han, Amy': '6375299',
+                     'Shen, Rocy': '6375302', 'Chen, Bella': '6375304', 'Ke, Coco': '6375314', 'Chen, Helen': '6375326',
+                     'Huang, Edwina': '6375330', 'Ma, Even': '6375331', 'Zhong, Teddy': '6375023',
+                     'Ou, Yedda': '6375024',
+                     'Zhang, Cathy': '6375043', 'Yang, Trison': '6375062', 'Huang, Moon': '6375084',
+                     'Qin, Bruce': '6375119', 'Zheng, Damon': '6375122', 'Ye, Valentine': '6375150',
+                     'Zhang, Dragon': '6375177', 'Zheng, Ariel': '6375196', 'Lu, Esther': '6375231',
+                     'Yang, Miya': '6375249', 'Zhan, Milla': '6375271', 'Lv, Linda': '6375273', 'Zeng, Tim': '6375280',
+                     'Xu, Simba': '6375282', 'Wang, Peter': '6375292', 'Zhou, Sean': '6375306',
+                     'Zeng, Winnie': '6375320', 'Chen, Echo': '6375321', 'Yu, Coley': '6375323',
+                     'Chen, Leah': '6375324', 'Ji, Sunny': '6375329', 'Li, Roy': '6375339', 'Liu, Josie': '6375341',
+                     'Zhang, Yvette': '6375349', 'Lin, Charlotte': '6375354', 'Pan, James': '6375355',
+                     'Yan, Alex': '6375356', 'Lin, Carl': '6375360', 'Xiao, Dennis': '6375362',
+                     'Cheng, Ethan': '6375369', 'Chen, Jacy': '6375372', 'Hour_Files_Export_URL': "N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\2.财务\\2.SAP\\1.ODM Data - XM\\3.Hours"}
+    staff_dict = {
+        'CHM': ['Chen, Nemo', 'Xu, Jimmy', 'Su, Lucky', 'Dai, Jocelyn', 'Yang, Alisa', 'Zou, Rudi',
+                'Wang, Carry', 'Zhang, Lynn', 'Wu, Alan', 'Li, Jesse', 'Ou, Ida', 'Miao, Molly',
+                'Ye, Anne', 'Zeng, Cris', 'Lin, Jenny', 'Lin, Lucy', 'Chen, Limi', 'Chen, Nikki',
+                'Ye, Carter', 'Wu, Mindy', 'Han, Amy', 'Shen, Rocy', 'Chen, Bella', 'Ke, Coco',
+                'Chen, Helen', 'Huang, Edwina', 'Ma, Even'],
+        'PHY': ['Zhong, Teddy', 'Ou, Yedda', 'Zhang, Cathy', 'Yang, Trison', 'Huang, Moon', 'Qin, Bruce',
+                'Zheng, Damon', 'Ye, Valentine', 'Zhang, Dragon', 'Zheng, Ariel', 'Lu, Esther',
+                'Yang, Miya', 'Zhan, Milla', 'Lv, Linda', 'Zeng, Tim', 'Xu, Simba', 'Wang, Peter',
+                'Zhou, Sean', 'Zeng, Winnie', 'Chen, Echo', 'Yu, Coley', 'Chen, Leah', 'Ji, Sunny',
+                'Li, Roy', 'Liu, Josie', 'Zhang, Yvette', 'Lin, Charlotte', 'Pan, James', 'Yan, Alex',
+                'Lin, Carl', 'Xiao, Dennis', 'Cheng, Ethan', 'Chen, Jacy'],
+        'CS': ['Chen, Iris', 'Chen, Eunice', 'Ding, Daisy', 'Du, Miley', 'Guan, Elaine', 'Huang, Mary',
+               'Jiao, Joyce', 'Lai, Tailor', 'Lao, Keely', 'Lin, Tina', 'Lv, Rita', 'Ma, Ella',
+               'Qiu, Dora', 'Qiu, Emily', 'Shen, Jewel', 'Weng, Cora', 'Yang, Stacey', 'Zhang, Judy',
+               'Zhang, Wendy', 'Zhuo, Mia', 'Huang, Holly', 'Li, Cathy', 'Yeh, Lynne', 'Zhang, Lyndon',
+               'Wu, Jemma', 'Su, Layla', 'Yang, Beauty', 'Huang, May', 'Chen, Claudia', 'Cai, Barry',
+               'Gong, Joy', 'chen, sarah', 'Chen, Raney', 'Pan, Peki', 'Liu, Amber', 'Chen, Kate',
+               'Liu, Mia', 'Liu, Morita', 'Peng, Penny', 'Zhang, Alaia', 'Huang, Even', 'Lin, Linda',
+               'Lu, Joanna', 'Wei, Wynne', 'Chen, Sarah'],
+    }
+    allocator = RevenueAllocator()
+
+    # 定义CSV文件的表头
+    res_headers = ['order_no', 'material_code', 'item', 'dept', 'dept_revenue', 'dept_hours']
+    res2_headers = ['order_no', 'material_code', 'item', 'dept', 'dept_revenue', 'dept_hours',
+                   'allocated_date', 'allocated_hours', 'staff_name']
+
+    # 第一次写入时包含表头
+    first_write = True
+
+    for revenueData in revenueDatas:
+        res = allocator.allocate_department_hours(revenueData, configContent)
+        res2 = allocator.allocate_person_hours(res, 8, datetime.date(2025, 4, 1), datetime.date(2025, 4, 30),
+                                     staff_dict,configContent)
+        res_df = pd.DataFrame(res)
+        res_df2 = pd.DataFrame(res2)
+
+        # 写入CSV文件，第一次写入时包含表头
+        res_df.to_csv('res.csv', index=False, mode='a', header=first_write)
+        res_df2.to_csv('res2.csv', index=False, mode='a', header=first_write)
+
+        # 第一次写入后设置为False
+        first_write = False
+
+    print(res)
