@@ -7,8 +7,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1123</width>
-    <height>754</height>
+    <width>1113</width>
+    <height>771</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -706,8 +706,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>538</width>
-             <height>580</height>
+             <width>533</width>
+             <height>597</height>
             </rect>
            </property>
            <attribute name="label">
@@ -1209,8 +1209,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>538</width>
-             <height>580</height>
+             <width>284</width>
+             <height>402</height>
             </rect>
            </property>
            <attribute name="label">
@@ -2333,60 +2333,6 @@
            <string>Operate</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_26">
-           <item row="2" column="0">
-            <widget class="QPushButton" name="pushButton_70">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="text">
-              <string>Combine key fields</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QPushButton" name="pushButton_76">
-             <property name="text">
-              <string>Get Order Data</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0">
-            <widget class="QPushButton" name="pushButton_71">
-             <property name="text">
-              <string>Get Hour Data</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1">
-            <widget class="QLineEdit" name="lineEdit_38"/>
-           </item>
-           <item row="2" column="1">
-            <widget class="QLineEdit" name="lineEdit_39"/>
-           </item>
-           <item row="3" column="1">
-            <widget class="QLineEdit" name="lineEdit_37"/>
-           </item>
-           <item row="4" column="2">
-            <widget class="QPushButton" name="pushButton_73">
-             <property name="text">
-              <string>Fill in the Sap</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="2">
-            <widget class="QPushButton" name="pushButton_77">
-             <property name="text">
-              <string>Allocate Hour</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QPushButton" name="pushButton_63">
-             <property name="text">
-              <string>Get Raw Data</string>
-             </property>
-            </widget>
-           </item>
            <item row="0" column="1">
             <widget class="QLineEdit" name="lineEdit_30"/>
            </item>
@@ -2400,6 +2346,77 @@
              </property>
              <property name="text">
               <string>Combine Data</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QPushButton" name="pushButton_76">
+             <property name="text">
+              <string>Get Order Data</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QPushButton" name="pushButton_70">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Combine key fields</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="2">
+            <widget class="QPushButton" name="pushButton_77">
+             <property name="text">
+              <string>Allocate Departments Hours</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QLineEdit" name="lineEdit_38"/>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLineEdit" name="lineEdit_39"/>
+           </item>
+           <item row="4" column="0">
+            <widget class="QPushButton" name="pushButton_71">
+             <property name="text">
+              <string>Get Departments Hours</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="lineEdit_37"/>
+           </item>
+           <item row="0" column="0">
+            <widget class="QPushButton" name="pushButton_63">
+             <property name="text">
+              <string>Get Raw Data</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QPushButton" name="pushButton_78">
+             <property name="text">
+              <string>Get Person Hours</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QLineEdit" name="lineEdit_31"/>
+           </item>
+           <item row="4" column="2">
+            <widget class="QPushButton" name="pushButton_73">
+             <property name="text">
+              <string>Allocate Person Hours</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="2">
+            <widget class="QPushButton" name="pushButton_79">
+             <property name="text">
+              <string>Fill in SAP</string>
              </property>
             </widget>
            </item>
@@ -2753,7 +2770,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1123</width>
+     <width>1113</width>
      <height>25</height>
     </rect>
    </property>

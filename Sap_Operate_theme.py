@@ -96,6 +96,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_71.clicked.connect(lambda: self.get_hour_file_url(self.lineEdit_38))
         self.pushButton_76.clicked.connect(lambda: self.get_hour_file_url(self.lineEdit_37))
         self.pushButton_72.clicked.connect(self.get_hour_combine_file)
+        self.pushButton_77.clicked.connect(self.get_department_hour)
+        self.pushButton_73.clicked.connect(self.get_person_hour)
         self.filesUrl = []
 
     def init_theme_action(self):
@@ -2066,7 +2068,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         pivot_table_key = self.lineEdit_39.text().split(';')
         if fileUrl and pivot_table_key:
             try:
-                self.textBrowser_4.append("开始合并")
+                self.textBrowser_4.append("数据开始合并")
                 app.processEvents()
                 newData = Get_Data()
                 file_data = newData.getFileTableData(fileUrl)
@@ -2076,12 +2078,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 # 合并
                 valus_key = ['Revenue', 'Total Subcon Cost']
                 pivot_table_data = newData.pivotTable(pivot_table_key, valus_key)
-                current_time = datetime.now().strftime('%Y-%m-%d %H.%M.%S')
+                current_time = datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')
                 pivot_table_data_path = '%s\\%s' % (configContent['Hour_Files_Export_URL'], '1.order data %s.xlsx' % current_time)
                 pivot_table_data_file = pivot_table_data.to_excel(pivot_table_data_path, merge_cells=False)
                 self.lineEdit_37.setText(pivot_table_data_path)
-                os.startfile(pivot_table_data_path)
                 self.textBrowser_4.append("合并完成")
+                self.textBrowser_4.append("文件路径：%s" % pivot_table_data_path)
             except Exception as errorMsg:
                 self.textBrowser_4.append("<font color='red'>出错信息：%s </font>" % errorMsg)
                 app.processEvents()
@@ -2095,33 +2097,123 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         config_content = copy.deepcopy(configContent)
         config_content.update(update_data)
         return config_content  # 返回修改后的副本
-    def get_calculate_revenue_allocation_data(self):
+    
+    def get_department_hour(self):
+        """
+        计算部门工时并保存结果
+        """
         order_data_path = self.lineEdit_37.text()
         hour_gui_data = myWin.getHourGuiData()
         if order_data_path:
+            self.textBrowser_4.append("部门开始计算")
+            app.processEvents()
+            
+            # 更新配置内容
             config_content = self.update_config_content(hour_gui_data)
-            max_hours_per_day = config_content['Max_Hour']
-            start_date = config_content['Start_Date']
-            end_date = config_content['End_Date']
-            # 获取order数据
+            
+            # 获取订单数据
             order_data_obj = Get_Data()
             order_datas = order_data_obj.getFileTableData(order_data_path)
-            # 调用hour方法
+            
+            # 初始化结果DataFrame
+            all_results = []
+            
+            # 调用hour方法处理每个订单
             revenue_allocator_obj = RevenueAllocator()
-            for order_data in order_datas:
-                order_revenue_data = revenue_allocator_obj.calculate_revenue_allocation(order_data, max_hours_per_day, start_date, end_date, staff_dict, config_content)
-                order_df = pd.DataFrame(order_revenue_data)
-                current_time = datetime.now().strftime('%Y-%m-%d %H.%M.%S')
-                dept_hour_path = '%s\\%s' % (configContent['Hour_Files_Export_URL'], 'dept hour %s.xlsx'% current_time)
-                order_df.to_csv(dept_hour_path, index=False, mode='a', header=True)
-            os.startfile(dept_hour_path)
+            for _, order_data in order_datas.iterrows():
+                # 将Series转换为字典
+                order_dict = order_data.to_dict()
+                # 计算部门工时
+                order_revenue_data = revenue_allocator_obj.allocate_department_hours(order_dict, config_content)
+                all_results.extend(order_revenue_data)
+            
+            # 创建结果DataFrame
+            result_df = pd.DataFrame(all_results)
+            
+            # 生成输出文件名
+            current_time = datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')
+            dept_hour_path = f"{configContent['Hour_Files_Export_URL']}\\2.dept hour {current_time}.xlsx"
+            
+            # 保存结果
+            result_df.to_excel(dept_hour_path, index=False)
+            
+            # 更新UI
             self.lineEdit_38.setText(dept_hour_path)
-            self.textBrowser_4.append("计算完成")
-            self.textBrowser_4.append("文件路径：%s" % dept_hour_path)
+            self.textBrowser_4.append("部门计算完成")
+            self.textBrowser_4.append(f"文件路径：{dept_hour_path}")
             app.processEvents()
         else:
             self.textBrowser_4.append("请重新选择合并后的文件")
             app.processEvents()
+
+    def get_person_hour(self):
+        """
+        分配人员工时并保存结果
+        """
+        dept_hour_path = self.lineEdit_38.text()
+        if dept_hour_path:
+            self.textBrowser_4.append("开始分配人员")
+            app.processEvents()
+            
+            # 获取配置数据
+            hour_gui_data = myWin.getHourGuiData()
+            config_content = self.update_config_content(hour_gui_data)
+            
+            # 获取参数
+            max_hours_per_day = int(config_content['Max_Hour'])
+            start_date = datetime.datetime.strptime(config_content['Start_Date'], '%Y.%m.%d').date()
+            end_date = datetime.datetime.strptime(config_content['End_Date'], '%Y.%m.%d').date()
+            
+            # 获取部门工时数据
+            dept_hour_obj = Get_Data()
+            dept_hour_datas = dept_hour_obj.getFileTableData(dept_hour_path)
+            
+            # 初始化结果列表
+            all_results = []
+            
+            # 处理每个部门工时记录
+            revenue_allocator_obj = RevenueAllocator()
+            for _, dept_hour in dept_hour_datas.iterrows():
+                # 将Series转换为字典
+                dept_hour_dict = dept_hour.to_dict()
+                # 将单个记录转换为列表形式
+                dept_hour_list = [dept_hour_dict]
+                self.textBrowser_4.append(f"处理Order Number：{dept_hour_dict['order_no']}")
+                app.processEvents()
+                # 分配人员工时
+                person_hour_data = revenue_allocator_obj.allocate_person_hours(
+                    dept_hour_list, 
+                    max_hours_per_day, 
+                    start_date, 
+                    end_date, 
+                    staff_dict, 
+                    config_content
+                )
+                all_results.extend(person_hour_data)
+            
+            # 创建结果DataFrame
+            result_df = pd.DataFrame(all_results)
+            
+            # 生成输出文件名
+            current_time = datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')
+            person_hour_path = f"{configContent['Hour_Files_Export_URL']}\\3.person hour {current_time}.xlsx"
+            
+            # 保存结果
+            result_df.to_excel(person_hour_path, index=False)
+            
+            # 打开结果文件
+            os.startfile(person_hour_path)
+            
+            # 更新UI
+            self.lineEdit_31.setText(person_hour_path)
+            self.textBrowser_4.append("分配人员完成")
+            self.textBrowser_4.append(f"文件路径：{person_hour_path}")
+            app.processEvents()
+        else:
+            self.textBrowser_4.append("请先完成部门工时计算")
+            app.processEvents()
+
+
 
 
 if __name__ == "__main__":
