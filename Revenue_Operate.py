@@ -6,8 +6,9 @@ import os
 # 新增计算方法
 class RevenueAllocator:
     def __init__(self):
-        self.hours_data = pd.DataFrame(columns=['date', 'staff_name', 'hours', 'order_no', 'dept'])
+        self.hours_data = pd.DataFrame(columns=['date', 'staff_name', 'hours', 'order_no', 'dept', 'week'])
         self.hours_file = None  # 将在使用时根据日期确定文件名
+        self.unallocated_hours_file = None  # 未分配工时记录文件
 
     def _get_hours_file_path(self, date, path):
         """
@@ -29,9 +30,12 @@ class RevenueAllocator:
                 self.hours_data = pd.read_csv(self.hours_file)
                 # 确保日期列是datetime类型
                 self.hours_data['date'] = pd.to_datetime(self.hours_data['date']).dt.date
+                # 确保week列存在
+                if 'week' not in self.hours_data.columns:
+                    self.hours_data['week'] = self.hours_data['date'].apply(self._get_week_number)
             except Exception as e:
                 print(f"Error loading hours data: {e}")
-                self.hours_data = pd.DataFrame(columns=['date', 'staff_name', 'hours', 'order_no', 'dept'])
+                self.hours_data = pd.DataFrame(columns=['date', 'staff_name', 'hours', 'order_no', 'dept', 'week'])
 
     def _save_hours_data(self):
         """
@@ -41,6 +45,10 @@ class RevenueAllocator:
             return
             
         try:
+            # 确保week列存在
+            if 'week' not in self.hours_data.columns:
+                self.hours_data['week'] = self.hours_data['date'].apply(self._get_week_number)
+            
             self.hours_data.to_csv(self.hours_file, index=False)
         except Exception as e:
             print(f"Error saving hours data: {e}")
@@ -72,7 +80,8 @@ class RevenueAllocator:
             'staff_name': [staff_name],
             'hours': [hours],
             'order_no': [order_no],
-            'dept': [dept]
+            'dept': [dept],
+            'week': [self._get_week_number(date)]
         })
         
         # 合并到现有数据
@@ -91,7 +100,7 @@ class RevenueAllocator:
     def allocate_department_hours(self, revenueData, configContent):
         """动态配置的收入分配计算方法"""
         material_code = revenueData.get('Material Code', '')
-        base = (float(revenueData['Revenue']) * float(configContent.get('Plan_Cost_Parameter')) - float(revenueData['Total Subcon Cost']) / 1.06)
+        base = (float(revenueData['Revenue']) - float(revenueData['Total Subcon Cost']) / 1.06) * float(configContent.get('Plan_Cost_Parameter'))
 
         # 获取有效位数配置
         significant_digits = int(configContent.get('Significant_Digits', 0))
@@ -234,6 +243,52 @@ class RevenueAllocator:
         """
         return date.isocalendar()[1]
 
+    def _save_unallocated_hours(self, unallocated_data, export_path):
+        """
+        保存未分配工时信息到Excel文件
+        :param unallocated_data: 未分配工时数据列表
+        :param export_path: Excel文件保存路径
+        """
+        if not unallocated_data:
+            return
+
+        # 创建DataFrame
+        df = pd.DataFrame(unallocated_data)
+        
+        # 设置文件名和路径
+        current_date = datetime.datetime.now().strftime("%Y%m%d")
+        file_name = f"unallocated_hours_{current_date}.xlsx"
+        self.unallocated_hours_file = os.path.join(export_path, file_name)
+        
+        try:
+            # 如果文件已存在，追加数据
+            if os.path.exists(self.unallocated_hours_file):
+                existing_df = pd.read_excel(self.unallocated_hours_file)
+                df = pd.concat([existing_df, df], ignore_index=True)
+            
+            # 保存到Excel
+            df.to_excel(self.unallocated_hours_file, index=False)
+            print(f"Unallocated hours information saved to {self.unallocated_hours_file}")
+        except Exception as e:
+            print(f"Error saving unallocated hours: {e}")
+
+    def _get_weekly_records_count(self, staff_name, week_number):
+        """
+        获取指定员工在指定周数的记录数量
+        :param staff_name: 员工姓名
+        :param week_number: 周数
+        :return: 记录数量
+        """
+        if self.hours_data.empty:
+            return 0
+        
+        # 确保week列存在
+        if 'week' not in self.hours_data.columns:
+            self.hours_data['week'] = self.hours_data['date'].apply(self._get_week_number)
+        
+        mask = (self.hours_data['staff_name'] == staff_name) & (self.hours_data['week'] == week_number)
+        return len(self.hours_data[mask])
+
     def allocate_person_hours(self, results, max_hours_per_day, start_date, end_date, staff_dict, configContent):
         """
         工时分配方法
@@ -259,6 +314,7 @@ class RevenueAllocator:
             return []
 
         final_results = []
+        unallocated_data = []  # 存储未分配工时信息
 
         # 按订单号和部门分组处理工时
         order_dept_groups = {}
@@ -278,7 +334,8 @@ class RevenueAllocator:
 
             # 计算总工时
             total_hours = sum(record['dept_hours'] for record in order_records)
-            
+            print(f"Processing order {order_no} in department {dept} with total hours: {total_hours}")
+
             # 计算每天需要分配的人数（向上取整）
             staff_per_day = max(1, int(total_hours / (max_hours_per_day * len(work_days))) + 1)
             staff_per_day = min(staff_per_day, len(staff_list))
@@ -303,7 +360,7 @@ class RevenueAllocator:
                     continue
 
                 # 计算当天需要分配的总工时
-                remaining_hours = total_hours
+                remaining_hours = sum(record['dept_hours'] for record in order_records)
                 if remaining_hours <= 0:
                     break
 
@@ -313,10 +370,18 @@ class RevenueAllocator:
                     remaining_hours / min(len(available_staff), staff_per_day)
                 )
 
+                # 获取当前周数
+                current_week = self._get_week_number(work_day)
+
                 # 分配工时给员工
                 for staff_name in available_staff[:staff_per_day]:
                     if remaining_hours <= 0:
                         break
+
+                    # 检查该员工本周记录数是否已达到上限
+                    weekly_records = self._get_weekly_records_count(staff_name, current_week)
+                    if weekly_records >= 14:
+                        continue
 
                     # 计算该员工可分配的最大工时
                     available_hours = max_hours_per_day - dept_allocations.get(staff_name, 0)
@@ -347,7 +412,7 @@ class RevenueAllocator:
                             'allocated_hours': round(record_hours, significant_digits),
                             'staff_name': staff_name,
                             'staff_id': configContent.get(staff_name),
-                            'week': self._get_week_number(work_day)
+                            'week': current_week
                         })
                         final_results.append(new_record)
 
@@ -360,6 +425,25 @@ class RevenueAllocator:
 
                     if remaining_hours <= 0:
                         break
+
+            # 检查是否所有工时都已分配
+            remaining_total = sum(record['dept_hours'] for record in order_records)
+            if remaining_total > 0:
+                # 记录未分配工时信息
+                for record in order_records:
+                    if record['dept_hours'] > 0:
+                        unallocated_data.append({
+                            'order_no': order_no,
+                            'dept': dept,
+                            'material_code': record['material_code'],
+                            'item': record['item'],
+                            'remaining_hours': round(record['dept_hours'], significant_digits),
+                            'original_hours': record['original_hours'],
+                            'check_date': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        })
+
+        # 保存未分配工时信息到指定路径
+        self._save_unallocated_hours(unallocated_data, configContent.get('Hour_Files_Export_URL'))
 
         return final_results
 

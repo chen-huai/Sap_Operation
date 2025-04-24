@@ -608,7 +608,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         guiHourData['CHM_Hourly_Rate'] = float(self.doubleSpinBox_16.text())
         guiHourData['PHY_Hourly_Rate'] = float(self.doubleSpinBox_15.text())
         guiHourData['Plan_Cost_Parameter'] = float(self.doubleSpinBox_11.text())
-        guiHourData['significantDigits'] = float(self.spinBox_11.text())
+        guiHourData['Significant_Digits'] = float(self.spinBox_11.text())
         guiHourData['CHM_Cost_Parameter'] = float(self.doubleSpinBox_13.text())
         guiHourData['PHY_Cost_Parameter'] = float(self.doubleSpinBox_12.text())
         guiHourData['Lab_1'] = self.lineEdit_28.text()
