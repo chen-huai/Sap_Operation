@@ -2,6 +2,8 @@ import time
 import os
 
 class File_Opetate():
+    def get_file_path(self, path):
+        return os.path.abspath(path)
     def createFolder(self, url):
         isExists = os.path.exists(url)
         if not isExists:
@@ -10,4 +12,3 @@ class File_Opetate():
         nowTime = time.strftime('%Y-%m-%d %H.%M.%S')
         fileName = fileUrl + '/' + nowTime + ' - ' + fileName + '.' + fileType
         return fileName
-

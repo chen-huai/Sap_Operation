@@ -26,6 +26,17 @@ class Get_Data():
         self.fileData = excel_field_mapper.transform_dataframe(self.fileData)
         return self.fileData
 
+    def getFileTableData(self, fileDataUrl):
+        self.fileDataUrl = fileDataUrl
+        fileType = self.fileDataUrl.split(".")[-1]
+        if fileType == 'xlsx':
+            self.fileData = pd.read_excel(self.fileDataUrl)
+        elif fileType == 'csv':
+            self.fileData = pd.read_csv(self.fileDataUrl)
+        height, width = self.fileData.shape
+
+        return self.fileData
+
     def getFileMoreSheetData(self, fileDataUrl, sheet_name=[]):
         if sheet_name==[]:
             sheet_name = None

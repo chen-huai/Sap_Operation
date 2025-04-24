@@ -5,6 +5,7 @@ import time
 import math
 import pandas as pd
 import csv
+import copy
 import numpy as np
 import win32com.client
 import datetime
@@ -12,7 +13,7 @@ import chicon  # 引用图标
 # from PyQt5 import QtCore, QtGui, QtWidgets
 # from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QVBoxLayout, QPushButton, QAction
-# from PyQt5.QtCore import *
+from PyQt5.QtCore import QDate
 from PyQt5.QtGui import QIcon
 from Get_Data import *
 from File_Operate import *
@@ -23,7 +24,10 @@ from Data_Table import *
 from Logger import *
 from Excel_Field_Mapper import excel_field_mapper
 from theme_manager_theme import ThemeManager
-import shutil
+from Revenue_Operate import *
+
+
+
 
 
 class MyMainWindow(QMainWindow, Ui_MainWindow):
@@ -88,6 +92,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.checkBox_26.toggled.connect(lambda: self.pdfNameRule('Client Contact Name', 'invoice'))
         self.pushButton_56.clicked.connect(lambda: self.orderUnlockOrLock('Unlock'))
         self.pushButton_57.clicked.connect(lambda: self.orderUnlockOrLock('Lock'))
+        self.pushButton_63.clicked.connect(lambda: self.get_hour_file_url(self.lineEdit_30))
+        self.pushButton_71.clicked.connect(lambda: self.get_hour_file_url(self.lineEdit_38))
+        self.pushButton_76.clicked.connect(lambda: self.get_hour_file_url(self.lineEdit_37))
+        self.pushButton_72.clicked.connect(self.get_hour_combine_file)
+        self.pushButton_77.clicked.connect(self.get_department_hour)
+        self.pushButton_73.clicked.connect(self.get_person_hour)
         self.filesUrl = []
 
     def init_theme_action(self):
@@ -147,12 +157,26 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         global configContent
         global username
         global role
+        global staff_dict
         configContent = {}
+        staff_dict = {}
+        # configContent[configContent.get('Business_Department','CS')] = []
+        # configContent[configContent.get('Lab_1','PHY')] = []
+        # configContent[configContent.get('Lab_2','CHM')] = []
         username = list(csvFile['A'])
         number = list(csvFile['B'])
         role = list(csvFile['C'])
         for i in range(len(username)):
             configContent['%s' % username[i]] = number[i]
+            if role[i] == configContent.get('Business_Department', 'CS'):
+                # 使用 setdefault 确保键存在且为列表类型
+                staff_dict.setdefault(configContent.get('Business_Department', 'CS'), []).append(username[i])
+            if role[i] == configContent.get('Lab_1', 'PHY'):
+                # 使用 setdefault 确保键存在且为列表类型
+                staff_dict.setdefault(configContent.get('Lab_1', 'PHY'), []).append(username[i])
+            if role[i] == configContent.get('Lab_2', 'CHM'):
+                # 使用 setdefault 确保键存在且为列表类型
+                staff_dict.setdefault(configContent.get('Lab_2', 'CHM'), []).append(username[i])
         MyMainWindow.csItem(self)
         MyMainWindow.salesItem(self)
         MyMainWindow.getDefaultInformation(self)
@@ -190,10 +214,15 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
              '以;分隔，数据透视字段'],
             ['SAP登入信息', '内容', '备注'],
             ['Login_msg', 'DR-0486-01->601-240', '订单类型-销售组织-分销渠道-销售办事处-销售组'],
+            ['Business_Department', 'CS', '业务部门,名称会用于后续'],
+            ['Lab_1', 'PHY', '代表实验室，会用于后续'],
+            ['Lab_2', 'CHM', '代表实验室，会用于后续'],
+            ['T20', 'PHY', '代表实验室，会用于后续'],
+            ['T75', 'CHM', '代表实验室，会用于后续'],
             ['Hourly Rate', '金额', '备注'],
-            ["Hourly Rate(PC)", 315, '每年更新'],
-            ['Hourly Rate(CHM)', 342, '每年更新'],
-            ['Hourly Rate(PHY)', 342, '每年更新'],
+            ['CS_Hourly_Rate', 300, '客服时薪'],
+            ['PHY_Hourly_Rate', 300, '物理时薪'],
+            ['CHM_Hourly_Rate', 300, '化学时薪'],
             ['成本中心', '编号', '备注'],
             ['CS_Selected', 1, '是否默认被选中,1选中，0未选中'],
             ['PHY_Selected', 1, '是否默认被选中,1选中，0未选中'],
@@ -207,6 +236,25 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ['实验室成本比例', '数值', '备注'],
             ['CHM_Cost_Parameter', 0.3, '给到CHM30%'],
             ['PHY_Cost_Parameter', 0.3, '给到PHY30%'],
+            # 新增分配规则参数
+            ['405_Item_1000', 0.5, '405分配规则'],
+            ['405_Item_2000', 0.5, '405分配规则'],
+            ['441_Item_1000', 0.8, '441分配规则'],
+            ['441_Item_2000', 0.2, '441分配规则'],
+            ['430_Item_1000', 0.8, '430分配规则'],
+            ['430_Item_2000', 0.2, '430分配规则'],
+            # 新增特殊MC规则
+            ['T20-430-A2', 'PHY_1000/CHM_2000', '1000/2000对应的lab'],
+            ['T20-430-A2_mc', 'T20-430-00/T75-430-00', '1000/2000对应的mc'],
+            ['T75-441-A2', 'CHM_1000/PHY_2000', '1000/2000对应的lab'],
+            ['T75-441-A2_mc', 'T75-441-00/T20-441-00', '1000/2000对应的mc'],
+            ['T75-405-A2', 'CHM_1000/PHY_2000', '1000/2000对应的lab'],
+            ['T75-405-A2_mc', 'T75-405-00/T20-405-00', '1000/2000对应的mc'],
+            # 新增公共参数
+            ['Max_Hour', 8, '最大工作时长'],
+            ['Hours_Combine_Key', "Order Number;Material Code",'以;分隔，数据透视字段'],
+            ['Hour_Files_Import_URL', "N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\2.财务\\2.SAP\\1.ODM Data - XM\\3.Hours",'Invoice文件导入路径'],
+            ['Hour_Files_Export_URL', "N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\2.财务\\2.SAP\\1.ODM Data - XM\\3.Hours",'Invoice文件导入路径'],
             ['DATA A数据填写', '判断依据', '备注'],
             ['Data_A_E1', '5010815347;5010427355;5010913488;5010685589;5010829635;5010817524', 'Data A录E1,新添加用;隔开即可'],
             ['Data_A_Z2', '5010908478;5010823259', 'Data A录Z2,新添加用;隔开即可'],
@@ -300,9 +348,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.lineEdit_13.setText(loginMsgList[3])
             self.lineEdit_14.setText(loginMsgList[4])
             # 每小时成本
-            self.doubleSpinBox_5.setValue(float(format(float(configContent['Hourly Rate(PC)']), '.2f')))
-            self.doubleSpinBox_6.setValue(float(format(float(configContent['Hourly Rate(CHM)']), '.2f')))
-            self.doubleSpinBox_8.setValue(float(format(float(configContent['Hourly Rate(PHY)']), '.2f')))
+            self.doubleSpinBox_5.setValue(float(format(float(configContent['CS_Hourly_Rate']), '.2f')))
+            self.doubleSpinBox_6.setValue(float(format(float(configContent['CHM_Hourly_Rate']), '.2f')))
+            self.doubleSpinBox_8.setValue(float(format(float(configContent['PHY_Hourly_Rate']), '.2f')))
             # 成本中心
             self.checkBox_13.setChecked(int(configContent['CS_Selected']))
             self.checkBox_14.setChecked(int(configContent['CHM_Selected']))
@@ -354,6 +402,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.checkBox_23.setChecked(int(configContent['Ele_Fapiao_No_Selected']))
             self.checkBox_24.setChecked(int(configContent['Ele_Revenue_Selected']))
             self.lineEdit_27.setText(configContent['Ele_Invoice_Name'])
+            # hour界面操作
+            self.spinBox_10.setValue(int(configContent['Max_Hour']))
+            self.lineEdit_39.setText(configContent['Hours_Combine_Key'])
+            today_hours = datetime.date.today()
+            first_day = today_hours.replace(day=1)
+            self.dateEdit.setDate(QDate(first_day.year, first_day.month, first_day.day))  # 当月第一天
+            self.dateEdit_2.setDate(QDate.currentDate())  # 当天日期
+            self.doubleSpinBox_12.setValue(float(format(float(configContent['CS_Hourly_Rate']), '.2f')))
+            self.doubleSpinBox_16.setValue(float(format(float(configContent['CHM_Hourly_Rate']), '.2f')))
+            self.doubleSpinBox_15.setValue(float(format(float(configContent['PHY_Hourly_Rate']), '.2f')))
+            self.doubleSpinBox_11.setValue(float(format(float(configContent['Plan_Cost_Parameter']), '.2f')))
+            self.doubleSpinBox_13.setValue(float(format(float(configContent['CHM_Cost_Parameter']), '.2f')))
+            self.doubleSpinBox_12.setValue(float(format(float(configContent['PHY_Cost_Parameter']), '.2f')))
+            self.spinBox_11.setValue(int(configContent['Significant_Digits']))
+            self.lineEdit_28.setText(configContent['Lab_1'])
+            self.lineEdit_29.setText(configContent['Lab_2'])
         except Exception as msg:
             self.textBrowser_2.append("错误信息：%s" % msg)
             self.textBrowser_2.append('----------------------------------')
@@ -535,6 +599,24 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         guiAdminData['eleOrderBits'] = int(self.spinBox_7.text())
         guiAdminData['fapiaoName'] = self.lineEdit_27.text()
         return guiAdminData
+
+    def getHourGuiData(self):
+        guiHourData = {}
+        guiHourData['Hours_Combine_Key'] = self.lineEdit_39.text()
+        guiHourData['Max_Hour'] = int(self.spinBox_10.text())
+        guiHourData['CS_Hourly_Rate'] = float(self.doubleSpinBox_14.text())
+        guiHourData['CHM_Hourly_Rate'] = float(self.doubleSpinBox_16.text())
+        guiHourData['PHY_Hourly_Rate'] = float(self.doubleSpinBox_15.text())
+        guiHourData['Plan_Cost_Parameter'] = float(self.doubleSpinBox_11.text())
+        guiHourData['Significant_Digits'] = float(self.spinBox_11.text())
+        guiHourData['CHM_Cost_Parameter'] = float(self.doubleSpinBox_13.text())
+        guiHourData['PHY_Cost_Parameter'] = float(self.doubleSpinBox_12.text())
+        guiHourData['Lab_1'] = self.lineEdit_28.text()
+        guiHourData['Lab_2'] = self.lineEdit_29.text()
+        guiHourData['Business_Department'] = self.lineEdit_26.text()
+        guiHourData['Start_Date'] = self.dateEdit.date().toString("yyyy.MM.dd")
+        guiHourData['End_Date'] = self.dateEdit_2.date().toString("yyyy.MM.dd")
+        return guiHourData
 
     # 计算Order所需数据
     def getRevenueData(self, guiData):
@@ -878,16 +960,16 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             return logMsg
 
     # 获取文件
-    def getFile(self):
+    def getFile(self, path):
         selectBatchFile = QFileDialog.getOpenFileName(self, '选择ODM导出文件',
-                                                      '%s\\%s' % (configContent['SAP_Date_URL'], today),
+                                                      '%s\\%s' % (path, today),
                                                       'files(*.docx;*.xls*;*.csv)')
         fileUrl = selectBatchFile[0]
         return fileUrl
 
     # SAP数据路径
     def getFileUrl(self):
-        fileUrl = MyMainWindow.getFile(self)
+        fileUrl = MyMainWindow.getFile(self, configContent['SAP_Date_URL'])
         if fileUrl:
             self.lineEdit_6.setText(fileUrl)
             app.processEvents()
@@ -897,7 +979,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     # ODM数据路径
     def getODMDataFileUrl(self):
-        fileUrl = MyMainWindow.getFile(self)
+        fileUrl = MyMainWindow.getFile(self, configContent['SAP_Date_URL'])
         if fileUrl:
             self.lineEdit_7.setText(fileUrl)
             app.processEvents()
@@ -907,7 +989,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     # 获取需要Combine文件的路径
     def getCombineFileUrl(self):
-        fileUrl = MyMainWindow.getFile(self)
+        fileUrl = MyMainWindow.getFile(self, configContent['SAP_Date_URL'])
         if fileUrl:
             self.lineEdit_8.setText(fileUrl)
             app.processEvents()
@@ -917,7 +999,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     # 获取Log文件路径
     def getLogFileUrl(self):
-        fileUrl = MyMainWindow.getFile(self)
+        fileUrl = MyMainWindow.getFile(self, configContent['SAP_Date_URL'])
         if fileUrl:
             self.lineEdit_9.setText(fileUrl)
             app.processEvents()
@@ -1541,9 +1623,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     i = 1
                     # 新增加log
                     log_file_name = 'Invoice %s.xlsx' % time.strftime('%Y-%m-%d %H.%M.%S')
-                    Log_file = os.path.join(configContent['Invoice_Files_Export_URL'], log_file_name)
+                    Log_file = '%s\\%s' % (configContent['Invoice_Files_Export_URL'], log_file_name)
                     log_obj = Logger(Log_file, ['Update', 'Invoice No', 'File Name', 'Company Name', 'CS', 'Project No', 'Customer Name', 'Client Contact Name', 'Remark'])
-                    has_error = False  # 新增错误标志
                     for fileUrl in fileUrls:
                         try:
                             log_list = {}
@@ -1655,39 +1736,17 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             self.textBrowser_3.append('%s' % outputFlie)
                             app.processEvents()
                         except Exception as errorMsg:
+                            # self.textBrowser_3.append("<font color='red'>第%s份文件：</font>" % i)
                             self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
                             self.textBrowser_3.append("<font color='red'>出错的文件：%s </font>" % fileUrl)
-                            try:
-                                # 创建错误文件目录
-                                error_folder = os.path.join(desktopUrl, "error_invoices")
-                                error_folder = os.path.normpath(error_folder)  # 新增路径规范化
-                                os.makedirs(error_folder, exist_ok=True)
-                                # 保存出错文件副本
-                                error_file = os.path.join(error_folder, os.path.basename(fileUrl))
-                                error_file = os.path.normpath(error_file)  # 新增路径规范化
-
-                                # 添加文件存在检查
-                                if os.path.exists(fileUrl):
-                                    has_error = True  # 设置错误标志
-                                    shutil.copy(fileUrl, error_file)
-                                    self.textBrowser_3.append(f"已将出错文件复制到：{error_file}")
-                                else:
-                                    self.textBrowser_3.append(f"<font color='red'>源文件不存在: {fileUrl}</font>")
-
-                            except PermissionError as perm_err:
-                                self.textBrowser_3.append(f"<font color='red'>权限拒绝错误: {perm_err}</font>")
-                                self.textBrowser_3.append(
-                                    "<font color='red'>请检查：1.是否具有网络路径写入权限 2.文件是否被其他程序占用</font>")
                         i += 1
                     log_obj.save_log_to_excel()
                     os.startfile(Log_file)
                     os.startfile(configContent['Invoice_Files_Export_URL'])
                     self.textBrowser_3.append('生成的数据文件：%s' % Log_file)
                     self.textBrowser_3.append('----------------------------------')
-                    if has_error:
-                        os.startfile(error_folder)
             except Exception as errorMsg:
-                log_obj.save_log_to_excel()
+                # self.textBrowser_3.append("<font color='red'>第%s份文件：</font>" % i)
                 self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
                 app.processEvents()
 
@@ -1731,7 +1790,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 app.processEvents()
             else:
                 log_file_name = 'Electronic Invoice %s.xlsx' % time.strftime('%Y-%m-%d %H.%M.%S')
-                log_file = os.path.join(configContent['Ele_Invoice_Files_Export_URL'], log_file_name)  # 使用标准路径拼接
+                log_file = '%s\\%s' % (configContent['Ele_Invoice_Files_Export_URL'], log_file_name)
                 log_obj = Logger(log_file, [
                     'Update',
                     'id',
@@ -1749,7 +1808,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     'ODMRe - Re',
                     '判断客户名称是否正确'
                 ])
-                has_error = False  # 新增错误标志
                 try:
                     pdfOperate = PDF_Operate
                     adminGuiData = MyMainWindow.getAdminGuiData(self)
@@ -1769,10 +1827,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
                                 # 获取文件内容
                                 for fileCon[fileNum] in fileCon:
-                                    if re.search(r'购\s*名\s*称', fileCon[fileNum]):
-                                        msg['Company Name'] = fileCon[fileNum].split('：')[1].replace('销 名 称', '').replace('销 名称', '').replace(' ', '')
-                                    elif re.search(r'小\s*写\s*）', fileCon[fileNum]):
-                                        msg['Revenue'] = fileCon[fileNum].split('）')[2]
+                                    if '名称：' in fileCon[fileNum]:
+                                        msg['Company Name'] = fileCon[fileNum].split('：')[1].split(' ')[0]
+                                    elif '（小写）' in fileCon[fileNum]:
+                                        msg['Revenue'] = fileCon[fileNum].split('（小写）')[1]
                                     elif '发票号码：' in fileCon[fileNum]:
                                         msg['fapiao'] = str(fileCon[fileNum].split('：')[1])
                                     elif re.search(r'%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'],
@@ -1864,49 +1922,28 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                     '判断客户名称是否正确': msg.get('Company Name', '') == msg.get('Customer Name', '')
                                 }
                                 log_obj.log(log_list)
+                            log_obj.save_log_to_excel()
                             self.textBrowser_3.append('%s' % outputFlie)
                             app.processEvents()
 
                         except Exception as errorMsg:
+
+                            log_obj.save_log_to_excel()
+                            # self.textBrowser_3.append("<font color='red'>第%s份文件：</font>" % i)
                             self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
                             self.textBrowser_3.append("<font color='red'>出错的文件：%s </font>" % fileUrl)
                             app.processEvents()
-                            try:
-                                # 创建错误文件目录
-                                error_folder = os.path.join(desktopUrl, "error_invoices")
-                                error_folder = os.path.normpath(error_folder)  # 新增路径规范化
-                                os.makedirs(error_folder, exist_ok=True)
-                                # 保存出错文件副本
-                                error_file = os.path.join(error_folder, os.path.basename(fileUrl))
-                                error_file = os.path.normpath(error_file)  # 新增路径规范化
-
-                                # 添加文件存在检查
-                                if os.path.exists(fileUrl):
-                                    has_error = True  # 设置错误标志
-                                    shutil.copy(fileUrl, error_file)
-                                    self.textBrowser_3.append(f"已将出错文件复制到：{error_file}")
-                                else:
-                                    self.textBrowser_3.append(f"<font color='red'>源文件不存在: {fileUrl}</font>")
-
-                            except PermissionError as perm_err:
-                                self.textBrowser_3.append(f"<font color='red'>权限拒绝错误: {perm_err}</font>")
-                                self.textBrowser_3.append(
-                                    "<font color='red'>请检查：1.是否具有网络路径写入权限 2.文件是否被其他程序占用</font>")
-                            app.processEvents()
                         i += 1
-                    log_obj.save_log_to_excel()
+
+                    os.startfile(log_file)
                     self.textBrowser_3.append('已生成数据文件：%s' % log_file)
                     self.textBrowser_3.append('----------------------------------')
                     os.startfile(configContent['Ele_Invoice_Files_Export_URL'])
-                    os.startfile(log_file)
-                    if has_error:
-                        os.startfile(error_folder)
                 except Exception as errorMsg:
                     log_obj.save_log_to_excel()
+                    os.startfile(log_file)
                     self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
                     app.processEvents()
-
-
 
     # Order解锁或关闭操作
     def orderUnlockOrLock(self, flag):
@@ -2014,6 +2051,169 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser_3.append('无选中文件')
             self.textBrowser_3.append('----------------------------------')
             app.processEvents()
+
+
+
+    def get_hour_file_url(self, position):
+        fileUrl = myWin.getFile(configContent['Hour_Files_Import_URL'])
+        if fileUrl:
+            position.setText(fileUrl)
+            app.processEvents()
+        else:
+            self.textBrowser_2.append("请重新选择ODM文件")
+            QMessageBox.information(self, "提示信息", "请重新选择ODM文件", QMessageBox.Yes)
+
+    def get_hour_combine_file(self):
+        fileUrl = self.lineEdit_30.text()
+        pivot_table_key = self.lineEdit_39.text().split(';')
+        if fileUrl and pivot_table_key:
+            try:
+                self.textBrowser_4.append("数据开始合并")
+                app.processEvents()
+                newData = Get_Data()
+                file_data = newData.getFileTableData(fileUrl)
+                # 删除
+                deleteRowList = {'Order Number': ''}
+                newData.deleteTheRows(deleteRowList)
+                # 合并
+                valus_key = ['Revenue', 'Total Subcon Cost']
+                pivot_table_data = newData.pivotTable(pivot_table_key, valus_key)
+                current_time = datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')
+                pivot_table_data_path = '%s\\%s' % (configContent['Hour_Files_Export_URL'], '1.order data %s.xlsx' % current_time)
+                pivot_table_data_file = pivot_table_data.to_excel(pivot_table_data_path, merge_cells=False)
+                self.lineEdit_37.setText(pivot_table_data_path)
+                self.textBrowser_4.append("合并完成")
+                self.textBrowser_4.append("文件路径：%s" % pivot_table_data_path)
+            except Exception as errorMsg:
+                self.textBrowser_4.append("<font color='red'>出错信息：%s </font>" % errorMsg)
+                app.processEvents()
+        elif pivot_table_key == []:
+            self.textBrowser_4.append("请输入合并的key")
+        else:
+            self.textBrowser_4.append("请重新选择ODM文件")
+
+    def update_config_content(self, update_data):
+        # 创建配置字典的深拷贝以避免污染原始配置
+        config_content = copy.deepcopy(configContent)
+        config_content.update(update_data)
+        return config_content  # 返回修改后的副本
+    
+    def get_department_hour(self):
+        """
+        计算部门工时并保存结果
+        """
+        order_data_path = self.lineEdit_37.text()
+        hour_gui_data = myWin.getHourGuiData()
+        if order_data_path:
+            self.textBrowser_4.append("部门开始计算")
+            app.processEvents()
+            
+            # 更新配置内容
+            config_content = self.update_config_content(hour_gui_data)
+            
+            # 获取订单数据
+            order_data_obj = Get_Data()
+            order_datas = order_data_obj.getFileTableData(order_data_path)
+            
+            # 初始化结果DataFrame
+            all_results = []
+            
+            # 调用hour方法处理每个订单
+            revenue_allocator_obj = RevenueAllocator()
+            for _, order_data in order_datas.iterrows():
+                # 将Series转换为字典
+                order_dict = order_data.to_dict()
+                # 计算部门工时
+                order_revenue_data = revenue_allocator_obj.allocate_department_hours(order_dict, config_content)
+                all_results.extend(order_revenue_data)
+            
+            # 创建结果DataFrame
+            result_df = pd.DataFrame(all_results)
+            
+            # 生成输出文件名
+            current_time = datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')
+            dept_hour_path = f"{configContent['Hour_Files_Export_URL']}\\2.dept hour {current_time}.xlsx"
+            
+            # 保存结果
+            result_df.to_excel(dept_hour_path, index=False)
+            
+            # 更新UI
+            self.lineEdit_38.setText(dept_hour_path)
+            self.textBrowser_4.append("部门计算完成")
+            self.textBrowser_4.append(f"文件路径：{dept_hour_path}")
+            app.processEvents()
+        else:
+            self.textBrowser_4.append("请重新选择合并后的文件")
+            app.processEvents()
+
+    def get_person_hour(self):
+        """
+        分配人员工时并保存结果
+        """
+        dept_hour_path = self.lineEdit_38.text()
+        if dept_hour_path:
+            self.textBrowser_4.append("开始分配人员")
+            app.processEvents()
+            
+            # 获取配置数据
+            hour_gui_data = myWin.getHourGuiData()
+            config_content = self.update_config_content(hour_gui_data)
+            
+            # 获取参数
+            max_hours_per_day = int(config_content['Max_Hour'])
+            start_date = datetime.datetime.strptime(config_content['Start_Date'], '%Y.%m.%d').date()
+            end_date = datetime.datetime.strptime(config_content['End_Date'], '%Y.%m.%d').date()
+            
+            # 获取部门工时数据
+            dept_hour_obj = Get_Data()
+            dept_hour_datas = dept_hour_obj.getFileTableData(dept_hour_path)
+            
+            # 初始化结果列表
+            all_results = []
+            
+            # 处理每个部门工时记录
+            revenue_allocator_obj = RevenueAllocator()
+            for _, dept_hour in dept_hour_datas.iterrows():
+                # 将Series转换为字典
+                dept_hour_dict = dept_hour.to_dict()
+                # 将单个记录转换为列表形式
+                dept_hour_list = [dept_hour_dict]
+                self.textBrowser_4.append(f"处理Order Number：{dept_hour_dict['order_no']}")
+                app.processEvents()
+                # 分配人员工时
+                person_hour_data = revenue_allocator_obj.allocate_person_hours(
+                    dept_hour_list, 
+                    max_hours_per_day, 
+                    start_date, 
+                    end_date, 
+                    staff_dict, 
+                    config_content
+                )
+                all_results.extend(person_hour_data)
+            
+            # 创建结果DataFrame
+            result_df = pd.DataFrame(all_results)
+            
+            # 生成输出文件名
+            current_time = datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')
+            person_hour_path = f"{configContent['Hour_Files_Export_URL']}\\3.person hour {current_time}.xlsx"
+            
+            # 保存结果
+            result_df.to_excel(person_hour_path, index=False)
+            
+            # 打开结果文件
+            os.startfile(person_hour_path)
+            
+            # 更新UI
+            self.lineEdit_31.setText(person_hour_path)
+            self.textBrowser_4.append("分配人员完成")
+            self.textBrowser_4.append(f"文件路径：{person_hour_path}")
+            app.processEvents()
+        else:
+            self.textBrowser_4.append("请先完成部门工时计算")
+            app.processEvents()
+
+
 
 
 if __name__ == "__main__":
