@@ -324,6 +324,9 @@ class RevenueAllocator:
                 order_dept_groups[key] = []
             order_dept_groups[key].append(record)
 
+        # 创建一个全局的工作日分配计数器
+        global_workday_counter = {day: 0 for day in work_days}
+
         # 处理每个订单组
         for (order_no, dept), order_records in order_dept_groups.items():
             # 获取对应部门的员工列表
@@ -340,8 +343,19 @@ class RevenueAllocator:
             staff_per_day = max(1, int(total_hours / (max_hours_per_day * len(work_days))) + 1)
             staff_per_day = min(staff_per_day, len(staff_list))
 
+            # 计算每个工作日应该分配的平均记录数
+            total_records = len(order_records)
+            avg_records_per_day = total_records / len(work_days)
+            
+            # 将工作日按分配次数排序，优先选择分配次数较少的工作日
+            sorted_work_days = sorted(work_days, key=lambda x: global_workday_counter[x])
+            
             # 遍历每个工作日进行分配
-            for work_day in work_days:
+            for work_day in sorted_work_days:
+                # 如果当前工作日的分配次数已经超过平均值，跳过
+                if global_workday_counter[work_day] > avg_records_per_day * 1.1:  # 允许10%的浮动
+                    continue
+
                 # 获取当天已分配工时
                 daily_allocations = self._get_staff_daily_hours(work_day)
                 
@@ -396,6 +410,9 @@ class RevenueAllocator:
                     # 更新工时记录
                     self._update_staff_daily_hours(work_day, staff_name, allocated_hours, order_no, dept)
                     
+                    # 增加工作日的分配计数
+                    global_workday_counter[work_day] += 1
+                    
                     # 添加分配记录
                     for record in order_records:
                         if record['dept_hours'] <= 0:
@@ -409,6 +426,7 @@ class RevenueAllocator:
                         new_record = record.copy()
                         new_record.update({
                             'allocated_date': work_day,
+                            'allocated_day': work_day.day,  # 添加新的字段，只保存日期中的日
                             'allocated_hours': round(record_hours, significant_digits),
                             'staff_name': staff_name,
                             'staff_id': configContent.get(staff_name),
