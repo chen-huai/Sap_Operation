@@ -100,7 +100,9 @@ class RevenueAllocator:
     def allocate_department_hours(self, revenueData, configContent):
         """动态配置的收入分配计算方法"""
         material_code = revenueData.get('Material Code', '')
-        base = (float(revenueData['Revenue']) - float(revenueData['Total Subcon Cost']) / 1.06) * float(configContent.get('Plan_Cost_Parameter'))
+        base = (float(revenueData['Revenue']) - float(revenueData['Total Subcon Cost']) / 1.06) * float(
+            configContent.get('Plan_Cost_Parameter'))
+        primary_cs = revenueData.get('Primary CS', '')  # 获取Primary CS字段
 
         # 获取有效位数配置
         significant_digits = int(configContent.get('Significant_Digits', 0))
@@ -110,7 +112,8 @@ class RevenueAllocator:
             'business_dept_2000_revenue': 0, 'lab_2000_revenue': 0, 'business_dept_2000_hours': 0, 'lab_2000_hours': 0,
             'lab_1000': '', 'lab_2000': '', 'order_no': revenueData.get('Order Number', ''),
             'material_code_1000': '',
-            'material_code_2000': ''
+            'material_code_2000': '',
+            'primary_cs': primary_cs  # 添加Primary CS字段
         }
 
         # 统一使用 Business_Department 配置
@@ -162,10 +165,12 @@ class RevenueAllocator:
             lab_1000_revenue = round(base * proportion_1000 * lab_1000_cost, 2)
             business_dept_2000_revenue = round(base * proportion_2000 * (1 - lab_2000_cost), 2)
             lab_2000_revenue = round(base * proportion_2000 * lab_2000_cost, 2)
-            
-            business_dept_1000_hours = round((base * proportion_1000 * (1 - lab_1000_cost)) / business_dept_rate, significant_digits)
+
+            business_dept_1000_hours = round((base * proportion_1000 * (1 - lab_1000_cost)) / business_dept_rate,
+                                             significant_digits)
             lab_1000_hours = round((base * proportion_1000 * lab_1000_cost) / lab_1000_rate, significant_digits)
-            business_dept_2000_hours = round((base * proportion_2000 * (1 - lab_2000_cost)) / business_dept_rate, significant_digits)
+            business_dept_2000_hours = round((base * proportion_2000 * (1 - lab_2000_cost)) / business_dept_rate,
+                                             significant_digits)
             lab_2000_hours = round((base * proportion_2000 * lab_2000_cost) / lab_2000_rate, significant_digits)
 
             result.update({
@@ -192,7 +197,8 @@ class RevenueAllocator:
                 'dept': business_dept,
                 'dept_revenue': round(result['business_dept_1000_revenue'], 2),
                 'dept_hours': round(result['business_dept_1000_hours'], significant_digits),
-                'original_hours': round(result['business_dept_1000_hours'], significant_digits)
+                'original_hours': round(result['business_dept_1000_hours'], significant_digits),
+                'primary_cs': result['primary_cs']  # 添加Primary CS字段
             },
             {  # 1000实验室
                 'order_no': revenueData['Order Number'],
@@ -201,7 +207,8 @@ class RevenueAllocator:
                 'dept': result['lab_1000'],
                 'dept_revenue': round(result['lab_1000_revenue'], 2),
                 'dept_hours': round(result['lab_1000_hours'], significant_digits),
-                'original_hours': round(result['lab_1000_hours'], significant_digits)
+                'original_hours': round(result['lab_1000_hours'], significant_digits),
+                'primary_cs': result['primary_cs']  # 添加Primary CS字段
             },
             {  # 2000业务部门
                 'order_no': revenueData['Order Number'],
@@ -210,7 +217,8 @@ class RevenueAllocator:
                 'dept': business_dept,
                 'dept_revenue': round(result['business_dept_2000_revenue'], 2),
                 'dept_hours': round(result['business_dept_2000_hours'], significant_digits),
-                'original_hours': round(result['business_dept_2000_hours'], significant_digits)
+                'original_hours': round(result['business_dept_2000_hours'], significant_digits),
+                'primary_cs': result['primary_cs']  # 添加Primary CS字段
             },
             {  # 2000实验室
                 'order_no': revenueData['Order Number'],
@@ -219,7 +227,8 @@ class RevenueAllocator:
                 'dept': result['lab_2000'],
                 'dept_revenue': round(result['lab_2000_revenue'], 2),
                 'dept_hours': round(result['lab_2000_hours'], significant_digits),
-                'original_hours': round(result['lab_2000_hours'], significant_digits)
+                'original_hours': round(result['lab_2000_hours'], significant_digits),
+                'primary_cs': result['primary_cs']  # 添加Primary CS字段
             }
         ]
 
