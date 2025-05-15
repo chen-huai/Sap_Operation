@@ -344,6 +344,10 @@ class RevenueAllocator:
                 print(f"Warning: No staff found for department {dept}")
                 continue
 
+            # 获取Primary CS（如果存在）
+            primary_cs = order_records[0].get('primary_cs', '')
+            primary_cs_allocated = False  # 标记Primary CS是否已分配
+
             # 计算总工时
             total_hours = sum(record['dept_hours'] for record in order_records)
             print(f"Processing order {order_no} in department {dept} with total hours: {total_hours}")
@@ -359,6 +363,59 @@ class RevenueAllocator:
             # 将工作日按分配次数排序，优先选择分配次数较少的工作日
             sorted_work_days = sorted(work_days, key=lambda x: global_workday_counter[x])
             
+            # 如果是CS部门且有Primary CS，优先分配一次给Primary CS
+            if dept == 'CS' and primary_cs and primary_cs in staff_list:
+                for work_day in sorted_work_days:
+                    # 获取当天已分配工时
+                    daily_allocations = self._get_staff_daily_hours(work_day)
+                    
+                    # 检查Primary CS当天是否还有可用工时
+                    primary_cs_hours = daily_allocations.get(primary_cs, 0)
+                    if primary_cs_hours < max_hours_per_day:
+                        # 计算可分配的工时
+                        available_hours = max_hours_per_day - primary_cs_hours
+                        allocated_hours = min(available_hours, total_hours)
+                        
+                        # 更新工时记录
+                        self._update_staff_daily_hours(work_day, primary_cs, allocated_hours, order_no, dept)
+                        
+                        # 增加工作日的分配计数
+                        global_workday_counter[work_day] += 1
+                        
+                        # 标记Primary CS已分配
+                        primary_cs_allocated = True
+                        
+                        # 添加分配记录
+                        for record in order_records:
+                            if record['dept_hours'] <= 0:
+                                continue
+
+                            # 计算该记录可分配的工时
+                            record_hours = min(allocated_hours, record['dept_hours'])
+                            if record_hours <= 0:
+                                continue
+
+                            new_record = record.copy()
+                            new_record.update({
+                                'allocated_date': work_day,
+                                'allocated_day': work_day.day,
+                                'allocated_hours': round(record_hours, significant_digits),
+                                'staff_name': primary_cs,
+                                'staff_id': configContent.get(primary_cs),
+                                'week': self._get_week_number(work_day)
+                            })
+                            final_results.append(new_record)
+
+                            record['dept_hours'] -= record_hours
+                            allocated_hours -= record_hours
+                            total_hours -= record_hours
+
+                            if allocated_hours <= 0:
+                                break
+                        
+                        # 如果Primary CS分配完成，跳出循环
+                        break
+
             # 遍历每个工作日进行分配
             for work_day in sorted_work_days:
                 # 如果当前工作日的分配次数已经超过平均值，跳过
@@ -435,7 +492,7 @@ class RevenueAllocator:
                         new_record = record.copy()
                         new_record.update({
                             'allocated_date': work_day,
-                            'allocated_day': work_day.day,  # 添加新的字段，只保存日期中的日
+                            'allocated_day': work_day.day,
                             'allocated_hours': round(record_hours, significant_digits),
                             'staff_name': staff_name,
                             'staff_id': configContent.get(staff_name),
@@ -456,18 +513,29 @@ class RevenueAllocator:
             # 检查是否所有工时都已分配
             remaining_total = sum(record['dept_hours'] for record in order_records)
             if remaining_total > 0:
-                # 记录未分配工时信息
-                for record in order_records:
-                    if record['dept_hours'] > 0:
-                        unallocated_data.append({
-                            'order_no': order_no,
-                            'dept': dept,
-                            'material_code': record['material_code'],
-                            'item': record['item'],
-                            'remaining_hours': round(record['dept_hours'], significant_digits),
-                            'original_hours': record['original_hours'],
-                            'check_date': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        })
+                # 检查所有工作日是否都已分配满8小时
+                all_days_full = True
+                for work_day in work_days:
+                    daily_allocations = self._get_staff_daily_hours(work_day)
+                    dept_allocations = {name: hours for name, hours in daily_allocations.items() 
+                                      if name in staff_list}
+                    if any(hours < max_hours_per_day for hours in dept_allocations.values()):
+                        all_days_full = False
+                        break
+
+                # 只有当所有工作日都分配满8小时时，才记录未分配工时
+                if all_days_full:
+                    for record in order_records:
+                        if record['dept_hours'] > 0:
+                            unallocated_data.append({
+                                'order_no': order_no,
+                                'dept': dept,
+                                'material_code': record['material_code'],
+                                'item': record['item'],
+                                'remaining_hours': round(record['dept_hours'], significant_digits),
+                                'original_hours': record['original_hours'],
+                                'check_date': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            })
 
         # 保存未分配工时信息到指定路径
         self._save_unallocated_hours(unallocated_data, configContent.get('Hour_Files_Export_URL'))
