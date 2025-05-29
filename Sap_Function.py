@@ -555,7 +555,7 @@ class Sap():
                                     "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,%s]" % n).text = "FREMDL"
                                 self.session.findById(
                                     "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).text = format(
-                                    guiData['cost'] / 1.06, '.2f')
+                                    guiData['cost'], '.2f')
                                 self.session.findById(
                                     "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).setFocus()
                                 self.session.findById(
@@ -629,7 +629,7 @@ class Sap():
                                     "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,%s]" % n).text = "FREMDL"
                                 self.session.findById(
                                     "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).text = format(
-                                    guiData['cost'] / 1.06, '.2f')
+                                    guiData['cost'], '.2f')
                                 self.session.findById(
                                     "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).setFocus()
                                 self.session.findById(
@@ -703,7 +703,7 @@ class Sap():
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,%s]" % n).text = "FREMDL"
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).text = format(
-                                guiData['cost'] / 1.06, '.2f')
+                                guiData['cost'], '.2f')
                             self.session.findById(
                                 "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).setFocus()
                             self.session.findById(
