@@ -95,9 +95,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_63.clicked.connect(lambda: self.get_hour_file_url(self.lineEdit_30))
         self.pushButton_71.clicked.connect(lambda: self.get_hour_file_url(self.lineEdit_38))
         self.pushButton_76.clicked.connect(lambda: self.get_hour_file_url(self.lineEdit_37))
+        self.pushButton_78.clicked.connect(lambda: self.get_hour_file_url(self.lineEdit_31))
         self.pushButton_72.clicked.connect(self.get_hour_combine_file)
         self.pushButton_77.clicked.connect(self.get_department_hour)
-        self.pushButton_73.clicked.connect(self.get_person_hour)
+        self.pushButton_73.clicked.connect(self.get_average_person_hour)
+        # self.pushButton_73.clicked.connect(self.get_person_hour)
+        self.pushButton_79.clicked.connect(self.hourOperate)
         self.filesUrl = []
 
     def init_theme_action(self):
@@ -409,7 +412,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             first_day = today_hours.replace(day=1)
             self.dateEdit.setDate(QDate(first_day.year, first_day.month, first_day.day))  # 当月第一天
             self.dateEdit_2.setDate(QDate.currentDate())  # 当天日期
-            self.doubleSpinBox_12.setValue(float(format(float(configContent['CS_Hourly_Rate']), '.2f')))
+            self.doubleSpinBox_14.setValue(float(format(float(configContent['CS_Hourly_Rate']), '.2f')))
             self.doubleSpinBox_16.setValue(float(format(float(configContent['CHM_Hourly_Rate']), '.2f')))
             self.doubleSpinBox_15.setValue(float(format(float(configContent['PHY_Hourly_Rate']), '.2f')))
             self.doubleSpinBox_11.setValue(float(format(float(configContent['Plan_Cost_Parameter']), '.2f')))
@@ -2168,6 +2171,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             dept_hour_obj = Get_Data()
             dept_hour_datas = dept_hour_obj.getFileTableData(dept_hour_path)
             
+            # 计算各部门总工时
+            dept_total_hours = dept_hour_datas.groupby('dept')['dept_hours'].sum().to_dict()
+            
             # 初始化结果列表
             all_results = []
             
@@ -2181,12 +2187,13 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.textBrowser_4.append(f"处理Order Number：{dept_hour_dict['order_no']}")
                 app.processEvents()
                 # 分配人员工时
-                person_hour_data = revenue_allocator_obj.allocate_person_hours(
-                    dept_hour_list, 
+                person_hour_data = revenue_allocator_obj.allocate_person_average_hours(
+                    dept_hour_list,
                     max_hours_per_day, 
                     start_date, 
                     end_date, 
-                    staff_dict, 
+                    staff_dict,
+                    dept_total_hours,  # 添加部门总工时参数
                     config_content
                 )
                 all_results.extend(person_hour_data)
@@ -2208,6 +2215,96 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.lineEdit_31.setText(person_hour_path)
             self.textBrowser_4.append("分配人员完成")
             self.textBrowser_4.append(f"文件路径：{person_hour_path}")
+            app.processEvents()
+        else:
+            self.textBrowser_4.append("请先完成部门工时计算")
+            app.processEvents()
+
+    def get_average_person_hour(self):
+        """
+        使用平均分配方式分配人员工时并保存结果
+        """
+        dept_hour_path = self.lineEdit_38.text()
+        if dept_hour_path:
+            self.textBrowser_4.append("开始平均分配人员")
+            app.processEvents()
+
+            # 获取配置数据
+            hour_gui_data = myWin.getHourGuiData()
+            config_content = self.update_config_content(hour_gui_data)
+
+            # 获取参数
+            max_hours_per_day = int(config_content['Max_Hour'])
+            start_date = datetime.datetime.strptime(config_content['Start_Date'], '%Y.%m.%d').date()
+            end_date = datetime.datetime.strptime(config_content['End_Date'], '%Y.%m.%d').date()
+
+            # 获取部门工时数据
+            dept_hour_obj = Get_Data()
+            dept_hour_datas = dept_hour_obj.getFileTableData(dept_hour_path)
+
+            # 计算各部门总工时
+            dept_total_hours = dept_hour_datas.groupby('dept')['dept_hours'].sum().to_dict()
+            
+            # 初始化结果列表
+            all_results = []
+            
+            # 按部门处理工时记录
+            revenue_allocator_obj = RevenueAllocator()
+            for dept, total_hours in dept_total_hours.items():
+                self.textBrowser_4.append(f"\n处理部门：{dept}")
+                self.textBrowser_4.append(f"部门总工时：{total_hours}")
+                app.processEvents()
+                
+                # 获取该部门的所有记录
+                dept_records = dept_hour_datas[dept_hour_datas['dept'] == dept].to_dict('records')
+                
+                # 分配该部门的工时
+                person_hour_data = revenue_allocator_obj.allocate_person_average_hours(
+                    dept_records,
+                    max_hours_per_day,
+                    start_date,
+                    end_date,
+                    staff_dict,
+                    {dept: total_hours},  # 只传入当前部门的总工时
+                    config_content
+                )
+                all_results.extend(person_hour_data)
+                
+                # 显示分配结果
+                allocated_hours = sum(record['allocated_hours'] for record in person_hour_data)
+                allocation_rate = (allocated_hours / total_hours * 100) if total_hours > 0 else 0
+                self.textBrowser_4.append(f"已分配工时：{allocated_hours:.2f}")
+                self.textBrowser_4.append(f"分配率：{allocation_rate:.2f}%")
+                app.processEvents()
+
+            # 创建结果DataFrame
+            result_df = pd.DataFrame(all_results)
+            
+            # 生成输出文件名
+            current_time = datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')
+            person_hour_path = f"{configContent['Hour_Files_Export_URL']}\\3.person hour {current_time}.xlsx"
+            
+            # 保存结果
+            result_df.to_excel(person_hour_path, index=False)
+            
+            # 打开结果文件
+            os.startfile(person_hour_path)
+            
+            # 更新UI
+            self.lineEdit_31.setText(person_hour_path)
+            self.textBrowser_4.append("\n分配人员完成")
+            self.textBrowser_4.append(f"文件路径：{person_hour_path}")
+            
+            # 显示总体分配统计
+            total_original = sum(dept_total_hours.values())
+            total_allocated = result_df['allocated_hours'].sum()
+            allocation_rate = (total_allocated / total_original * 100) if total_original > 0 else 0
+            
+            self.textBrowser_4.append(f"\n总体分配统计:")
+            self.textBrowser_4.append(f"原始总工时: {total_original:.2f}")
+            self.textBrowser_4.append(f"已分配工时: {total_allocated:.2f}")
+            self.textBrowser_4.append(f"分配率: {allocation_rate:.2f}%")
+            
             app.processEvents()
         else:
             self.textBrowser_4.append("请先完成部门工时计算")
