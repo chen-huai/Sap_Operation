@@ -49,6 +49,15 @@ class RevenueAllocator:
             if 'week' not in self.hours_data.columns:
                 self.hours_data['week'] = self.hours_data['date'].apply(self._get_week_number)
             
+            # 确保所有必需的列都存在
+            required_columns = ['date', 'staff_name', 'hours', 'order_no', 'dept', 'week']
+            for col in required_columns:
+                if col not in self.hours_data.columns:
+                    self.hours_data[col] = None
+            
+            # 只保留必需的列
+            self.hours_data = self.hours_data[required_columns]
+            
             # 获取保存路径
             export_path = configContent.get('Hour_Files_Export_URL')
             if not export_path:
