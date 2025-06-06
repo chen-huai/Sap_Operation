@@ -255,9 +255,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ['T75-405-A2_mc', 'T75-405-00/T20-405-00', '1000/2000对应的mc'],
             # 新增公共参数
             ['Max_Hour', 8, '最大工作时长'],
-            ['Hours_Combine_Key', "Order Number;Material Code",'以;分隔，数据透视字段'],
+            ['Hours_Combine_Key', "Order Number;Material Code;Primary CS",'以;分隔，数据透视字段'],
             ['Hour_Files_Import_URL', "N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\2.财务\\2.SAP\\1.ODM Data - XM\\3.Hours",'Invoice文件导入路径'],
             ['Hour_Files_Export_URL', "N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\2.财务\\2.SAP\\1.ODM Data - XM\\3.Hours",'Invoice文件导入路径'],
+            ['Hour_Field_Mapping', "{'staff_id': 'staff_id','week': 'week','order_no': 'order_no','allocated_hours': 'allocated_hours','office_time':'office_time','material_code': 'material_code','item': 'item','allocated_day': 'allocated_day','staff_name': 'staff_name'}", '对应字段映射'],
             ['DATA A数据填写', '判断依据', '备注'],
             ['Data_A_E1', '5010815347;5010427355;5010913488;5010685589;5010829635;5010817524', 'Data A录E1,新添加用;隔开即可'],
             ['Data_A_Z2', '5010908478;5010823259', 'Data A录Z2,新添加用;隔开即可'],
