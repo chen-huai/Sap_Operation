@@ -2206,7 +2206,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             person_hour_path = f"{configContent['Hour_Files_Export_URL']}\\3.person hour {current_time}.xlsx"
             
             # 保存结果
-            result_df.to_excel(person_hour_path, index=False)
+            result_df.to_excel(person_hour_path, index=True, index_label='ID')
             
             # 打开结果文件
             os.startfile(person_hour_path)
@@ -2285,7 +2285,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             person_hour_path = f"{configContent['Hour_Files_Export_URL']}\\3.person hour {current_time}.xlsx"
             
             # 保存结果
-            result_df.to_excel(person_hour_path, index=False)
+            result_df.to_excel(person_hour_path, index=True, index_label='ID')
             
             # 打开结果文件
             os.startfile(person_hour_path)
@@ -2318,7 +2318,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         time_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         log_file = os.path.join(configContent['Hour_Files_Export_URL'], f'log_{time_str}.xlsx')
         columns = [
-            'timestamp',
+            'ID',
             'staff_id',
             'week',
             'order_no',
@@ -2332,7 +2332,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             'message',
             'Update'
         ]
-        logger = Logger(log_file=log_file, columns=columns)
+        log_obj = Logger(log_file=log_file, columns=columns)
         try:
             # 获取文件路径
             hour_path = self.lineEdit_31.text()
@@ -2340,7 +2340,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 QMessageBox.warning(self, "警告", "请先选择工时文件！")
                 return
 
-            log_data = []  # 用于存储日志数据
+
 
             # 获取并处理数据
             get_data = Get_Data()
@@ -2356,11 +2356,26 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             current_staff_id = None
             current_week = None
             is_first_login = True  # 标记是否是第一次登录
-
+            num = 0
             # 遍历分组后的数据
             for _, row in renamed_data.iterrows():
+                num += 1
                 staff_id = row['staff_id']
                 week = row['week']
+                log_data = {
+                    'ID': '',
+                    'staff_id': '',
+                    'week': '',
+                    'order_no': '',
+                    'allocated_hours': '',
+                    'office_time': '',
+                    'material_code': '',
+                    'item': '',
+                    'allocated_day': '',
+                    'staff_name': '',
+                    'status': '',
+                    'message': '',
+                }  # 用于存储日志数据
 
                 # 如果staff_id或week发生变化，需要重新登录
                 if staff_id != current_staff_id or week != current_week:
@@ -2369,27 +2384,40 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         if not sap.save_hours():
                             error_msg = f"保存工时失败！Staff ID: {current_staff_id}, Week: {current_week}"
                             # logger.error(error_msg)
-                            log_data.append({
-                                'timestamp': datetime.datetime.now(),
+                            log_data.update({
+                                'ID': row['ID'],
                                 'staff_id': current_staff_id,
                                 'week': current_week,
+                                'order_no': row['order_no'],
+                                'allocated_hours': row['allocated_hours'],
+                                'office_time': row['office_time'],
+                                'material_code': row['material_code'],
+                                'item': row['item'],
+                                'allocated_day': row['allocated_day'],
+                                'staff_name': row['staff_name'],
                                 'status': 'Failed',
                                 'message': error_msg
                             })
-                            continue
 
                     # 登录SAP
                     if not sap.login_hour_gui(row):
                         error_msg = f"登录SAP失败！Staff ID: {staff_id}, Week: {week}"
                         # logger.error(error_msg)
-                        log_data.append({
-                            'timestamp': datetime.datetime.now(),
-                            'staff_id': staff_id,
-                            'week': week,
+                        log_data.update({
+                            'ID': row['ID'],
+                            'staff_id': current_staff_id,
+                            'week': current_week,
+                            'order_no': row['order_no'],
+                            'allocated_hours': row['allocated_hours'],
+                            'office_time': row['office_time'],
+                            'material_code': row['material_code'],
+                            'item': row['item'],
+                            'allocated_day': row['allocated_day'],
+                            'staff_name': row['staff_name'],
                             'status': 'Failed',
                             'message': error_msg
                         })
-                        continue
+
 
                     current_staff_id = staff_id
                     current_week = week
@@ -2412,61 +2440,98 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     if not sap.recording_hours(hour_data):
                         error_msg = f"记录工时失败！Staff ID: {staff_id}, Week: {week}"
                         # logger.error(error_msg)
-                        log_data.append({
-                            'timestamp': datetime.datetime.now(),
-                            'staff_id': staff_id,
-                            'week': week,
+                        log_data.update({
+                            'ID': row['ID'],
+                            'staff_id': current_staff_id,
+                            'week': current_week,
+                            'order_no': row['order_no'],
+                            'allocated_hours': row['allocated_hours'],
+                            'office_time': row['office_time'],
+                            'material_code': row['material_code'],
+                            'item': row['item'],
+                            'allocated_day': row['allocated_day'],
+                            'staff_name': row['staff_name'],
                             'status': 'Failed',
                             'message': error_msg
                         })
-                        continue
+
 
                     success_msg = f"成功处理 Staff ID: {staff_id}, Week: {week} 的工时数据"
                     # logger.info(success_msg)
-                    log_data.append({
-                        'timestamp': datetime.datetime.now(),
-                        'staff_id': staff_id,
-                        'week': week,
+                    log_data.update({
+                        'ID': row['ID'],
+                        'staff_id': current_staff_id,
+                        'week': current_week,
+                        'order_no': row['order_no'],
+                        'allocated_hours': row['allocated_hours'],
+                        'office_time': row['office_time'],
+                        'material_code': row['material_code'],
+                        'item': row['item'],
+                        'allocated_day': row['allocated_day'],
+                        'staff_name': row['staff_name'],
                         'status': 'Success',
                         'message': success_msg
                     })
 
                     self.textBrowser_4.append(success_msg)
+                    app.processEvents()
 
                 except Exception as e:
                     error_msg = f"处理工时数据时出错: {str(e)}"
                     # logger.error(error_msg)
-                    log_data.append({
-                        'timestamp': datetime.datetime.now(),
-                        'staff_id': staff_id,
-                        'week': week,
+                    log_data.update({
+                        'ID': row['ID'],
+                        'staff_id': current_staff_id,
+                        'week': current_week,
+                        'order_no': row['order_no'],
+                        'allocated_hours': row['allocated_hours'],
+                        'office_time': row['office_time'],
+                        'material_code': row['material_code'],
+                        'item': row['item'],
+                        'allocated_day': row['allocated_day'],
+                        'staff_name': row['staff_name'],
                         'status': 'Failed',
                         'message': error_msg
                     })
-                    continue
+
+
+                log_obj.log(log_data)
 
             # 最后一次保存
             if not is_first_login:
                 if not sap.save_hours():
                     error_msg = f"最后一次保存工时失败！Staff ID: {current_staff_id}, Week: {current_week}"
                     # logger.error(error_msg)
-                    log_data.append({
-                        'timestamp': datetime.datetime.now(),
+                    log_data.update({
+                        'ID': row['ID'],
                         'staff_id': current_staff_id,
                         'week': current_week,
+                        'order_no': row['order_no'],
+                        'allocated_hours': row['allocated_hours'],
+                        'office_time': row['office_time'],
+                        'material_code': row['material_code'],
+                        'item': row['item'],
+                        'allocated_day': row['allocated_day'],
+                        'staff_name': row['staff_name'],
                         'status': 'Failed',
                         'message': error_msg
                     })
 
-            # 将日志数据保存为Excel文件
-            log_df = pd.DataFrame(log_data)
-            log_file_path = os.path.join(os.path.dirname(hour_path),
-                                         f'hour_operation_log_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx')
-            log_df.to_excel(log_file_path, index=False)
 
-            QMessageBox.information(self, "完成", f"所有工时数据处理完成！\n日志文件保存在：{log_file_path}")
+            # 将日志数据保存为Excel文件
+            # log_df = pd.DataFrame(log_data)
+            # log_file_path = os.path.join(os.path.dirname(hour_path),
+            #                              f'hour_operation_log_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx')
+            # log_df.to_excel(log_file_path, index=False)
+            log_obj.save_log_to_excel()
+            self.textBrowser_4.append(self, "完成", f"所有工时数据处理完成！\n日志文件保存在：{log_file}")
+            os.startfile(log_file)
+            app.processEvents()
 
         except Exception as e:
+            log_obj.save_log_to_excel()
+            os.startfile(log_file)
+            self.textBrowser_4.append(self, "完成", f"所有工时数据处理完成！\n日志文件保存在：{log_file}")
             error_msg = f"处理过程中出现错误: {str(e)}"
             # logger.error(error_msg)
             QMessageBox.critical(self, "错误", error_msg)
