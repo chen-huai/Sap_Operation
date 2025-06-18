@@ -25,6 +25,7 @@ from Logger import *
 from Excel_Field_Mapper import excel_field_mapper
 from theme_manager_theme import ThemeManager
 from Revenue_Operate import *
+import qt_material
 
 
 
@@ -2525,14 +2526,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             #                              f'hour_operation_log_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx')
             # log_df.to_excel(log_file_path, index=False)
             log_obj.save_log_to_excel()
-            self.textBrowser_4.append(self, "完成", f"所有工时数据处理完成！\n日志文件保存在：{log_file}")
+            self.textBrowser_4.append("完成", f"所有工时数据处理完成！\n日志文件保存在：{log_file}")
             os.startfile(log_file)
             app.processEvents()
 
         except Exception as e:
             log_obj.save_log_to_excel()
             os.startfile(log_file)
-            self.textBrowser_4.append(self, "完成", f"所有工时数据处理完成！\n日志文件保存在：{log_file}")
+            self.textBrowser_4.append(f"错误：处理过程中出现错误: {str(e)}\n日志文件保存在：{log_file}")
             error_msg = f"处理过程中出现错误: {str(e)}"
             # logger.error(error_msg)
             QMessageBox.critical(self, "错误", error_msg)
