@@ -631,7 +631,7 @@ class RevenueAllocator:
                 avg_hours_per_staff = total_hours / len(staff_list)
                 
                 # 确定实际分配上限
-                actual_max_hours = min(max_hours_per_day, avg_hours_per_staff)
+                actual_max_hours = max_hours_per_day
                 
                 # 获取该部门的所有记录
                 dept_records = [r for r in filtered if r['dept'] == dept]
@@ -670,81 +670,96 @@ class RevenueAllocator:
                     'records': merged_records
                 }
 
-            # 第二步：按部门分配工时，分配日期以分配记录为推进单位
+            # 第二步：按部门分配工时
             for dept, stats in dept_stats.items():
                 if not stats['records']:
                     continue
 
                 records = stats['records']
                 staff_list = stats['staff_list']
+                actual_max_hours = max_hours_per_day
                 avg_hours_per_staff = stats['avg_hours_per_staff']
-                actual_max_hours = stats['actual_max_hours']
                 staff_target_hours = {staff: avg_hours_per_staff for staff in staff_list}
-                records.sort(key=lambda x: x['dept_hours'], reverse=True)
 
-                staff_index = 0
-                workday_index = 0
+                total_remaining = sum(r['dept_hours'] for r in records)
 
+                while total_remaining > 1e-6:
+                    progress = False
+                    
+                    # 优先分配给离平均目标最远的员工，保证公平性
+                    sorted_staff = sorted(staff_list, key=lambda s: staff_target_hours[s], reverse=True)
+
+                    for staff_name in sorted_staff:
+                        if total_remaining <= 1e-6: break
+
+                        # 优先分配到当天已分配工时最少的日期，保证日期上的均匀
+                        sorted_work_days = sorted(work_days, key=lambda d: self._get_staff_daily_hours(d, staff_name))
+
+                        for work_day in sorted_work_days:
+                            if total_remaining <= 1e-6: break
+
+                            # 检查周记录上限
+                            if self._get_weekly_records_count(staff_name, self._get_week_number(work_day)) >= 14:
+                                continue
+                            
+                            # 检查日工时上限
+                            staff_current_hours = self._get_staff_daily_hours(work_day, staff_name)
+                            daily_capacity = actual_max_hours - staff_current_hours
+                            if daily_capacity <= 1e-6:
+                                continue
+
+                            # 找到工时最多的记录进行分配
+                            # 过滤掉已分配完的记录
+                            valid_records = [r for r in records if r['dept_hours'] > 1e-6]
+                            if not valid_records: break
+                            
+                            record_to_process = max(valid_records, key=lambda x: x['dept_hours'])
+                            
+                            # 本次可分配的小时数，是在不超过单日容量和记录剩余容量的前提下
+                            # **核心改动**: 不再受 staff_target_hours 限制，从而能够拆分大块
+                            alloc_hours = min(daily_capacity, record_to_process['dept_hours'])
+                            
+                            if alloc_hours <= 1e-6:
+                                continue
+                            
+                            # 更新数据
+                            self._update_staff_daily_hours(work_day, staff_name, alloc_hours, record_to_process['order_no'], dept, configContent)
+                            
+                            # 更新目标，用于下一轮排序
+                            staff_target_hours[staff_name] -= alloc_hours 
+                            
+                            # **核心改动**: 直接修改记录的剩余工时
+                            record_to_process['dept_hours'] -= alloc_hours
+                            
+                            # 更新总剩余工时
+                            total_remaining -= alloc_hours
+
+                            # 创建分配结果，dept_hours 字段将自动为分配后的剩余小时数
+                            new_record = record_to_process.copy()
+                            new_record.update({
+                                'allocated_date': work_day,
+                                'allocated_day': work_day.day,
+                                'allocated_hours': round(alloc_hours, significant_digits),
+                                'staff_name': staff_name,
+                                'staff_id': configContent.get(staff_name),
+                                'week': self._get_week_number(work_day)
+                            })
+                            final_results.append(new_record)
+                            progress = True
+
+                    if not progress:
+                        # 如果一轮完整的遍历后没有任何分配发生，说明已经无法再分配，跳出循环
+                        break
+                
+                # 分配结束后，检查records列表中是否还有剩余（dept_hours已被实时更新）
                 for record in records:
-                    remaining = record['dept_hours']
-                    try_count = 0
-                    max_try = len(staff_list) * len(work_days) * 2  # 允许两轮全遍历
-                    while remaining > 0 and try_count < max_try:
-                        staff_name = staff_list[staff_index % len(staff_list)]
-                        work_day = work_days[workday_index % len(work_days)]
-                        current_week = self._get_week_number(work_day)
-
-                        weekly_records = self._get_weekly_records_count(staff_name, current_week)
-                        if weekly_records >= 14:
-                            staff_index += 1
-                            try_count += 1
-                            continue
-
-                        daily_allocations = self._get_staff_daily_hours(work_day)
-                        staff_current_hours = daily_allocations.get(staff_name, 0)
-                        if staff_current_hours >= actual_max_hours:
-                            workday_index += 1
-                            try_count += 1
-                            continue
-
-                        available_hours = min(
-                            actual_max_hours - staff_current_hours,
-                            staff_target_hours[staff_name],
-                            remaining
-                        )
-                        if available_hours <= 0:
-                            staff_index += 1
-                            try_count += 1
-                            continue
-
-                        self._update_staff_daily_hours(work_day, staff_name, available_hours, record['order_no'], dept, configContent)
-                        staff_target_hours[staff_name] -= available_hours
-                        remaining -= available_hours
-                        record['dept_hours'] -= available_hours  # 实时同步剩余小时
-
-                        new_record = record.copy()
-                        new_record.update({
-                            'allocated_date': work_day,
-                            'allocated_day': work_day.day,
-                            'allocated_hours': round(available_hours, significant_digits),
-                            'staff_name': staff_name,
-                            'staff_id': configContent.get(staff_name),
-                            'week': current_week
-                        })
-                        final_results.append(new_record)
-                        allocated_records.add(record['order_no'])
-
-                        workday_index += 1
-                        staff_index += 1
-                        try_count += 1
-                    # 如果无法分配，记录未分配工时（只在remaining > 1e-6时记录，避免0被记录）
-                    if remaining > 1e-6:
+                    if record['dept_hours'] > 1e-6:
                         unallocated_data.append({
                             'order_no': record['order_no'],
                             'dept': dept,
                             'material_code': record['material_code'],
                             'item': record['item'],
-                            'remaining_hours': round(remaining, significant_digits),
+                            'remaining_hours': round(record['dept_hours'], significant_digits),
                             'original_hours': record['original_hours'],
                             'check_date': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         })
