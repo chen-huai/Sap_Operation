@@ -2383,7 +2383,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 if staff_id != current_staff_id or week != current_week:
                     # 如果不是第一次登录，需要先保存之前的工时
                     if not is_first_login:
-                        if not sap.save_hours():
+                        save_res = sap.save_hours()
+                        if not save_res['flag']:
                             error_msg = f"保存工时失败！Staff ID: {current_staff_id}, Week: {current_week}"
                             # logger.error(error_msg)
                             log_data.update({
@@ -2402,7 +2403,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             })
 
                     # 登录SAP
-                    if not sap.login_hour_gui(row):
+                    login_res = sap.login_hour_gui(row)
+                    if not login_res['flag']:
+                        # logger.error(error_msg):
                         error_msg = f"登录SAP失败！Staff ID: {staff_id}, Week: {week}"
                         # logger.error(error_msg)
                         log_data.update({
@@ -2439,7 +2442,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     # }
                     hour_data = row
                     # 调用recording_hours方法记录工时
-                    if not sap.recording_hours(hour_data):
+                    recording_res = sap.recording_hours(hour_data)
+                    if not recording_res['flag']:
+                        # logger.error(error_msg):
                         error_msg = f"记录工时失败！Staff ID: {staff_id}, Week: {week}"
                         # logger.error(error_msg)
                         log_data.update({
@@ -2501,7 +2506,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
             # 最后一次保存
             if not is_first_login:
-                if not sap.save_hours():
+                save_res = sap.save_hours()
+                if not save_res['flag']:
                     error_msg = f"最后一次保存工时失败！Staff ID: {current_staff_id}, Week: {current_week}"
                     # logger.error(error_msg)
                     log_data.update({
@@ -2534,9 +2540,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             log_obj.save_log_to_excel()
             os.startfile(log_file)
             self.textBrowser_4.append(f"错误：处理过程中出现错误: {str(e)}\n日志文件保存在：{log_file}")
-            error_msg = f"处理过程中出现错误: {str(e)}"
+            # error_msg = f"处理过程中出现错误: {str(e)}"
             # logger.error(error_msg)
-            QMessageBox.critical(self, "错误", error_msg)
+            # QMessageBox.critical(self, "错误", error_msg)
 
 
 if __name__ == "__main__":

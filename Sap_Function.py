@@ -828,9 +828,17 @@ class Sap():
             self.session.findById("wnd[0]").sendVKey(0)
             self.session.findById("wnd[0]/usr/ctxtZRUCKD-PERNR").text = hour_data['staff_id']
             self.session.findById("wnd[0]/usr/txtZRUCKD-KWEEK").text = hour_data['week']
-            self.session.findById("wnd[0]/usr/txtZRUCKD-KWEEK").setFocus
+            self.session.findById("wnd[0]/usr/txtZRUCKD-KWEEK").setFocus()
             self.session.findById("wnd[0]/usr/txtZRUCKD-KWEEK").caretPosition = 2
             self.session.findById("wnd[0]").sendVKey(0)
+
+            time.sleep(1)  # Give SAP time to process
+            status_text = self.session.findById("wnd[0]/sbar/pane[0]").text
+            if "doesn't exist" in status_text or "does not exist" in status_text or "不存在" in status_text:
+                res['flag'] = 0
+                res['msg'] = f"登录工时系统失败，员工ID无效: {status_text}"
+                # raise Exception(f"登录工时系统失败，员工ID无效: {status_text}")
+
         except Exception as msg:
             res['flag'] = 0
             res['msg'] = "Hour界面失败，%s" % msg
@@ -853,12 +861,12 @@ class Sap():
             hour_data['item']
             self.session.findById(f"wnd[0]/usr/tblZIIZRUECKMELD00DYNPRO200/ctxtZRUCKDS-ZZTAETIGNR[9,{row_num}]").text = \
             hour_data['material_code']
-            # self.session.findById(f"wnd[0]/usr/tblZIIZRUECKMELD00DYNPRO200/ctxtZRUCKDS-ZZTAETIGNR[9,{row_num}]").setFocus
+            self.session.findById(f"wnd[0]/usr/tblZIIZRUECKMELD00DYNPRO200/ctxtZRUCKDS-ZZTAETIGNR[9,{row_num}]").setFocus()
             self.session.findById(f"wnd[0]/usr/tblZIIZRUECKMELD00DYNPRO200/txtZRUCKDS-PZEIT[13,{row_num}]").text = \
             hour_data['allocated_hours']
             self.session.findById(f"wnd[0]/usr/tblZIIZRUECKMELD00DYNPRO200/txtZRUCKDS-BZEIT[15,{row_num}]").text = \
             hour_data['office_time']
-            # self.session.findById(f"wnd[0]/usr/tblZIIZRUECKMELD00DYNPRO200/txtZRUCKDS-BZEIT[15,{row_num}]").setFocus
+            self.session.findById(f"wnd[0]/usr/tblZIIZRUECKMELD00DYNPRO200/txtZRUCKDS-BZEIT[15,{row_num}]").setFocus()
             self.session.findById(
                 f"wnd[0]/usr/tblZIIZRUECKMELD00DYNPRO200/txtZRUCKDS-BZEIT[15,{row_num}]").caretPosition = 1
         except Exception as msg:
@@ -877,6 +885,7 @@ class Sap():
         except Exception as msg:
             max_retries = 14  # 最大重试次数
             retry_count = 0
+            last_retry_error = None
             while retry_count < max_retries:
                 try:
                     # 回车
@@ -894,10 +903,13 @@ class Sap():
                         self.session.findById("wnd[0]/tbar[0]/btn[11]").press()
                         self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
                         break
-                except :
+                except Exception as retry_error:
+                    last_retry_error = retry_error
                     retry_count += 1
                     if retry_count >= max_retries:
-                        raise Exception(f"保存失败，已重试{max_retries}次: {str(msg)}")
+                        res['flag'] = 0
+                        res['msg'] = f"保存失败，已重试{max_retries}次。初始错误: {msg}. 最后一次重试错误: {last_retry_error}"
+                        # raise Exception(f"保存失败，已重试{max_retries}次。初始错误: {msg}. 最后一次重试错误: {last_retry_error}")
                     continue
         return res
 
