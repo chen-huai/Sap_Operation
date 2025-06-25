@@ -103,6 +103,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_73.clicked.connect(self.get_average_person_hour)
         # self.pushButton_73.clicked.connect(self.get_person_hour)
         self.pushButton_79.clicked.connect(self.hourOperate)
+        self.pushButton_80.clicked.connect(self.clear_hour_gui)
+        self.pushButton_81.clicked.connect(lambda: self.open_file(self.lineEdit_30.text()))
+        self.pushButton_82.clicked.connect(lambda: self.open_file(self.lineEdit_37.text()))
+        self.pushButton_83.clicked.connect(lambda: self.open_file(self.lineEdit_38.text()))
+        self.pushButton_84.clicked.connect(lambda: self.open_file(self.lineEdit_31.text()))
         self.filesUrl = []
 
     def init_theme_action(self):
@@ -2362,6 +2367,17 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.textBrowser_4.append("请先完成部门工时计算")
             app.processEvents()
+
+    def clear_hour_gui(self):
+        self.lineEdit_30.clear()
+        self.lineEdit_37.clear()
+        self.lineEdit_38.clear()
+        self.lineEdit_31.clear()
+        self.textBrowser_4.clear()
+
+    def open_file(self, path):
+        os.startfile(path)
+
 
     def hourOperate(self):
         """
