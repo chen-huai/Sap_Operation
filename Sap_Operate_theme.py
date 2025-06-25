@@ -26,6 +26,7 @@ from Excel_Field_Mapper import excel_field_mapper
 from theme_manager_theme import ThemeManager
 from Revenue_Operate import *
 import qt_material
+import shutil
 
 
 
@@ -1628,8 +1629,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     i = 1
                     # 新增加log
                     log_file_name = 'Invoice %s.xlsx' % time.strftime('%Y-%m-%d %H.%M.%S')
-                    Log_file = '%s\\%s' % (configContent['Invoice_Files_Export_URL'], log_file_name)
+                    Log_file = os.path.join(configContent['Invoice_Files_Export_URL'], log_file_name)
                     log_obj = Logger(Log_file, ['Update', 'Invoice No', 'File Name', 'Company Name', 'CS', 'Project No', 'Customer Name', 'Client Contact Name', 'Remark'])
+                    has_error = False
                     for fileUrl in fileUrls:
                         try:
                             log_list = {}
@@ -1744,16 +1746,40 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             # self.textBrowser_3.append("<font color='red'>第%s份文件：</font>" % i)
                             self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
                             self.textBrowser_3.append("<font color='red'>出错的文件：%s </font>" % fileUrl)
+                            try:
+                                # 创建错误文件目录
+                                error_folder = os.path.join(desktopUrl, "error_invoices")
+                                error_folder = os.path.normpath(error_folder)  # 新增路径规范化
+                                os.makedirs(error_folder, exist_ok=True)
+                                # 保存出错文件副本
+                                error_file = os.path.join(error_folder, os.path.basename(fileUrl))
+                                error_file = os.path.normpath(error_file)  # 新增路径规范化
+
+                                # 添加文件存在检查
+                                if os.path.exists(fileUrl):
+                                    has_error = True  # 设置错误标志
+                                    shutil.copy(fileUrl, error_file)
+                                    self.textBrowser_3.append(f"已将出错文件复制到：{error_file}")
+                                else:
+                                    self.textBrowser_3.append(f"<font color='red'>源文件不存在: {fileUrl}</font>")
+
+                            except PermissionError as perm_err:
+                                self.textBrowser_3.append(f"<font color='red'>权限拒绝错误: {perm_err}</font>")
+                                self.textBrowser_3.append(
+                                    "<font color='red'>请检查：1.是否具有网络路径写入权限 2.文件是否被其他程序占用</font>")
                         i += 1
                     log_obj.save_log_to_excel()
                     os.startfile(Log_file)
                     os.startfile(configContent['Invoice_Files_Export_URL'])
                     self.textBrowser_3.append('生成的数据文件：%s' % Log_file)
                     self.textBrowser_3.append('----------------------------------')
+                    if has_error:
+                        os.startfile(error_folder)
             except Exception as errorMsg:
-                # self.textBrowser_3.append("<font color='red'>第%s份文件：</font>" % i)
+                log_obj.save_log_to_excel()
                 self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
                 app.processEvents()
+
 
     # 获取电子发票文件
     def getEleInvoiceFiles(self):
@@ -1795,7 +1821,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 app.processEvents()
             else:
                 log_file_name = 'Electronic Invoice %s.xlsx' % time.strftime('%Y-%m-%d %H.%M.%S')
-                log_file = '%s\\%s' % (configContent['Ele_Invoice_Files_Export_URL'], log_file_name)
+                log_file = os.path.join(configContent['Ele_Invoice_Files_Export_URL'], log_file_name)
                 log_obj = Logger(log_file, [
                     'Update',
                     'id',
@@ -1813,6 +1839,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     'ODMRe - Re',
                     '判断客户名称是否正确'
                 ])
+                has_error = False
                 try:
                     pdfOperate = PDF_Operate
                     adminGuiData = MyMainWindow.getAdminGuiData(self)
@@ -1832,10 +1859,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
                                 # 获取文件内容
                                 for fileCon[fileNum] in fileCon:
-                                    if '名称：' in fileCon[fileNum]:
-                                        msg['Company Name'] = fileCon[fileNum].split('：')[1].split(' ')[0]
-                                    elif '（小写）' in fileCon[fileNum]:
-                                        msg['Revenue'] = fileCon[fileNum].split('（小写）')[1]
+                                    if re.search(r'购\s*名\s*称', fileCon[fileNum]):
+                                        msg['Company Name'] = fileCon[fileNum].split('：')[1].replace('销 名 称',
+                                                                                                     '').replace(
+                                            '销 名称', '').replace(' ', '')
+                                    elif re.search(r'小\s*写\s*）', fileCon[fileNum]):
+                                        msg['Revenue'] = fileCon[fileNum].split('）')[2]
                                     elif '发票号码：' in fileCon[fileNum]:
                                         msg['fapiao'] = str(fileCon[fileNum].split('：')[1])
                                     elif re.search(r'%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'],
@@ -1927,23 +1956,45 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                     '判断客户名称是否正确': msg.get('Company Name', '') == msg.get('Customer Name', '')
                                 }
                                 log_obj.log(log_list)
-                            log_obj.save_log_to_excel()
                             self.textBrowser_3.append('%s' % outputFlie)
                             app.processEvents()
 
                         except Exception as errorMsg:
 
-                            log_obj.save_log_to_excel()
-                            # self.textBrowser_3.append("<font color='red'>第%s份文件：</font>" % i)
                             self.textBrowser_3.append("<font color='red'>出错信息：%s </font>" % errorMsg)
                             self.textBrowser_3.append("<font color='red'>出错的文件：%s </font>" % fileUrl)
                             app.processEvents()
+                            try:
+                                # 创建错误文件目录
+                                error_folder = os.path.join(desktopUrl, "error_invoices")
+                                error_folder = os.path.normpath(error_folder)  # 新增路径规范化
+                                os.makedirs(error_folder, exist_ok=True)
+                                # 保存出错文件副本
+                                error_file = os.path.join(error_folder, os.path.basename(fileUrl))
+                                error_file = os.path.normpath(error_file)  # 新增路径规范化
+
+                                # 添加文件存在检查
+                                if os.path.exists(fileUrl):
+                                    has_error = True  # 设置错误标志
+                                    shutil.copy(fileUrl, error_file)
+                                    self.textBrowser_3.append(f"已将出错文件复制到：{error_file}")
+                                else:
+                                    self.textBrowser_3.append(f"<font color='red'>源文件不存在: {fileUrl}</font>")
+
+                            except PermissionError as perm_err:
+                                self.textBrowser_3.append(f"<font color='red'>权限拒绝错误: {perm_err}</font>")
+                                self.textBrowser_3.append(
+                                    "<font color='red'>请检查：1.是否具有网络路径写入权限 2.文件是否被其他程序占用</font>")
+                            app.processEvents()
                         i += 1
 
-                    os.startfile(log_file)
+                    log_obj.save_log_to_excel()
                     self.textBrowser_3.append('已生成数据文件：%s' % log_file)
                     self.textBrowser_3.append('----------------------------------')
                     os.startfile(configContent['Ele_Invoice_Files_Export_URL'])
+                    os.startfile(log_file)
+                    if has_error:
+                        os.startfile(error_folder)
                 except Exception as errorMsg:
                     log_obj.save_log_to_excel()
                     os.startfile(log_file)
