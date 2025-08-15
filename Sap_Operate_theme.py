@@ -14,7 +14,7 @@ import chicon  # 引用图标
 # from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QVBoxLayout, QPushButton, QAction
 from PyQt5.QtCore import QDate
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QFontDatabase
 from Get_Data import *
 from File_Operate import *
 from PDF_Operate import *
@@ -25,7 +25,9 @@ from Logger import *
 from Excel_Field_Mapper import excel_field_mapper
 from theme_manager_theme import ThemeManager
 from Revenue_Operate import *
-import qt_material
+
+# 延迟导入qt_material以避免警告
+# qt_material 将在需要时由 ThemeManager 导入
 import shutil
 
 
@@ -790,6 +792,165 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 '.%sf' % guiData['significantDigits'])
         return revenueData
 
+    def getRevenueDataUnified(self, guiData, configContent):
+        """
+        统一的收入分配计算方法，使用 Revenue_Operate.py 的逻辑
+        
+        Args:
+            guiData: GUI界面数据
+            configContent: 配置内容（从 Revenue_Operate.py 传入）
+            
+        Returns:
+            与原 getRevenueData 方法相同格式的数据
+        """
+        try:
+            # 导入 Revenue_Operate 模块
+            from Revenue_Operate import RevenueAllocator
+            
+            # 创建分配器实例
+            allocator = RevenueAllocator()
+            
+            # 转换 GUI 数据为 Revenue_Operate 格式
+            revenueDataForAllocation = {
+                'Order Number': guiData.get('orderNo', ''),
+                'Material Code': guiData.get('materialCode', ''),
+                'Revenue': guiData.get('amountVat', 0) / 1.06,  # 去除增值税
+                'Total Subcon Cost': guiData.get('cost', 0),
+                'Primary CS': guiData.get('csName', '')
+            }
+            
+            # 调用新的分配方法
+            department_results = allocator.allocate_department_hours(revenueDataForAllocation, configContent)
+            
+            # 将结果转换为原 getRevenueData 格式
+            return self._convertDepartmentResultsToRevenueData(department_results, guiData, configContent)
+            
+        except Exception as e:
+            # 如果新方法失败，回退到原方法
+            print(f"统一计算方法失败，使用原方法: {e}")
+            return self.getRevenueData(guiData)
+    
+    def _getLabMapping(self, material_code, configContent):
+        """
+        根据materialCode和配置文件获取实验室映射关系
+        
+        Args:
+            material_code: 物料代码
+            configContent: 配置内容
+            
+        Returns:
+            dict: {'1000_lab': 'CHM'或'PHY', '2000_lab': 'CHM'或'PHY'}
+        """
+        # 默认映射
+        default_mapping = {'1000_lab': 'CHM', '2000_lab': 'PHY'}
+        
+        if not material_code:
+            return default_mapping
+            
+        # 检查是否有特殊配置
+        if material_code in configContent:
+            rule = configContent.get(material_code, '').split('/')
+            if len(rule) == 2:
+                lab_1000 = rule[0].split('_')[0]  # 如 "PHY_1000" -> "PHY"
+                lab_2000 = rule[1].split('_')[0]  # 如 "CHM_2000" -> "CHM"
+                return {'1000_lab': lab_1000, '2000_lab': lab_2000}
+        
+        # 检查前缀配置
+        prefix = material_code.split('-')[0] if '-' in material_code else material_code
+        if prefix in configContent:
+            lab = configContent.get(prefix, '')
+            if lab in ['CHM', 'PHY']:
+                return {'1000_lab': lab, '2000_lab': 'PHY' if lab == 'CHM' else 'CHM'}
+        
+        return default_mapping
+    
+    def _convertDepartmentResultsToRevenueData(self, department_results, guiData, configContent):
+        """
+        将部门分配结果转换为原 getRevenueData 格式
+        
+        Args:
+            department_results: allocate_department_hours 的返回结果
+            guiData: 原始 GUI 数据
+            configContent: 配置内容
+            
+        Returns:
+            与原 getRevenueData 方法相同格式的数据
+        """
+        revenueData = {}
+        
+        # 基础计算
+        revenueData['revenue'] = guiData['amountVat'] / 1.06
+        revenueData['planCost'] = revenueData['revenue'] * guiData['exchangeRate']
+        revenueData['revenueForCny'] = revenueData['revenue'] * guiData['exchangeRate']
+        
+        # 获取有效位数
+        significant_digits = int(configContent.get('Significant_Digits', 2))
+        
+        # 获取materialCode以确定实验室映射
+        material_code = guiData.get('materialCode', '')
+        
+        # 根据配置确定实验室映射
+        lab_mapping = self._getLabMapping(material_code, configContent)
+        
+        # 从 department_results 提取数据
+        if len(department_results) >= 4:  # 完整的4个结果：1000业务,1000实验室,2000业务,2000实验室
+            # 1000项目数据 (索引0和1)
+            result_1000_business = department_results[0]
+            result_1000_lab = department_results[1]
+            # 2000项目数据 (索引2和3)
+            result_2000_business = department_results[2]
+            result_2000_lab = department_results[3]
+            
+            # 根据配置映射到正确的实验室
+            if lab_mapping['1000_lab'] == 'CHM':
+                chm_lab_revenue = result_1000_lab.get('dept_revenue', 0)
+                chm_lab_hours = result_1000_lab.get('dept_hours', 0)
+                chm_business_revenue = result_1000_business.get('dept_revenue', 0)
+                chm_business_hours = result_1000_business.get('dept_hours', 0)
+            else:
+                chm_lab_revenue = result_2000_lab.get('dept_revenue', 0)
+                chm_lab_hours = result_2000_lab.get('dept_hours', 0)
+                chm_business_revenue = result_2000_business.get('dept_revenue', 0)
+                chm_business_hours = result_2000_business.get('dept_hours', 0)
+                
+            if lab_mapping['2000_lab'] == 'PHY':
+                phy_lab_revenue = result_2000_lab.get('dept_revenue', 0)
+                phy_lab_hours = result_2000_lab.get('dept_hours', 0)
+                phy_business_revenue = result_2000_business.get('dept_revenue', 0)
+                phy_business_hours = result_2000_business.get('dept_hours', 0)
+            else:
+                phy_lab_revenue = result_1000_lab.get('dept_revenue', 0)
+                phy_lab_hours = result_1000_lab.get('dept_hours', 0)
+                phy_business_revenue = result_1000_business.get('dept_revenue', 0)
+                phy_business_hours = result_1000_business.get('dept_hours', 0)
+            
+            # 计算各项成本和收入
+            revenueData['chmCost'] = format(chm_lab_revenue * guiData['exchangeRate'], '.2f')
+            revenueData['phyCost'] = format(phy_lab_revenue * guiData['exchangeRate'], '.2f')
+            revenueData['chmRe'] = format(chm_lab_revenue + chm_business_revenue, '.2f')
+            revenueData['phyRe'] = format(phy_lab_revenue + phy_business_revenue, '.2f')
+            
+            # 计算工时分配
+            revenueData['chmCsCostAccounting'] = format(chm_business_hours, f'.{significant_digits}f')
+            revenueData['chmLabCostAccounting'] = format(chm_lab_hours, f'.{significant_digits}f')
+            revenueData['phyCsCostAccounting'] = format(phy_business_hours, f'.{significant_digits}f')
+            revenueData['phyLabCostAccounting'] = format(phy_lab_hours, f'.{significant_digits}f')
+        else:
+            # 单项目情况或向后兼容
+            result = department_results[0] if department_results else {}
+            
+            revenueData['chmCost'] = format(result.get('lab_revenue', 0) * guiData['exchangeRate'], '.2f')
+            revenueData['phyCost'] = format(0, '.2f')  # 单项目时设为0
+            revenueData['chmRe'] = format(result.get('revenue', 0), '.2f')
+            revenueData['phyRe'] = format(0, '.2f')  # 单项目时设为0
+            
+            revenueData['chmCsCostAccounting'] = format(result.get('business_dept_hours', 0), f'.{significant_digits}f')
+            revenueData['chmLabCostAccounting'] = format(result.get('lab_hours', 0), f'.{significant_digits}f')
+            revenueData['phyCsCostAccounting'] = format(0, f'.{significant_digits}f')
+            revenueData['phyLabCostAccounting'] = format(0, f'.{significant_digits}f')
+        
+        return revenueData
+
     # SAP开Order操作
     def sapOperate(self, sap_obj):
         logMsg = {}
@@ -817,7 +978,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 if guiData['everyCheck']:
                     QMessageBox.information(self, "提示信息", "有关键信息未填", QMessageBox.Yes)
             else:
-                revenueData = MyMainWindow.getRevenueData(self, guiData)
+                # 使用新的统一计算方法
+                revenueData = MyMainWindow.getRevenueDataUnified(self, guiData, configContent)
                 messageFlag = 1
                 if self.checkBox_5.isChecked():
                     if guiData['salesName'] == '':

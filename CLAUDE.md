@@ -58,10 +58,6 @@ python build_with_pyinstaller.py
 pyinstaller --onefile --windowed --clean --noconfirm --icon=Sap_Operate_Logo.ico Sap_Operate_theme.py
 ```
 
-### Installing Dependencies
-```bash
-pip install -r requirements.txt
-```
 
 ## Application Features
 
