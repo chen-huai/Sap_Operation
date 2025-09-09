@@ -174,7 +174,7 @@ class RevenueAllocator:
         # 情况1: 配置不存在
         if material_code not in configContent:
             prefix = material_code.split('-')[0]
-            lab = configContent.get(prefix)
+            lab = configContent.get(prefix,'CHM')
 
             lab_cost = float(configContent.get(f"{lab}_Cost_Parameter", 0.3))
             lab_rate = float(configContent.get(f"{lab}_Hourly_Rate", 342))
