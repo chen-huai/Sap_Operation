@@ -1965,46 +1965,44 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         try:
                             self.textBrowser_3.append('第%s份文件：' % i)
                             msg = {}
-                            with open(fileUrl, 'rb') as pdfFile:
+                            with (open(fileUrl, 'rb') as pdfFile):
                                 fileCon = pdfOperate.readPdf(pdfFile)
                                 fileNum = 0
 
+                                # 构造正则表达式
+                                inv_pattern = r'%s\d{%s}' % (
+                                    adminGuiData['eleInvoiceStsrtNum'],
+                                    int(adminGuiData['eleInvoiceBits']) - len(
+                                        str(adminGuiData['eleInvoiceStsrtNum']))
+                                )
+
+                                order_pattern = r'%s\d{%s}' % (
+                                    adminGuiData['eleOrderStsrtNum'],
+                                    int(adminGuiData['eleOrderBits']) - len(
+                                        str(adminGuiData['eleOrderStsrtNum']))
+                                )
+
                                 # 获取文件内容
                                 for fileCon[fileNum] in fileCon:
-                                    if re.search(r'购\s*名\s*称', fileCon[fileNum]):
-                                        msg['Company Name'] = fileCon[fileNum].split('：')[1].replace('销 名 称',
-                                                                                                     '').replace(
-                                            '销 名称', '').replace(' ', '')
+                                    if re.search(r'南德认证检测', fileCon[fileNum]):
+                                        msg['Company Name'] = fileCon[fileNum].split()[0]
                                     elif re.search(r'小\s*写\s*）', fileCon[fileNum]):
                                         msg['Revenue'] = fileCon[fileNum].split('）')[2]
-                                    elif '发票号码：' in fileCon[fileNum]:
-                                        msg['fapiao'] = str(fileCon[fileNum].split('：')[1])
-                                    elif re.search(r'%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'],
-                                                                 int(adminGuiData['eleInvoiceBits']) - len(
-                                                                     str(adminGuiData['eleInvoiceStsrtNum']))),
-                                                   fileCon[fileNum]):
-                                        text = fileCon[fileNum].split('/')
-                                        try:
-                                            msg['Invoice No'] = int(text[-1])
-                                        except :
-                                            msg['Invoice No'] = re.sub(r'[^0-9]', '', text[-1])
-                                    elif re.search(r'%s\d{%s}' % (adminGuiData['eleOrderStsrtNum'],
-                                                                 int(adminGuiData['eleOrderBits']) - len(
-                                                                     str(adminGuiData['eleOrderStsrtNum']))),
-                                                   fileCon[fileNum]):
-                                        text = fileCon[fileNum].split('/')
-                                        try:
-                                            msg['Order No'] = text[1]
-                                        except:
-                                            msg['Order No'] = ''
+                                    elif '制' in fileCon[fileNum]:
+                                        msg['fapiao'] = str(fileCon[fileNum].split()[1])
+                                    elif re.search(inv_pattern, fileCon[fileNum]):
+                                        text = re.findall(inv_pattern, fileCon[fileNum])
+                                        if text:
+                                            msg['Invoice No'] = int(text[0])
+                                    elif re.search(order_pattern, fileCon[fileNum]):
+                                        text = re.findall(order_pattern, fileCon[fileNum])
+                                        if text:
+                                            msg['Order No'] = text
                                     fileNum += 1
                                 if 'Order No' not in msg:
                                     msg['Order No'] = ''
                                 if 'Invoice No' not in msg:
-                                    msg['Invoice No'] = re.findall(r'%s\d{%s}' % (adminGuiData['eleInvoiceStsrtNum'],
-                                                                                 int(adminGuiData['eleInvoiceBits']) - len(
-                                                                                     str(adminGuiData['eleInvoiceStsrtNum']))),
-                                                                   fileUrl)[0]
+                                    msg['Invoice No'] = re.findall(inv_pattern,fileUrl)[0]
                                 if self.checkBox_25.isChecked():
                                     # pandas中有int32和int64的格式区别
                                     cs = list(
