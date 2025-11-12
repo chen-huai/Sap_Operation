@@ -3,10 +3,60 @@ import os
 import re
 import time
 import math
-import pandas as pd
 import csv
 import copy
-import numpy as np
+
+# ===== numpy兼容性修复 =====
+def fix_numpy_before_import():
+    """在导入numpy前修复兼容性问题"""
+    try:
+        # 设置环境变量
+        os.environ['NUMPY_EXPERIMENTAL_ARRAY_FUNCTION'] = '0'
+        os.environ['NUMPY_DISABLE_ARRAY_API'] = '1'
+
+        # 导入numpy模块并修复装饰器问题
+        import numpy.core.overrides as overrides_module
+
+        # 获取原始add_docstring函数
+        original_add_docstring = getattr(overrides_module, 'add_docstring', None)
+
+        if original_add_docstring:
+            def safe_add_docstring(obj, doc):
+                """安全的add_docstring函数"""
+                if doc is None:
+                    doc = ""
+                elif not isinstance(doc, str):
+                    try:
+                        doc = str(doc)
+                    except Exception:
+                        doc = ""
+                return original_add_docstring(obj, doc)
+
+            # 替换原函数
+            overrides_module.add_docstring = safe_add_docstring
+
+        return True
+    except Exception as e:
+        print(f"numpy修复失败: {e}")
+        return False
+
+# 立即执行修复
+fix_numpy_before_import()
+
+# ===== 现在安全导入依赖 =====
+try:
+    import numpy as np
+    print("numpy导入成功")
+except Exception as e:
+    print(f"numpy导入失败: {e}")
+    sys.exit(1)
+
+try:
+    import pandas as pd
+    print("pandas导入成功")
+except Exception as e:
+    print(f"pandas导入失败: {e}")
+    sys.exit(1)
 import win32com.client
 import datetime
 import chicon  # 引用图标
@@ -1997,7 +2047,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                     elif re.search(order_pattern, fileCon[fileNum]):
                                         text = re.findall(order_pattern, fileCon[fileNum])
                                         if text:
-                                            msg['Order No'] = text
+                                            msg['Order No'] = int(text[0])
                                     fileNum += 1
                                 if 'Order No' not in msg:
                                     msg['Order No'] = ''
