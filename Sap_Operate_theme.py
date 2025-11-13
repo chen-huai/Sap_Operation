@@ -1961,44 +1961,43 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         billing_df = myWin.getBillingListData()
                     i = 1
 
+                    # 构造正则表达式
+                    inv_pattern = r'%s\d{%s}' % (
+                        adminGuiData['eleInvoiceStsrtNum'],
+                        int(adminGuiData['eleInvoiceBits']) - len(
+                            str(adminGuiData['eleInvoiceStsrtNum']))
+                    )
+                    inv_pattern = r'(?<!\d)' + inv_pattern + r'(?!\d)'
+
+                    order_pattern = r'%s\d{%s}' % (
+                        adminGuiData['eleOrderStsrtNum'],
+                        int(adminGuiData['eleOrderBits']) - len(
+                            str(adminGuiData['eleOrderStsrtNum']))
+                    )
+
                     for fileUrl in fileUrls:
                         try:
                             self.textBrowser_3.append('第%s份文件：' % i)
                             msg = {}
                             with (open(fileUrl, 'rb') as pdfFile):
                                 fileCon = pdfOperate.readPdf(pdfFile)
-                                fileNum = 0
 
-                                # 构造正则表达式
-                                inv_pattern = r'%s\d{%s}' % (
-                                    adminGuiData['eleInvoiceStsrtNum'],
-                                    int(adminGuiData['eleInvoiceBits']) - len(
-                                        str(adminGuiData['eleInvoiceStsrtNum']))
-                                )
-
-                                order_pattern = r'%s\d{%s}' % (
-                                    adminGuiData['eleOrderStsrtNum'],
-                                    int(adminGuiData['eleOrderBits']) - len(
-                                        str(adminGuiData['eleOrderStsrtNum']))
-                                )
-
-                                # 获取文件内容
-                                for fileCon[fileNum] in fileCon:
-                                    if re.search(r'南德认证检测', fileCon[fileNum]):
-                                        msg['Company Name'] = fileCon[fileNum].split()[0]
-                                    elif re.search(r'小\s*写\s*）', fileCon[fileNum]):
-                                        msg['Revenue'] = fileCon[fileNum].split('）')[2]
-                                    elif '制' in fileCon[fileNum]:
-                                        msg['fapiao'] = str(fileCon[fileNum].split()[1])
-                                    elif re.search(inv_pattern, fileCon[fileNum]):
-                                        text = re.findall(inv_pattern, fileCon[fileNum])
+                                for i, each in enumerate(fileCon):
+                                    if re.search(r'南德认证检测', each):
+                                        msg['Company Name'] = each.split()[0]
+                                    elif re.search(r'小\s*写\s*）', each):
+                                        msg['Revenue'] = each.split('）')[2]
+                                    elif '制' in each:
+                                        msg['fapiao'] = str(each.split()[1])
+                                    elif re.search(inv_pattern, each):
+                                        text = re.findall(inv_pattern, each)
                                         if text:
                                             msg['Invoice No'] = int(text[0])
-                                    elif re.search(order_pattern, fileCon[fileNum]):
-                                        text = re.findall(order_pattern, fileCon[fileNum])
+                                    elif re.search(order_pattern, each):
+                                        text = re.findall(order_pattern, each)
                                         if text:
-                                            msg['Order No'] = text
-                                    fileNum += 1
+                                            msg['Order No'] = text[0]
+
                                 if 'Order No' not in msg:
                                     msg['Order No'] = ''
                                 if 'Invoice No' not in msg:
