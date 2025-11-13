@@ -3,60 +3,10 @@ import os
 import re
 import time
 import math
+import pandas as pd
 import csv
 import copy
-
-# ===== numpy兼容性修复 =====
-def fix_numpy_before_import():
-    """在导入numpy前修复兼容性问题"""
-    try:
-        # 设置环境变量
-        os.environ['NUMPY_EXPERIMENTAL_ARRAY_FUNCTION'] = '0'
-        os.environ['NUMPY_DISABLE_ARRAY_API'] = '1'
-
-        # 导入numpy模块并修复装饰器问题
-        import numpy.core.overrides as overrides_module
-
-        # 获取原始add_docstring函数
-        original_add_docstring = getattr(overrides_module, 'add_docstring', None)
-
-        if original_add_docstring:
-            def safe_add_docstring(obj, doc):
-                """安全的add_docstring函数"""
-                if doc is None:
-                    doc = ""
-                elif not isinstance(doc, str):
-                    try:
-                        doc = str(doc)
-                    except Exception:
-                        doc = ""
-                return original_add_docstring(obj, doc)
-
-            # 替换原函数
-            overrides_module.add_docstring = safe_add_docstring
-
-        return True
-    except Exception as e:
-        print(f"numpy修复失败: {e}")
-        return False
-
-# 立即执行修复
-fix_numpy_before_import()
-
-# ===== 现在安全导入依赖 =====
-try:
-    import numpy as np
-    print("numpy导入成功")
-except Exception as e:
-    print(f"numpy导入失败: {e}")
-    sys.exit(1)
-
-try:
-    import pandas as pd
-    print("pandas导入成功")
-except Exception as e:
-    print(f"pandas导入失败: {e}")
-    sys.exit(1)
+import numpy as np
 import win32com.client
 import datetime
 import chicon  # 引用图标
@@ -2011,44 +1961,43 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         billing_df = myWin.getBillingListData()
                     i = 1
 
+                    # 构造正则表达式
+                    inv_pattern = r'%s\d{%s}' % (
+                        adminGuiData['eleInvoiceStsrtNum'],
+                        int(adminGuiData['eleInvoiceBits']) - len(
+                            str(adminGuiData['eleInvoiceStsrtNum']))
+                    )
+                    inv_pattern = r'(?<!\d)' + inv_pattern + r'(?!\d)'
+
+                    order_pattern = r'%s\d{%s}' % (
+                        adminGuiData['eleOrderStsrtNum'],
+                        int(adminGuiData['eleOrderBits']) - len(
+                            str(adminGuiData['eleOrderStsrtNum']))
+                    )
+
                     for fileUrl in fileUrls:
                         try:
                             self.textBrowser_3.append('第%s份文件：' % i)
                             msg = {}
                             with (open(fileUrl, 'rb') as pdfFile):
                                 fileCon = pdfOperate.readPdf(pdfFile)
-                                fileNum = 0
 
-                                # 构造正则表达式
-                                inv_pattern = r'%s\d{%s}' % (
-                                    adminGuiData['eleInvoiceStsrtNum'],
-                                    int(adminGuiData['eleInvoiceBits']) - len(
-                                        str(adminGuiData['eleInvoiceStsrtNum']))
-                                )
-
-                                order_pattern = r'%s\d{%s}' % (
-                                    adminGuiData['eleOrderStsrtNum'],
-                                    int(adminGuiData['eleOrderBits']) - len(
-                                        str(adminGuiData['eleOrderStsrtNum']))
-                                )
-
-                                # 获取文件内容
-                                for fileCon[fileNum] in fileCon:
-                                    if re.search(r'南德认证检测', fileCon[fileNum]):
-                                        msg['Company Name'] = fileCon[fileNum].split()[0]
-                                    elif re.search(r'小\s*写\s*）', fileCon[fileNum]):
-                                        msg['Revenue'] = fileCon[fileNum].split('）')[2]
-                                    elif '制' in fileCon[fileNum]:
-                                        msg['fapiao'] = str(fileCon[fileNum].split()[1])
-                                    elif re.search(inv_pattern, fileCon[fileNum]):
-                                        text = re.findall(inv_pattern, fileCon[fileNum])
+                                for i, each in enumerate(fileCon):
+                                    if re.search(r'南德认证检测', each):
+                                        msg['Company Name'] = each.split()[0]
+                                    elif re.search(r'小\s*写\s*）', each):
+                                        msg['Revenue'] = each.split('）')[2]
+                                    elif '制' in each:
+                                        msg['fapiao'] = str(each.split()[1])
+                                    elif re.search(inv_pattern, each):
+                                        text = re.findall(inv_pattern, each)
                                         if text:
                                             msg['Invoice No'] = int(text[0])
-                                    elif re.search(order_pattern, fileCon[fileNum]):
-                                        text = re.findall(order_pattern, fileCon[fileNum])
+                                    elif re.search(order_pattern, each):
+                                        text = re.findall(order_pattern, each)
                                         if text:
-                                            msg['Order No'] = int(text[0])
-                                    fileNum += 1
+                                            msg['Order No'] = text[0]
+
                                 if 'Order No' not in msg:
                                     msg['Order No'] = ''
                                 if 'Invoice No' not in msg:
