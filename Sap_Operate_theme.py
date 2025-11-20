@@ -1982,9 +1982,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             with (open(fileUrl, 'rb') as pdfFile):
                                 fileCon = pdfOperate.readPdf(pdfFile)
 
-                                for i, each in enumerate(fileCon):
+                                for num, each in enumerate(fileCon):
                                     if re.search(r'南德认证检测', each):
-                                        msg['Company Name'] = each.split()[0]
+                                        if 'Company Name'  not in msg:
+                                            msg['Company Name'] = each.split()[0]
                                     elif re.search(r'小\s*写\s*）', each):
                                         msg['Revenue'] = each.split('）')[2]
                                     elif '制' in each:
