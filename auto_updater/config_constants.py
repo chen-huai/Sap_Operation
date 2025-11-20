@@ -7,6 +7,8 @@
 # 应用配置
 APP_NAME: str = "SAP操作工具"
 APP_EXECUTABLE: str = "Sap_Operate.exe"
+APP_EXECUTABLE_DEV: str = "Sap_Operate_theme.py"  # 开发环境可执行文件
+APP_EXECUTABLE_PROD: str = "Sap_Operate.exe"     # 生产环境可执行文件
 
 # GitHub仓库配置
 GITHUB_OWNER: str = "chen-huai"
@@ -14,7 +16,7 @@ GITHUB_REPO: str = "Sap_Operation"
 GITHUB_API_BASE: str = "https://api.github.com"
 
 # 版本配置
-CURRENT_VERSION: str = "2.0.0"
+CURRENT_VERSION: str = "0.1.0"
 UPDATE_CHECK_INTERVAL_DAYS: int = 30
 AUTO_CHECK_ENABLED: bool = True
 

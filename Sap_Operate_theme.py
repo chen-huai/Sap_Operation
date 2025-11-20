@@ -12,7 +12,7 @@ import datetime
 import chicon  # 引用图标
 # from PyQt5 import QtCore, QtGui, QtWidgets
 # from PyQt5.QtWidgets import QApplication, QMainWindow
-from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QVBoxLayout, QPushButton, QAction
+from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QVBoxLayout, QPushButton, QAction, QLabel
 from PyQt5.QtCore import QDate
 from PyQt5.QtGui import QIcon, QFontDatabase
 from Get_Data import *
@@ -25,6 +25,8 @@ from Logger import *
 from Excel_Field_Mapper import excel_field_mapper
 from theme_manager_theme import ThemeManager
 from Revenue_Operate import *
+from auto_updater.config_constants import CURRENT_VERSION
+from auto_updater import AutoUpdater
 
 # 延迟导入qt_material以避免警告
 # qt_material 将在需要时由 ThemeManager 导入
@@ -35,6 +37,34 @@ import shutil
 
 
 class MyMainWindow(QMainWindow, Ui_MainWindow):
+
+    # UI常量定义
+    class UIConstants:
+        PROGRESS_DIALOG_WIDTH = 400
+        PROGRESS_DIALOG_HEIGHT = 200
+        UPDATE_INTERVAL = 0.5  # UI更新间隔（秒）
+        NETWORK_TIMEOUT = 5
+
+    @staticmethod
+    def format_file_size(size_bytes: int) -> str:
+        """
+        格式化文件大小显示
+
+        Args:
+            size_bytes: 文件大小（字节）
+
+        Returns:
+            格式化后的文件大小字符串
+        """
+        if size_bytes <= 0:
+            return "0 B"
+
+        size_names = ["B", "KB", "MB", "GB", "TB"]
+        i = int(math.floor(math.log(size_bytes, 1024)))
+        p = math.pow(1024, i)
+        s = round(size_bytes / p, 2)
+        return f"{s} {size_names[i]}"
+
     def __init__(self, parent=None):
         super(MyMainWindow, self).__init__(parent)
         self.setupUi(self)
@@ -111,6 +141,23 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_83.clicked.connect(lambda: self.open_file(self.lineEdit_38.text()))
         self.pushButton_84.clicked.connect(lambda: self.open_file(self.lineEdit_31.text()))
         self.filesUrl = []
+
+        # 初始化状态栏
+        self.status_bar = self.statusBar()
+        self.update_status_bar()
+
+        # 初始化自动更新器
+        self.auto_updater = AutoUpdater(parent=self)
+
+        # 性能优化：初始化更新控制变量
+        self._last_update_time = 0
+
+        # 连接Update菜单项信号
+        self.actionUpdate.triggered.connect(self.handle_manual_update)
+
+        # 异步检查更新（不阻塞主线程）
+        from PyQt5.QtCore import QTimer
+        QTimer.singleShot(1000, self.check_for_updates_startup)  # 1秒后检查更新
 
     def init_theme_action(self):
         theme_action = QAction(QIcon('theme_icon.png'), 'Toggle Theme', self)
@@ -472,9 +519,221 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                           "人生苦短，码上行乐。\n\n\n        ----Frank Chen")
 
     def showVersion(self):
-        # 关于作者
+        # 显示版本信息 - 动态从配置常量获取
         QMessageBox.about(self, "版本",
-                          "V 22.01.11\n\n\n 2022-04-26")
+                          f"版本: {CURRENT_VERSION}")
+
+    def update_status_bar(self):
+        """更新状态栏显示版本信息（右下角）"""
+        try:
+            # 清除现有的永久小部件（如果存在）
+            if hasattr(self, '_version_widget'):
+                self.status_bar.removeWidget(self._version_widget)
+
+            # 创建版本标签
+            version_text = f"版本: {CURRENT_VERSION}"
+            self._version_widget = QLabel(version_text)
+            self._version_widget.setStyleSheet("color: #666; font-size: 12px; padding: 0 5px;")
+
+            # 添加到状态栏右侧
+            self.status_bar.addPermanentWidget(self._version_widget)
+
+            # 清除主消息区域
+            self.status_bar.showMessage("")
+        except Exception as e:
+            print(f"更新状态栏失败: {e}")
+            self.status_bar.showMessage("状态栏初始化失败")
+
+    def check_for_updates_startup(self):
+        """启动时检查更新，不阻塞主线程"""
+        try:
+            has_update, remote_version, local_version, error_msg = self.auto_updater.check_for_updates()
+
+            if error_msg and "距离上次检查时间过短" not in error_msg:
+                # 检查时出错，静默处理（跳过正常的时间限制提示）
+                print(f"更新检查失败: {error_msg}")
+            elif has_update:
+                # 有更新可用，通过状态栏提示用户
+                self.update_status_bar_with_update(remote_version)
+                # 可选择性地弹出更新提示
+                from PyQt5.QtCore import QTimer
+                QTimer.singleShot(2000, self.show_update_notification)
+            else:
+                # 无更新，静默处理
+                pass
+
+        except Exception as e:
+            print(f"启动更新检查异常: {e}")
+
+    def update_status_bar_with_update(self, remote_version=None):
+        """更新状态栏显示更新提示"""
+        try:
+            if remote_version:
+                version_text = f"发现新版本: {remote_version} (当前: {CURRENT_VERSION})"
+            else:
+                version_text = f"版本: {CURRENT_VERSION}"
+            self.status_bar.showMessage(version_text)
+        except Exception as e:
+            print(f"更新状态栏失败: {e}")
+            self.status_bar.showMessage("状态栏初始化失败")
+
+    def show_update_notification(self):
+        """显示更新通知"""
+        try:
+            # 检查最新的版本信息
+            has_update, remote_version, local_version, error_msg = self.auto_updater.check_for_updates(force_check=True)
+
+            if not has_update:
+                # 显示已是最新版本提示
+                QMessageBox.information(
+                    self,
+                    "检查更新",
+                    f"当前版本 {local_version} 已是最新版本！",
+                    QMessageBox.Yes
+                )
+                # 恢复状态栏显示当前版本
+                self.update_status_bar()
+                return
+
+            # 创建更新对话框
+            reply = QMessageBox.question(
+                self,
+                "发现新版本",
+                f"发现新版本 {remote_version}，当前版本: {local_version}\n\n是否现在下载更新？",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes
+            )
+
+            if reply == QMessageBox.Yes:
+                # 显示下载进度
+                self.start_update_process()
+
+        except Exception as e:
+            print(f"显示更新通知失败: {e}")
+            QMessageBox.information(self, "提示", f"检查更新失败: {str(e)}", QMessageBox.Yes)
+
+    def start_update_process(self):
+        """启动更新过程"""
+        try:
+            # 获取更新信息
+            has_update, remote_version, local_version, error_msg = self.auto_updater.check_for_updates(force_check=True)
+
+            if not has_update:
+                QMessageBox.information(self, "提示", "当前已是最新版本", QMessageBox.Yes)
+                return
+
+            # 下载进度对话框
+            progress_dialog = QMessageBox()
+            progress_dialog.setWindowTitle("下载更新")
+            progress_dialog.setText(f"准备下载版本 {remote_version}...")
+            progress_dialog.setStandardButtons(QMessageBox.NoButton)
+            progress_dialog.setModal(True)  # 设置为模态对话框
+            progress_dialog.setIcon(QMessageBox.Information)  # 设置信息图标
+
+            # 居中显示对话框
+            progress_dialog.setGeometry(
+                self.x() + (self.width() - self.UIConstants.PROGRESS_DIALOG_WIDTH) // 2,
+                self.y() + (self.height() - self.UIConstants.PROGRESS_DIALOG_HEIGHT) // 2,
+                self.UIConstants.PROGRESS_DIALOG_WIDTH,
+                self.UIConstants.PROGRESS_DIALOG_HEIGHT
+            )
+
+            progress_dialog.show()
+
+            # 启动下载
+            success, download_path, error = self.auto_updater.download_update(
+                remote_version,
+                lambda downloaded, total, percentage: self.update_download_progress(downloaded, total, percentage, progress_dialog)
+            )
+
+            progress_dialog.hide()
+
+            if success:
+                # 询问是否执行更新
+                reply = QMessageBox.question(
+                    self,
+                    "下载完成",
+                    f"更新文件已下载到:\n{download_path}\n\n是否现在安装更新？",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.Yes
+                )
+
+                if reply == QMessageBox.Yes:
+                    success, error = self.auto_updater.execute_update(download_path, remote_version)
+                    if success:
+                        QMessageBox.information(self, "更新完成", "应用已更新，将在下次启动时生效", QMessageBox.Yes)
+                        # 可选择重启应用
+                        reply = QMessageBox.question(
+                            self, "更新成功",
+                            "更新完成！是否重启应用？",
+                            QMessageBox.Yes | QMessageBox.No,
+                            QMessageBox.Yes
+                        )
+                        if reply == QMessageBox.Yes:
+                            import subprocess
+                            subprocess.Popen([sys.executable, sys.argv[0]], creationflags=subprocess.CREATE_NEW_CONSOLE)
+                    else:
+                        QMessageBox.warning(self, "更新失败", f"更新失败: {error}", QMessageBox.Yes)
+            else:
+                QMessageBox.warning(self, "下载失败", f"下载失败: {error}", QMessageBox.Yes)
+
+        except Exception as e:
+            QMessageBox.warning(self, "更新异常", f"更新过程异常: {str(e)}", QMessageBox.Yes)
+
+    def update_download_progress(self, downloaded: int, total: int, percentage: float, progress_dialog: QMessageBox):
+        """
+        更新下载进度显示（优化版本）
+
+        Args:
+            downloaded: 已下载字节数
+            total: 总文件大小
+            percentage: 下载百分比 (0-100)
+            progress_dialog: 进度对话框对象
+        """
+        try:
+            # 参数验证
+            if progress_dialog is None:
+                return
+
+            if not all(isinstance(x, (int, float)) for x in [downloaded, total, percentage]):
+                return
+
+            # 确保百分比在有效范围内
+            percentage = min(100, max(0, percentage))
+
+            # 性能优化：控制更新频率
+            import time
+            current_time = time.time()
+            if current_time - self._last_update_time < self.UIConstants.UPDATE_INTERVAL:
+                return
+            self._last_update_time = current_time
+
+            # 使用优化的文件大小格式化方法
+            downloaded_str = self.format_file_size(int(downloaded))
+            total_str = self.format_file_size(int(total))
+
+            # 更新进度对话框的文本
+            if percentage >= 100:
+                progress_text = f"下载完成！\n已下载: {downloaded_str}"
+            else:
+                progress_text = f"正在下载更新... {percentage:.1f}%\n已下载: {downloaded_str} / {total_str}"
+
+            progress_dialog.setText(progress_text)
+
+            # 优化的界面更新：安全获取 QApplication 实例
+            try:
+                from PyQt5.QtWidgets import QApplication
+                app = QApplication.instance()
+                if app:
+                    app.processEvents()
+            except Exception:
+                # 如果无法获取 QApplication 实例，静默处理
+                pass
+
+        except Exception as e:
+            # 记录错误日志，不影响下载过程
+            import logging
+            logging.warning(f"更新进度显示失败: {str(e)}")
 
     def getAmountVat(self):
         amount = float(self.doubleSpinBox_2.text())
@@ -2715,6 +2974,57 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             # error_msg = f"处理过程中出现错误: {str(e)}"
             # logger.error(error_msg)
             # QMessageBox.critical(self, "错误", error_msg)
+
+    def handle_manual_update(self):
+        """处理手动更新检查"""
+        try:
+            # 显示检查中状态
+            self.status_bar.showMessage("正在检查更新...")
+
+            # 预先检查网络连接
+            import socket
+            try:
+                socket.create_connection(("www.github.com", 80), timeout=self.UIConstants.NETWORK_TIMEOUT)
+            except (socket.timeout, socket.error, OSError) as e:
+                self.status_bar.showMessage("网络连接失败")
+                QMessageBox.warning(
+                    self,
+                    "网络错误",
+                    f"无法连接到更新服务器 ({str(e)})\n\n请检查您的网络连接后重试。",
+                    QMessageBox.Yes
+                )
+                return
+
+            # 调用现有更新检查逻辑
+            self.show_update_notification()
+
+        except Exception as e:
+            error_msg = str(e)
+            self.status_bar.showMessage("检查更新失败")
+
+            # 根据错误类型显示不同的提示信息
+            error_lower = error_msg.lower()
+            if any(keyword in error_lower for keyword in ["network", "连接", "connection"]):
+                QMessageBox.warning(
+                    self,
+                    "网络错误",
+                    f"网络连接出现问题:\n{error_msg}\n\n请检查网络连接后重试。",
+                    QMessageBox.Yes
+                )
+            elif any(keyword in error_lower for keyword in ["timeout", "超时"]):
+                QMessageBox.warning(
+                    self,
+                    "连接超时",
+                    "服务器响应超时，请稍后重试。\n如果问题持续存在，请检查网络连接。",
+                    QMessageBox.Yes
+                )
+            else:
+                QMessageBox.warning(
+                    self,
+                    "更新检查失败",
+                    f"检查更新时发生未知错误:\n{error_msg}\n\n请稍后重试或联系技术支持。",
+                    QMessageBox.Yes
+                )
 
 
 if __name__ == "__main__":

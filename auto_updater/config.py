@@ -8,19 +8,37 @@
 
 import os
 import sys
+import json
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional
 from packaging import version
 
-# 导入配置常量
-from .config_constants import (
-    APP_NAME, APP_EXECUTABLE, GITHUB_OWNER, GITHUB_REPO, GITHUB_API_BASE,
-    CURRENT_VERSION, UPDATE_CHECK_INTERVAL_DAYS, AUTO_CHECK_ENABLED,
-    MAX_BACKUP_COUNT, DOWNLOAD_TIMEOUT, MAX_RETRIES, AUTO_RESTART,
-    REQUEST_HEADERS, DEFAULT_CONFIG, GITHUB_REPO_PATH,
-    GITHUB_RELEASES_URL, GITHUB_LATEST_RELEASE_URL
-)
+# 导入配置常量 - 修复相对导入问题
+try:
+    from .config_constants import (
+        APP_NAME, APP_EXECUTABLE, APP_EXECUTABLE_DEV, APP_EXECUTABLE_PROD,
+        GITHUB_OWNER, GITHUB_REPO, GITHUB_API_BASE,
+        CURRENT_VERSION, UPDATE_CHECK_INTERVAL_DAYS, AUTO_CHECK_ENABLED,
+        MAX_BACKUP_COUNT, DOWNLOAD_TIMEOUT, MAX_RETRIES, AUTO_RESTART,
+        REQUEST_HEADERS, DEFAULT_CONFIG, GITHUB_REPO_PATH,
+        GITHUB_RELEASES_URL, GITHUB_LATEST_RELEASE_URL
+    )
+except ImportError:
+    # 降级到绝对导入（用于测试）
+    import sys
+    import os
+    parent_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, parent_dir)
+
+    from config_constants import (
+        APP_NAME, APP_EXECUTABLE, APP_EXECUTABLE_DEV, APP_EXECUTABLE_PROD,
+        GITHUB_OWNER, GITHUB_REPO, GITHUB_API_BASE,
+        CURRENT_VERSION, UPDATE_CHECK_INTERVAL_DAYS, AUTO_CHECK_ENABLED,
+        MAX_BACKUP_COUNT, DOWNLOAD_TIMEOUT, MAX_RETRIES, AUTO_RESTART,
+        REQUEST_HEADERS, DEFAULT_CONFIG, GITHUB_REPO_PATH,
+        GITHUB_RELEASES_URL, GITHUB_LATEST_RELEASE_URL
+    )
 
 # 配置文件名（保持兼容性）
 UPDATE_STATE_FILE = "update_state.json"
@@ -300,11 +318,36 @@ CURRENT_VERSION = CURRENT_VERSION
 def get_executable_dir():
     """
     获取可执行文件所在目录
+    修复开发环境路径问题：返回项目根目录而非auto_updater目录
     """
     if getattr(sys, 'frozen', False):
+        # 生产环境：返回exe所在目录
         return os.path.dirname(sys.executable)
     else:
-        return os.path.dirname(os.path.abspath(__file__))
+        # 开发环境：返回项目根目录（auto_updater的上级目录）
+        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def get_running_environment():
+    """
+    检测当前运行环境
+    :return: 'development', 'production', 或 'unknown'
+    """
+    if getattr(sys, 'frozen', False):
+        # 打包后的exe环境
+        return 'production'
+    else:
+        # Python源码环境，进一步检测是否为开发环境
+        project_root = get_executable_dir()
+        dev_file = os.path.join(project_root, APP_EXECUTABLE_DEV)
+        prod_file = os.path.join(project_root, APP_EXECUTABLE_PROD)
+
+        if os.path.exists(dev_file):
+            return 'development'
+        elif os.path.exists(prod_file):
+            return 'production'
+        else:
+            return 'unknown'
 
 
 def get_update_config_path():
@@ -324,5 +367,17 @@ def get_backup_dir():
 def get_app_executable_path():
     """
     获取应用程序可执行文件路径
+    支持开发环境和生产环境的自动适配
     """
-    return os.path.join(get_executable_dir(), APP_NAME)
+    exec_dir = get_executable_dir()
+    env = get_running_environment()
+
+    if env == 'development':
+        # 开发环境：返回Python主文件路径
+        return os.path.join(exec_dir, APP_EXECUTABLE_DEV)
+    elif env == 'production':
+        # 生产环境：返回exe文件路径
+        return os.path.join(exec_dir, APP_EXECUTABLE_PROD)
+    else:
+        # 未知环境：尝试使用默认配置
+        return os.path.join(exec_dir, APP_EXECUTABLE)
