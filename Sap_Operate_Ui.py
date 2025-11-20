@@ -1749,4 +1749,3 @@ class Ui_MainWindow(object):
         self.actionHelp.setText(_translate("MainWindow", "Help"))
         self.actionImport.setText(_translate("MainWindow", "Import"))
         self.actionUpdate.setText(_translate("MainWindow", "Update"))
-import chicon_rc

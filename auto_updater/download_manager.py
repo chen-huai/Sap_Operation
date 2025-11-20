@@ -206,8 +206,11 @@ class DownloadManager:
 
             # 获取所有下载文件
             files = []
+            app_base_name = APP_NAME.replace('.exe', '')  # 移除.exe后缀进行匹配
             for file_name in os.listdir(download_dir):
-                if file_name.startswith(APP_NAME) and file_name.endswith('.exe'):
+                if (file_name.startswith(app_base_name) and
+                    file_name.endswith('.exe') and
+                    not file_name.endswith('.bak')):  # 排除备份文件
                     file_path = os.path.join(download_dir, file_name)
                     if os.path.isfile(file_path):
                         files.append((file_path, os.path.getmtime(file_path)))

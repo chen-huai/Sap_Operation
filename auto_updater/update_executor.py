@@ -63,22 +63,46 @@ class UpdateExecutor:
 
     def _update_development_environment(self, update_file_path: str, new_version: str) -> bool:
         """
-        开发环境下的更新（直接替换Python文件）
+        开发环境下的更新（更新版本号并启动新版本）
         :param update_file_path: 更新文件路径
         :param new_version: 新版本号
         :return: 是否更新成功
         """
         try:
-            # 在开发环境下，我们只是更新版本号文件
-            print(f"开发环境模拟更新: 版本 {new_version}")
+            print(f"开发环境更新: 版本 {new_version}")
 
             # 更新版本文件
             success = self.config.update_current_version(new_version)
-            if success:
-                print(f"版本已更新到: {new_version}")
-                return True
-            else:
+            if not success:
                 raise UpdateExecutionError("更新版本文件失败")
+
+            print(f"版本已更新到: {new_version}")
+
+            # 在开发环境下，启动新版本程序实例
+            try:
+                import subprocess
+                import sys
+                from .config import get_app_executable_path
+
+                current_exe_path = get_app_executable_path()
+
+                # 启动新版本程序
+                print("正在启动新版本程序...")
+                subprocess.Popen([sys.executable, current_exe_path],
+                               cwd=os.path.dirname(current_exe_path),
+                               creationflags=subprocess.DETACHED_PROCESS)
+
+                print("新版本程序已启动")
+
+                # 提示用户关闭旧版本
+                print("请手动关闭当前程序窗口以完成更新")
+
+                return True
+
+            except Exception as start_error:
+                print(f"启动新版本失败: {str(start_error)}")
+                # 即使启动失败，版本更新仍然成功
+                return True
 
         except Exception as e:
             raise UpdateExecutionError(f"开发环境更新失败: {str(e)}")
@@ -151,38 +175,196 @@ class UpdateExecutor:
 
     def _schedule_delayed_update(self, update_file_path: str, current_exe_path: str, new_version: str) -> bool:
         """
-        安排延迟更新（使用批处理脚本）
+        安排延迟更新（使用增强的批处理脚本）
         :param update_file_path: 更新文件路径
         :param current_exe_path: 当前可执行文件路径
         :param new_version: 新版本号
         :return: 是否成功安排延迟更新
         """
         try:
-            # 创建更新脚本
+            # 预检查：验证文件和路径
+            if not os.path.exists(update_file_path):
+                raise UpdateExecutionError(f"更新文件不存在: {update_file_path}")
+
+            if os.path.getsize(update_file_path) == 0:
+                raise UpdateExecutionError(f"更新文件为空: {update_file_path}")
+
+            # 检查目标目录是否可写
+            target_dir = os.path.dirname(current_exe_path)
+            if not os.access(target_dir, os.W_OK):
+                raise UpdateExecutionError(f"目标目录无写入权限: {target_dir}")
+
+            # 创建日志文件路径
+            log_path = os.path.join(tempfile.gettempdir(), "update_log.txt")
+
+            # 创建增强的更新脚本
             script_content = f'''@echo off
-echo 正在更新应用程序...
-timeout /t 2 /nobreak >nul
+chcp 65001 >nul
+setlocal enabledelayedexpansion
 
-REM 替换可执行文件
-copy /Y "{update_file_path}" "{current_exe_path}"
+echo ========== 开始更新应用程序 ==========
+echo 更新时间: %date% %time% >> "{log_path}"
+echo 源文件: "{update_file_path}" >> "{log_path}"
+echo 目标文件: "{current_exe_path}" >> "{log_path}"
 
-REM 版本信息已通过配置文件更新，无需单独的版本文件
+REM 预检查：验证源文件存在
+if not exist "{update_file_path}" (
+    echo 错误：源文件不存在！ >> "{log_path}"
+    echo 错误：源文件不存在！
+    timeout /t 5 /nobreak >nul
+    exit /b 1
+)
+
+REM 预检查：验证源文件大小
+for %%A in ("{update_file_path}") do set size=%%~zA
+if !size! LEQ 0 (
+    echo 错误：源文件为空！ >> "{log_path}"
+    echo 错误：源文件为空！
+    timeout /t 5 /nobreak >nul
+    exit /b 1
+)
+
+echo 源文件检查通过，大小：!size! 字节 >> "{log_path}"
+
+REM 等待原程序退出（最多等待30秒）
+echo 等待原程序退出...
+set wait_count=0
+:wait_exit
+timeout /t 1 /nobreak >nul
+set /a wait_count+=1
+
+REM 检查目标文件是否可访问（即原程序是否已退出）
+if exist "{current_exe_path}" (
+    REM 尝试重命名文件来测试是否被占用
+    ren "{current_exe_path}" "Sap_Operate_theme_backup.exe" >nul 2>&1
+    if !errorlevel! EQU 0 (
+        ren "Sap_Operate_theme_backup.exe" "{current_exe_path}" >nul 2>&1
+        echo 原程序已退出，文件可访问 >> "{log_path}"
+        goto file_replace
+    )
+
+    if !wait_count! GEQ 30 (
+        echo 警告：等待超时，强制继续更新 >> "{log_path}"
+        echo 警告：等待超时，强制继续更新
+        goto file_replace
+    )
+
+    echo 等待中...(!wait_count!/30秒) >> "{log_path}"
+    goto wait_exit
+) else (
+    echo 目标文件不存在，继续更新 >> "{log_path}"
+    goto file_replace
+)
+
+:file_replace
+echo 开始文件替换操作...
+
+REM 创建备份
+if exist "{current_exe_path}" (
+    echo 创建备份文件 >> "{log_path}"
+    copy "{current_exe_path}" "{current_exe_path}.backup" >nul 2>&1
+)
+
+REM 文件替换操作（带重试机制）
+set retry_count=0
+:max_retry
+echo 尝试复制文件 (第!retry_count!次) >> "{log_path}"
+
+REM 删除目标文件（如果存在）
+if exist "{current_exe_path}" (
+    del "{current_exe_path}" >nul 2>&1
+    if !errorlevel! NEQ 0 (
+        echo 删除目标文件失败，等待重试... >> "{log_path}"
+        timeout /t 2 /nobreak >nul
+        set /a retry_count+=1
+        if !retry_count! LSS 3 goto max_retry
+        echo 错误：删除目标文件失败，重试次数已用尽！ >> "{log_path}"
+        echo 错误：删除目标文件失败！
+        timeout /t 5 /nobreak >nul
+        exit /b 1
+    )
+)
+
+REM 复制新文件
+copy /Y "{update_file_path}" "{current_exe_path}" >nul 2>&1
+if !errorlevel! NEQ 0 (
+    echo 复制文件失败，等待重试... >> "{log_path}"
+    timeout /t 2 /nobreak >nul
+    set /a retry_count+=1
+    if !retry_count! LSS 3 goto max_retry
+    echo 错误：复制文件失败，重试次数已用尽！ >> "{log_path}"
+    echo 错误：复制文件失败！
+    timeout /t 5 /nobreak >nul
+    exit /b 1
+)
+
+echo 文件复制成功 >> "{log_path}"
+
+REM 验证复制结果
+if exist "{current_exe_path}" (
+    for %%A in ("{current_exe_path}") do set new_size=%%~zA
+    if !new_size! EQU !size! (
+        echo 文件验证成功，大小匹配：!new_size! 字节 >> "{log_path}"
+        echo 文件替换成功！
+    ) else (
+        echo 错误：文件大小不匹配！期望：!size!，实际：!new_size! >> "{log_path}"
+        echo 错误：文件大小不匹配！
+        timeout /t 5 /nobreak >nul
+        exit /b 1
+    )
+) else (
+    echo 错误：目标文件不存在！ >> "{log_path}"
+    echo 错误：目标文件不存在！
+    timeout /t 5 /nobreak >nul
+    exit /b 1
+)
+
+REM 等待1秒确保文件完全写入
+timeout /t 1 /nobreak >nul
 
 REM 启动新版本
+echo 启动新版本应用程序... >> "{log_path}"
 start "" "{current_exe_path}"
 
-REM 清理临时文件
-del "{update_file_path}"
-del "%~f0"
-
-echo 更新完成！
+REM 等待启动验证
 timeout /t 3 /nobreak >nul
+
+REM 检查新版本是否启动成功
+tasklist /FI "IMAGENAME eq Sap_Operate_theme.exe" 2>NUL | find /I "Sap_Operate_theme.exe" >NUL
+if !errorlevel! EQU 0 (
+    echo 新版本启动成功 >> "{log_path}"
+    echo 新版本启动成功！
+) else (
+    echo 警告：无法确认新版本启动状态 >> "{log_path}"
+    echo 警告：无法确认新版本启动状态
+)
+
+REM 清理临时文件
+echo 清理临时文件... >> "{log_path}"
+del "{update_file_path}" >nul 2>&1
+del "%~f0" >nul 2>&1
+
+echo ========== 更新完成 ========== >> "{log_path}"
+echo 更新完成！新版本已启动。
+echo 详细日志：{log_path}
+timeout /t 5 /nobreak >nul
+exit /b 0
 '''
 
             # 创建临时脚本文件
-            script_path = os.path.join(tempfile.gettempdir(), "pdf_update_script.bat")
+            script_path = os.path.join(tempfile.gettempdir(), "enhanced_update_script.bat")
             with open(script_path, 'w', encoding='utf-8') as f:
                 f.write(script_content)
+
+            # 清理旧的日志文件
+            if os.path.exists(log_path):
+                try:
+                    os.remove(log_path)
+                except Exception:
+                    pass
+
+            print(f"已创建增强更新脚本: {script_path}")
+            print(f"更新日志将保存到: {log_path}")
 
             # 启动更新脚本
             subprocess.Popen([script_path],
@@ -191,6 +373,7 @@ timeout /t 3 /nobreak >nul
                            encoding='utf-8')
 
             print("已安排延迟更新，应用程序将重启")
+            print("更新过程包含详细日志记录，如遇问题可查看日志文件")
             return True
 
         except Exception as e:
