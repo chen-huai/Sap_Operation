@@ -55,6 +55,13 @@ class AutoUpdater:
         self.update_executor = UpdateExecutor()
         self.parent = parent
 
+        # 初始化UI管理器
+        try:
+            from .ui.update_ui_manager import UpdateUIManager
+            self.ui_manager = UpdateUIManager(parent)
+        except ImportError:
+            self.ui_manager = None
+
     def check_for_updates(self, force_check=False) -> tuple:
         """
         检查更新
@@ -204,6 +211,144 @@ class AutoUpdater:
             return True
         except Exception:
             return False
+
+    # UI集成接口方法
+    def set_parent_window(self, parent):
+        """
+        设置父窗口引用
+
+        Args:
+            parent: 父窗口对象
+        """
+        self.parent = parent
+        if self.ui_manager:
+            self.ui_manager.set_parent(parent)
+
+    def show_update_dialog(self) -> None:
+        """
+        显示更新对话框 - 完整的更新流程
+        这是主程序调用的主要接口
+        """
+        if not self.ui_manager:
+            print("UI管理器未初始化")
+            return
+
+        try:
+            # 检查网络连接
+            self._check_network_connection()
+
+            # 检查更新
+            has_update, remote_version, local_version, error_msg = self.check_for_updates(force_check=True)
+
+            # 显示更新通知
+            user_confirm, error = self.ui_manager.show_update_notification(
+                has_update, remote_version, error_msg
+            )
+
+            # 如果有更新且用户确认，开始下载
+            if has_update and user_confirm:
+                self._handle_download_flow(remote_version)
+
+        except Exception as e:
+            if self.ui_manager:
+                error_msg = str(e).lower()
+                if any(keyword in error_msg for keyword in ["network", "连接", "connection"]):
+                    self.ui_manager.show_error_dialog("网络错误", f"网络连接出现问题:\n{str(e)}", "warning")
+                elif any(keyword in error_msg for keyword in ["timeout", "超时"]):
+                    self.ui_manager.show_error_dialog("连接超时", "服务器响应超时，请稍后重试。", "warning")
+                else:
+                    self.ui_manager.show_error_dialog("更新检查失败", f"检查更新时发生未知错误:\n{str(e)}", "error")
+            else:
+                print(f"更新流程异常: {e}")
+
+    def handle_startup_check(self) -> None:
+        """
+        处理启动时的更新检查
+        非阻塞方式，不影响应用启动
+        """
+        if not self.ui_manager:
+            return
+
+        try:
+            has_update, remote_version, local_version, error_msg = self.check_for_updates()
+
+            if error_msg and "距离上次检查时间过短" not in error_msg:
+                print(f"更新检查失败: {error_msg}")
+            elif has_update:
+                # 延迟显示更新通知，避免干扰应用启动
+                from PyQt5.QtCore import QTimer
+                QTimer.singleShot(2000, lambda: self._delayed_update_notification(remote_version))
+
+        except Exception as e:
+            print(f"启动更新检查异常: {e}")
+
+    def _check_network_connection(self) -> None:
+        """检查网络连接"""
+        import socket
+        try:
+            socket.create_connection(("www.github.com", 80), timeout=5)
+        except (socket.timeout, socket.error, OSError) as e:
+            if self.ui_manager:
+                self.ui_manager.show_error_dialog("网络错误", f"无法连接到更新服务器 ({str(e)})", "warning")
+            raise
+
+    def _delayed_update_notification(self, remote_version: str) -> None:
+        """延迟的更新通知"""
+        if self.ui_manager:
+            user_confirm, _ = self.ui_manager.show_update_notification(True, remote_version)
+            if user_confirm:
+                self._handle_download_flow(remote_version)
+
+    def _handle_download_flow(self, version: str) -> None:
+        """处理下载流程"""
+        try:
+            # 获取文件大小信息
+            release_info = self.github_client.get_release_info(version)
+            file_size = None
+            if release_info and 'assets' in release_info and release_info['assets']:
+                size_bytes = release_info['assets'][0].get('size', 0)
+                if self.ui_manager:
+                    file_size = self.ui_manager.format_file_size(size_bytes)
+
+            # 显示下载确认
+            if not self.ui_manager.show_download_confirm(version, file_size):
+                return
+
+            # 创建进度对话框
+            progress_dialog = self.ui_manager.create_progress_dialog("下载更新")
+
+            # 定义进度回调
+            def progress_callback(downloaded: int, total: int, percentage: float):
+                if self.ui_manager and progress_dialog:
+                    self.ui_manager.update_progress(progress_dialog, downloaded, total, percentage)
+
+            # 开始下载
+            success, download_path, error = self.download_update(version, progress_callback)
+
+            # 关闭进度对话框
+            if self.ui_manager:
+                self.ui_manager.close_progress_dialog(progress_dialog)
+
+            if success and download_path:
+                # 下载成功，询问是否安装
+                if self.ui_manager.show_install_confirm(version):
+                    # 执行更新
+                    update_success, update_error = self.execute_update(download_path, version)
+
+                    if update_success:
+                        self.ui_manager.show_update_complete(version)
+                    else:
+                        self.ui_manager.show_error_dialog("更新失败", update_error, "error")
+            else:
+                # 下载失败
+                if self.ui_manager:
+                    self.ui_manager.show_error_dialog("下载失败", error or "未知错误", "error")
+
+        except Exception as e:
+            if self.ui_manager:
+                self.ui_manager.show_error_dialog("下载流程异常", str(e), "error")
+            else:
+                print(f"下载流程异常: {e}")
 
 # 导出的公共接口
 __all__ = [

@@ -547,20 +547,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def check_for_updates_startup(self):
         """启动时检查更新，不阻塞主线程"""
         try:
-            has_update, remote_version, local_version, error_msg = self.auto_updater.check_for_updates()
-
-            if error_msg and "距离上次检查时间过短" not in error_msg:
-                # 检查时出错，静默处理（跳过正常的时间限制提示）
-                print(f"更新检查失败: {error_msg}")
-            elif has_update:
-                # 有更新可用，通过状态栏提示用户
-                self.update_status_bar_with_update(remote_version)
-                # 可选择性地弹出更新提示
-                from PyQt5.QtCore import QTimer
-                QTimer.singleShot(2000, self.show_update_notification)
+            if hasattr(self, 'auto_updater') and self.auto_updater:
+                self.auto_updater.handle_startup_check()
             else:
-                # 无更新，静默处理
-                pass
+                print("自动更新器未初始化")
 
         except Exception as e:
             print(f"启动更新检查异常: {e}")
@@ -2981,50 +2971,15 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             # 显示检查中状态
             self.status_bar.showMessage("正在检查更新...")
 
-            # 预先检查网络连接
-            import socket
-            try:
-                socket.create_connection(("www.github.com", 80), timeout=self.UIConstants.NETWORK_TIMEOUT)
-            except (socket.timeout, socket.error, OSError) as e:
-                self.status_bar.showMessage("网络连接失败")
-                QMessageBox.warning(
-                    self,
-                    "网络错误",
-                    f"无法连接到更新服务器 ({str(e)})\n\n请检查您的网络连接后重试。",
-                    QMessageBox.Yes
-                )
-                return
-
-            # 调用现有更新检查逻辑
-            self.show_update_notification()
+            # 调用auto_updater的更新对话框
+            if hasattr(self, 'auto_updater') and self.auto_updater:
+                self.auto_updater.show_update_dialog()
+            else:
+                self.status_bar.showMessage("自动更新器未初始化")
 
         except Exception as e:
-            error_msg = str(e)
-            self.status_bar.showMessage("检查更新失败")
-
-            # 根据错误类型显示不同的提示信息
-            error_lower = error_msg.lower()
-            if any(keyword in error_lower for keyword in ["network", "连接", "connection"]):
-                QMessageBox.warning(
-                    self,
-                    "网络错误",
-                    f"网络连接出现问题:\n{error_msg}\n\n请检查网络连接后重试。",
-                    QMessageBox.Yes
-                )
-            elif any(keyword in error_lower for keyword in ["timeout", "超时"]):
-                QMessageBox.warning(
-                    self,
-                    "连接超时",
-                    "服务器响应超时，请稍后重试。\n如果问题持续存在，请检查网络连接。",
-                    QMessageBox.Yes
-                )
-            else:
-                QMessageBox.warning(
-                    self,
-                    "更新检查失败",
-                    f"检查更新时发生未知错误:\n{error_msg}\n\n请稍后重试或联系技术支持。",
-                    QMessageBox.Yes
-                )
+            self.status_bar.showMessage("更新检查失败")
+            QMessageBox.warning(self, "更新错误", f"启动更新流程失败：{str(e)}", QMessageBox.Yes)
 
 
 if __name__ == "__main__":
