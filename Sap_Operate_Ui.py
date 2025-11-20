@@ -626,7 +626,7 @@ class Ui_MainWindow(object):
         self.formLayout.setWidget(5, QtWidgets.QFormLayout.SpanningRole, self.groupBox_21)
         self.toolBox.addItem(self.page_3, "")
         self.page_4 = QtWidgets.QWidget()
-        self.page_4.setGeometry(QtCore.QRect(0, 0, 284, 402))
+        self.page_4.setGeometry(QtCore.QRect(0, 0, 533, 597))
         self.page_4.setObjectName("page_4")
         self.gridLayout = QtWidgets.QGridLayout(self.page_4)
         self.gridLayout.setObjectName("gridLayout")
@@ -1500,7 +1500,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         self.toolBox.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -1749,3 +1749,4 @@ class Ui_MainWindow(object):
         self.actionHelp.setText(_translate("MainWindow", "Help"))
         self.actionImport.setText(_translate("MainWindow", "Import"))
         self.actionUpdate.setText(_translate("MainWindow", "Update"))
+import chicon_rc

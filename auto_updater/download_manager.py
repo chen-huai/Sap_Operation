@@ -14,7 +14,8 @@ from urllib.parse import urlparse
 from .config import (
     DOWNLOAD_TIMEOUT,
     get_executable_dir,
-    APP_NAME
+    APP_NAME,
+    SHOW_VERSION_IN_FILENAME
 )
 
 # 异常类定义
@@ -98,7 +99,8 @@ class DownloadManager:
             os.makedirs(download_dir, exist_ok=True)
 
             # 生成下载文件名
-            file_name = f"{APP_NAME}.v{version}.exe"
+            base_name = APP_NAME.replace('.exe', '')  # 移除可能存在的.exe后缀
+            file_name = f"{base_name}{'.v' + version if SHOW_VERSION_IN_FILENAME else ''}.exe"
             file_path = os.path.join(download_dir, file_name)
 
             # 如果文件已存在，先删除

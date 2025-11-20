@@ -19,6 +19,7 @@ GITHUB_API_BASE: str = "https://api.github.com"
 CURRENT_VERSION: str = "0.1.0"
 UPDATE_CHECK_INTERVAL_DAYS: int = 30
 AUTO_CHECK_ENABLED: bool = True
+SHOW_VERSION_IN_FILENAME: bool = False  # 控制下载文件名是否包含版本号
 
 # 更新配置
 MAX_BACKUP_COUNT: int = 3
