@@ -2971,9 +2971,15 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             # 显示检查中状态
             self.status_bar.showMessage("正在检查更新...")
 
-            # 调用auto_updater的更新对话框
+            # 调用auto_updater的异步更新对话框
             if hasattr(self, 'auto_updater') and self.auto_updater:
-                self.auto_updater.show_update_dialog()
+                # 优先使用异步版本
+                if self.auto_updater.is_async_supported():
+                    print("使用异步下载模式")
+                    self.auto_updater.show_update_dialog_async()
+                else:
+                    print("使用同步下载模式")
+                    self.auto_updater.show_update_dialog()
             else:
                 self.status_bar.showMessage("自动更新器未初始化")
 

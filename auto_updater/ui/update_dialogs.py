@@ -100,28 +100,48 @@ class UpdateDialogs:
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.exec_()
 
-    def show_download_confirm(self, version: str, file_size: str = None) -> bool:
+    def _setup_yes_no_buttons(self, msg_box: QMessageBox) -> None:
+        """
+        设置标准的确认/取消按钮
+
+        Args:
+            msg_box: QMessageBox实例
+        """
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg_box.setDefaultButton(QMessageBox.Yes)
+
+    def show_download_confirm(self, version: str, file_size: str = None, show_loading: bool = False) -> bool:
         """
         显示下载确认对话框
 
         Args:
             version: 版本号
-            file_size: 文件大小
+            file_size: 文件大小或加载信息
+            show_loading: 是否显示加载状态
 
         Returns:
             bool: 用户是否确认下载
         """
         try:
             msg_box = QMessageBox(self.parent)
-            msg_box.setIcon(QMessageBox.Question)
-            msg_box.setWindowTitle("确认下载")
-            msg_box.setText(f"是否下载版本 {version}？")
 
-            if file_size:
-                msg_box.setInformativeText(f"文件大小：{file_size}")
+            if show_loading:
+                msg_box.setIcon(QMessageBox.Information)
+                msg_box.setWindowTitle("下载确认")
+                msg_box.setText(f"准备下载版本 {version}")
+                if file_size:
+                    msg_box.setInformativeText(f"文件大小：{file_size}<br><br>是否继续下载？")
+                else:
+                    msg_box.setInformativeText("是否继续下载？")
+            else:
+                msg_box.setIcon(QMessageBox.Question)
+                msg_box.setWindowTitle("确认下载")
+                msg_box.setText(f"是否下载版本 {version}？")
+                if file_size:
+                    msg_box.setInformativeText(f"文件大小：{file_size}")
 
-            msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            msg_box.setDefaultButton(QMessageBox.Yes)
+            # 统一设置按钮
+            self._setup_yes_no_buttons(msg_box)
 
             return msg_box.exec_() == QMessageBox.Yes
 
@@ -194,10 +214,8 @@ class UpdateDialogs:
             # 设置图标
             if error_type == "warning":
                 msg_box.setIcon(QMessageBox.Warning)
-            elif error_type == "critical":
-                msg_box.setIcon(QMessageBox.Critical)
             else:
-                msg_box.setIcon(QMessageBox.Error)
+                msg_box.setIcon(QMessageBox.Critical)
 
             msg_box.setWindowTitle(title)
             msg_box.setText(message)

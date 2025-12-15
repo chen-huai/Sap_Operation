@@ -8,7 +8,8 @@ import os
 import requests
 import hashlib
 import time
-from typing import Optional, Callable
+import logging
+from typing import Optional, Callable, Tuple
 from urllib.parse import urlparse
 
 from .config import (
@@ -16,6 +17,14 @@ from .config import (
     get_executable_dir,
     APP_NAME,
     SHOW_VERSION_IN_FILENAME
+)
+from .config_constants import (
+    NETWORK_TIMEOUT_SHORT,
+    NETWORK_TIMEOUT_MEDIUM,
+    NETWORK_TIMEOUT_LONG,
+    NETWORK_MAX_RETRIES,
+    NETWORK_RETRY_DELAY,
+    FILE_SIZE_CACHE_TTL
 )
 
 # 异常类定义
@@ -28,10 +37,88 @@ class DownloadManager:
 
     def __init__(self):
         self.session = requests.Session()
-        # 设置用户代理
+        # 设置用户代理和请求头，支持GitHub重定向
         self.session.headers.update({
-            'User-Agent': 'PDF-Rename-Tool-Updater/1.0'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
         })
+        # 文件大小缓存 {url: (size, timestamp)}
+        self._file_size_cache = {}
+
+        # 设置logger
+        self.logger = logging.getLogger(__name__)
+
+    def _retry_request(self, func, *args, **kwargs):
+        """
+        智能重试机制
+        :param func: 要重试的函数
+        :return: 函数结果
+        """
+        last_exception = None
+
+        for attempt in range(NETWORK_MAX_RETRIES):
+            try:
+                return func(*args, **kwargs)
+            except (requests.RequestException, requests.Timeout) as e:
+                last_exception = e
+                if attempt < NETWORK_MAX_RETRIES - 1:
+                    # 指数退避策略
+                    delay = NETWORK_RETRY_DELAY * (2 ** attempt)
+                    self.logger.warning(f"网络请求失败，{delay}秒后重试 (尝试 {attempt + 1}/{NETWORK_MAX_RETRIES}): {str(e)}")
+                    time.sleep(delay)
+                    continue
+
+        raise last_exception
+
+    def get_download_size_cached(self, url: str) -> Optional[int]:
+        """
+        获取下载文件大小（带缓存）
+        :param url: 下载链接
+        :return: 文件大小（字节），获取失败返回None
+        """
+        current_time = time.time()
+
+        # 检查缓存
+        if url in self._file_size_cache:
+            size, timestamp = self._file_size_cache[url]
+            if current_time - timestamp < FILE_SIZE_CACHE_TTL:
+                return size
+
+        # 缓存未命中或已过期，重新获取
+        def _fetch_size():
+            # 使用allow_redirects=True跟随重定向
+            response = self.session.head(url, timeout=NETWORK_TIMEOUT_MEDIUM, allow_redirects=True)
+            response.raise_for_status()
+
+            # 记录调试信息
+            self.logger.info(f"HEAD请求URL: {url}")
+            self.logger.info(f"最终URL: {response.url}")
+            self.logger.info(f"状态码: {response.status_code}")
+
+            # 获取content-length
+            content_length = response.headers.get('content-length')
+            if content_length:
+                size = int(content_length)
+                self.logger.info(f"获取到文件大小: {size} 字节")
+                return size
+            else:
+                self.logger.warning("响应中未找到content-length头")
+                return None
+
+        try:
+            size = self._retry_request(_fetch_size)
+            if size:
+                # 更新缓存
+                self._file_size_cache[url] = (size, current_time)
+            return size
+        except Exception as e:
+            self.logger.error(f"获取文件大小失败: {str(e)}")
+            return None
 
     def _calculate_file_hash(self, file_path: str) -> str:
         """
@@ -233,16 +320,11 @@ class DownloadManager:
 
     def get_download_size(self, url: str) -> Optional[int]:
         """
-        获取下载文件大小
+        获取下载文件大小（使用优化后的缓存方法）
         :param url: 下载链接
         :return: 文件大小（字节），获取失败返回None
         """
-        try:
-            response = self.session.head(url, timeout=30)
-            response.raise_for_status()
-            return int(response.headers.get('content-length', 0))
-        except Exception:
-            return None
+        return self.get_download_size_cached(url)
 
     def test_download_speed(self, url: str) -> float:
         """
@@ -277,3 +359,68 @@ class DownloadManager:
 
         except Exception:
             return 0.0
+
+    def download_file_async(self, url: str, version: str, max_retries: int = 3) -> Tuple[Optional[object], str]:
+        """
+        创建异步下载任务（带重试机制）
+
+        Args:
+            url: 下载链接
+            version: 版本号
+            max_retries: 最大重试次数
+
+        Returns:
+            tuple: (下载线程对象, 文件路径)
+        """
+        try:
+            # 验证URL
+            parsed_url = urlparse(url)
+            if not parsed_url.scheme or not parsed_url.netloc:
+                raise DownloadError("无效的下载链接")
+
+            # 创建下载目录
+            download_dir = os.path.join(get_executable_dir(), "downloads")
+            os.makedirs(download_dir, exist_ok=True)
+
+            # 生成下载文件名
+            base_name = APP_NAME.replace('.exe', '')  # 移除可能存在的.exe后缀
+            file_name = f"{base_name}{'.v' + version if SHOW_VERSION_IN_FILENAME else ''}.exe"
+            file_path = os.path.join(download_dir, file_name)
+
+            # 如果文件已存在，先删除
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
+            # 创建异步下载线程（传递重试参数）
+            try:
+                from .ui.async_download_thread import AsyncDownloadThread
+                download_thread = AsyncDownloadThread(
+                    url,
+                    file_path,
+                    self.session.headers,
+                    max_retries=max_retries
+                )
+                self.logger.info(f"异步下载线程创建成功，最大重试次数: {max_retries}")
+                return download_thread, file_path
+            except ImportError as e:
+                raise DownloadError(f"无法导入异步下载模块: {str(e)}")
+
+        except DownloadError:
+            raise
+        except Exception as e:
+            raise DownloadError(f"创建异步下载任务失败: {str(e)}")
+
+    def verify_downloaded_file(self, file_path: str) -> bool:
+        """
+        验证已下载文件的完整性
+
+        Args:
+            file_path: 文件路径
+
+        Returns:
+            bool: 文件是否完整
+        """
+        try:
+            return self._verify_file_integrity(file_path)
+        except Exception as e:
+            raise DownloadError(f"验证下载文件失败: {str(e)}")

@@ -18,6 +18,20 @@ GITHUB_API_BASE: str = "https://api.github.com"
 # 版本配置
 CURRENT_VERSION: str = "0.1.0"
 UPDATE_CHECK_INTERVAL_DAYS: int = 30
+
+# 错误消息常量
+ERROR_DOWNLOAD_URL_FAILED: str = "获取下载链接失败，请检查网络连接或版本号"
+ERROR_DOWNLOAD_URL_TITLE: str = "获取下载链接失败"
+
+# 网络请求优化配置
+NETWORK_TIMEOUT_SHORT: int = 10    # 短超时：HEAD请求、连接测试
+NETWORK_TIMEOUT_MEDIUM: int = 20   # 中超时：文件大小获取
+NETWORK_TIMEOUT_LONG: int = 60     # 长超时：文件下载
+NETWORK_MAX_RETRIES: int = 3       # 最大重试次数
+NETWORK_RETRY_DELAY: float = 1.0   # 重试基础延迟（秒）
+
+# 文件大小缓存配置
+FILE_SIZE_CACHE_TTL: int = 300     # 缓存有效期（秒）
 AUTO_CHECK_ENABLED: bool = True
 SHOW_VERSION_IN_FILENAME: bool = False  # 控制下载文件名是否包含版本号
 
