@@ -2235,6 +2235,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                     if re.search(r'南德认证检测', each):
                                         if 'Company Name'  not in msg:
                                             msg['Company Name'] = each.split()[0]
+                                            if msg['Company Name'] == '购':
+                                                    msg['Company Name'] = each.split()[1].replace('名称：','')
                                     elif re.search(r'小\s*写\s*）', each):
                                         msg['Revenue'] = each.split('）')[2]
                                     elif '制' in each:
