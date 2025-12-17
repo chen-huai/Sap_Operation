@@ -46,6 +46,9 @@ class UpdateExecutor:
             if os.path.getsize(update_file_path) == 0:
                 raise UpdateExecutionError("更新文件无效")
 
+            # 记录更新开始状态
+            self._create_update_status_file("updating", new_version, update_file_path)
+
             # 获取当前可执行文件路径
             current_exe_path = get_app_executable_path()
 
@@ -57,52 +60,182 @@ class UpdateExecutor:
             return self._update_production_environment(update_file_path, new_version)
 
         except UpdateExecutionError:
+            # 记录更新失败状态
+            self._create_update_status_file("failed", new_version, update_file_path)
             raise
         except Exception as e:
+            # 记录更新失败状态
+            self._create_update_status_file("failed", new_version, update_file_path)
             raise UpdateExecutionError(f"执行更新失败: {str(e)}")
+
+    def _create_update_status_file(self, status: str, version: str, update_file: str) -> None:
+        """
+        创建更新状态文件
+
+        Args:
+            status: 更新状态 (updating/success/failed)
+            version: 版本号
+            update_file: 更新文件路径
+        """
+        try:
+            import json
+            from datetime import datetime
+
+            status_data = {
+                "status": status,
+                "version": version,
+                "update_file": update_file,
+                "timestamp": datetime.now().isoformat(),
+                "current_exe": get_app_executable_path()
+            }
+
+            status_file_path = os.path.join(get_executable_dir(), "update_status.json")
+            with open(status_file_path, 'w', encoding='utf-8') as f:
+                json.dump(status_data, f, indent=2, ensure_ascii=False)
+
+            print(f"创建更新状态文件: {status}")
+
+        except Exception as e:
+            print(f"创建更新状态文件失败: {e}")
+
+    def verify_update_success(self) -> bool:
+        """
+        验证更新是否成功
+
+        Returns:
+            更新是否成功
+        """
+        try:
+            status_file_path = os.path.join(get_executable_dir(), "update_status.json")
+
+            if not os.path.exists(status_file_path):
+                print("未找到更新状态文件")
+                return False
+
+            import json
+            with open(status_file_path, 'r', encoding='utf-8') as f:
+                status_data = json.load(f)
+
+            status = status_data.get("status")
+            version = status_data.get("version")
+            target_version = self.config.CURRENT_VERSION  # 使用配置常量
+
+            print(f"更新状态: {status}, 版本: {version} -> {target_version}")
+
+            # 检查更新状态
+            if status != "success":
+                print(f"更新状态不成功: {status}")
+                return False
+
+            # 检查版本是否匹配
+            if version != target_version:
+                print(f"版本不匹配: 期望 {version}, 实际 {target_version}")
+                return False
+
+            print("更新验证成功")
+            return True
+
+        except Exception as e:
+            print(f"更新验证失败: {e}")
+            return False
+
+    def cleanup_update_status(self) -> None:
+        """清理更新状态文件"""
+        try:
+            status_file_path = os.path.join(get_executable_dir(), "update_status.json")
+            if os.path.exists(status_file_path):
+                os.remove(status_file_path)
+                print("清理更新状态文件")
+        except Exception as e:
+            print(f"清理更新状态文件失败: {e}")
 
     def _update_development_environment(self, update_file_path: str, new_version: str) -> bool:
         """
-        开发环境下的更新（更新版本号并启动新版本）
+        开发环境下的更新（支持实际文件替换和版本更新）
         :param update_file_path: 更新文件路径
         :param new_version: 新版本号
         :return: 是否更新成功
         """
         try:
-            print(f"开发环境更新: 版本 {new_version}")
+            print(f"开发环境更新开始: 版本 {new_version}")
 
-            # 更新版本文件
-            success = self.config.update_current_version(new_version)
-            if not success:
-                raise UpdateExecutionError("更新版本文件失败")
+            # 获取当前应用程序路径
+            current_app_path = get_app_executable_path()
+            print(f"当前应用程序路径: {current_app_path}")
 
-            print(f"版本已更新到: {new_version}")
+            # 如果是Python文件，尝试创建备份
+            if current_app_path.endswith('.py'):
+                print("开发环境：检测到Python应用程序，创建备份...")
+                backup_path = self.backup_manager.create_backup()
+                if backup_path:
+                    print(f"已创建开发环境备份: {os.path.basename(backup_path)}")
 
-            # 在开发环境下，启动新版本程序实例
+            # 强制执行文件替换（处理Python到exe的转换）
             try:
-                import subprocess
-                import sys
-                from .config import get_app_executable_path
+                print(f"开发环境：执行文件替换...")
+                print(f"  更新文件: {update_file_path}")
+                print(f"  当前文件: {current_app_path}")
 
-                current_exe_path = get_app_executable_path()
+                # 确定目标文件路径
+                exec_dir = get_executable_dir()
+                if update_file_path.endswith('.exe'):
+                    # 如果更新文件是exe，目标应该是主程序目录下的exe
+                    target_path = os.path.join(exec_dir, os.path.basename(update_file_path))
+                else:
+                    # 如果更新文件是py，目标是当前的py文件
+                    target_path = current_app_path
 
-                # 启动新版本程序
-                print("正在启动新版本程序...")
-                subprocess.Popen([sys.executable, current_exe_path],
-                               cwd=os.path.dirname(current_exe_path),
-                               creationflags=subprocess.DETACHED_PROCESS)
+                print(f"  目标文件: {target_path}")
 
-                print("新版本程序已启动")
+                # 创建备份
+                if os.path.exists(target_path):
+                    backup_current = target_path + f".backup.{int(time.time())}"
+                    shutil.copy2(target_path, backup_current)
+                    print(f"  已创建备份: {os.path.basename(backup_current)}")
 
-                # 提示用户关闭旧版本
-                print("请手动关闭当前程序窗口以完成更新")
+                # 强制替换文件
+                shutil.copy2(update_file_path, target_path)
+                print("  文件替换成功")
 
+                # 验证替换后的文件
+                if os.path.exists(target_path) and os.path.getsize(target_path) > 0:
+                    print("  文件验证通过")
+                    print(f"  新文件大小: {os.path.getsize(target_path)} bytes")
+                else:
+                    raise UpdateExecutionError("替换后的文件验证失败")
+
+                # 如果成功替换为exe文件，记录这个信息供重启使用
+                if update_file_path.endswith('.exe'):
+                    print(f"  开发环境已更新为exe文件: {target_path}")
+                    # 验证exe文件的可执行性
+                    try:
+                        if os.access(target_path, os.X_OK):
+                            print("  exe文件可执行验证通过")
+                        else:
+                            print("  警告：exe文件可能不可执行")
+                    except:
+                        print("  无法验证exe文件可执行性")
+
+                # 进行完整性验证
+                if self._verify_file_replacement(update_file_path, target_path):
+                    print("  文件替换完整性验证通过")
+                else:
+                    raise UpdateExecutionError("文件替换完整性验证失败")
+
+            except Exception as file_error:
+                print(f"文件替换失败: {file_error}")
+                raise UpdateExecutionError(f"文件替换失败: {str(file_error)}")
+
+            # 更新版本信息
+            print("更新版本配置...")
+            success = self.config.update_current_version(new_version)
+            if success:
+                # 记录更新成功状态
+                self._create_update_status_file("success", new_version, update_file_path)
+                print(f"版本信息已更新到: {new_version}")
                 return True
-
-            except Exception as start_error:
-                print(f"启动新版本失败: {str(start_error)}")
-                # 即使启动失败，版本更新仍然成功
-                return True
+            else:
+                raise UpdateExecutionError("更新版本信息失败")
 
         except Exception as e:
             raise UpdateExecutionError(f"开发环境更新失败: {str(e)}")
@@ -125,15 +258,27 @@ class UpdateExecutor:
             print(f"已创建备份: {backup_path}")
 
             # 尝试替换可执行文件
-            if not self._replace_executable(update_file_path, current_exe_path):
+            replacement_success = self._replace_executable(update_file_path, current_exe_path)
+
+            if replacement_success:
+                # 验证文件替换的完整性
+                if self._verify_file_replacement(update_file_path, current_exe_path):
+                    # 更新版本文件
+                    self.config.update_current_version(new_version)
+
+                    # 记录更新成功状态
+                    self._create_update_status_file("success", new_version, update_file_path)
+
+                    print("文件替换成功，更新完成")
+                    return True
+                else:
+                    print("文件替换验证失败，使用延迟更新")
+                    # 回滚备份并使用延迟更新
+                    self.backup_manager.restore_from_backup()
+                    return self._schedule_delayed_update(update_file_path, current_exe_path, new_version)
+            else:
                 # 如果直接替换失败，使用批处理脚本延迟更新
                 return self._schedule_delayed_update(update_file_path, current_exe_path, new_version)
-
-            # 更新版本文件
-            self.config.update_current_version(new_version)
-
-            print("文件替换成功，更新完成")
-            return True
 
         except Exception as e:
             raise UpdateExecutionError(f"生产环境更新失败: {str(e)}")
@@ -173,198 +318,185 @@ class UpdateExecutor:
             print(f"替换可执行文件失败: {e}")
             return False
 
+    def _verify_file_replacement(self, source_path: str, target_path: str) -> bool:
+        """
+        验证文件替换的完整性
+
+        Args:
+            source_path: 源文件路径（更新文件）
+            target_path: 目标文件路径（程序文件）
+
+        Returns:
+            文件替换是否成功
+        """
+        try:
+            import hashlib
+
+            # 检查文件是否存在
+            if not os.path.exists(target_path):
+                print("目标文件不存在")
+                return False
+
+            if not os.path.exists(source_path):
+                print("源文件不存在")
+                return False
+
+            # 检查文件大小
+            source_size = os.path.getsize(source_path)
+            target_size = os.path.getsize(target_path)
+
+            if source_size != target_size:
+                print(f"文件大小不匹配: 源文件={source_size}, 目标文件={target_size}")
+                return False
+
+            if target_size == 0:
+                print("文件大小为0，替换失败")
+                return False
+
+            # 检查文件哈希（对于小文件，否则只检查大小）
+            if source_size < 50 * 1024 * 1024:  # 50MB以下的文件检查哈希
+                try:
+                    source_hash = self._calculate_file_hash(source_path)
+                    target_hash = self._calculate_file_hash(target_path)
+
+                    if source_hash != target_hash:
+                        print("文件哈希不匹配")
+                        return False
+
+                    print("文件哈希验证通过")
+                except Exception as e:
+                    print(f"哈希验证失败，但大小匹配: {e}")
+
+            print(f"文件替换验证通过: {target_size} bytes")
+            return True
+
+        except Exception as e:
+            print(f"文件替换验证失败: {e}")
+            return False
+
+    def _force_copy_executable(self, source_path: str, target_dir: str) -> str:
+        """
+        强制复制可执行文件到目标目录
+
+        Args:
+            source_path: 源文件路径
+            target_dir: 目标目录
+
+        Returns:
+            复制后的文件路径
+        """
+        try:
+            if not os.path.exists(source_path):
+                raise UpdateExecutionError(f"源文件不存在: {source_path}")
+
+            # 确保目标目录存在
+            os.makedirs(target_dir, exist_ok=True)
+
+            # 获取源文件名
+            source_filename = os.path.basename(source_path)
+            target_path = os.path.join(target_dir, source_filename)
+
+            # 如果目标文件已存在，删除它（强制覆盖）
+            if os.path.exists(target_path):
+                try:
+                    os.remove(target_path)
+                    print(f"删除旧文件: {target_path}")
+                except PermissionError:
+                    print(f"无法删除旧文件，可能被占用: {target_path}")
+
+            # 复制新文件
+            shutil.copy2(source_path, target_path)
+
+            # 验证复制结果
+            if os.path.exists(target_path) and os.path.getsize(target_path) > 0:
+                print(f"文件复制成功: {target_path} ({os.path.getsize(target_path)} bytes)")
+                return target_path
+            else:
+                raise UpdateExecutionError(f"文件复制验证失败: {target_path}")
+
+        except Exception as e:
+            raise UpdateExecutionError(f"强制复制文件失败: {str(e)}")
+
+    def _calculate_file_hash(self, file_path: str) -> str:
+        """
+        计算文件的MD5哈希值
+
+        Args:
+            file_path: 文件路径
+
+        Returns:
+            MD5哈希值
+        """
+        hash_md5 = hashlib.md5()
+        try:
+            with open(file_path, "rb") as f:
+                # 分块读取以处理大文件
+                for chunk in iter(lambda: f.read(4096), b""):
+                    hash_md5.update(chunk)
+            return hash_md5.hexdigest()
+        except Exception:
+            raise UpdateExecutionError(f"计算文件哈希失败: {file_path}")
+
     def _schedule_delayed_update(self, update_file_path: str, current_exe_path: str, new_version: str) -> bool:
         """
-        安排延迟更新（使用增强的批处理脚本）
+        安排延迟更新（使用批处理脚本）
         :param update_file_path: 更新文件路径
         :param current_exe_path: 当前可执行文件路径
         :param new_version: 新版本号
         :return: 是否成功安排延迟更新
         """
         try:
-            # 预检查：验证文件和路径
-            if not os.path.exists(update_file_path):
-                raise UpdateExecutionError(f"更新文件不存在: {update_file_path}")
-
-            if os.path.getsize(update_file_path) == 0:
-                raise UpdateExecutionError(f"更新文件为空: {update_file_path}")
-
-            # 检查目标目录是否可写
-            target_dir = os.path.dirname(current_exe_path)
-            if not os.access(target_dir, os.W_OK):
-                raise UpdateExecutionError(f"目标目录无写入权限: {target_dir}")
-
-            # 创建日志文件路径
-            log_path = os.path.join(tempfile.gettempdir(), "update_log.txt")
-
-            # 创建增强的更新脚本
+            # 创建更新脚本（增强错误处理和路径验证）
             script_content = f'''@echo off
 chcp 65001 >nul
-setlocal enabledelayedexpansion
+echo 正在更新应用程序...
+echo 更新文件: {update_file_path}
+echo 目标路径: {current_exe_path}
+echo.
 
-echo ========== 开始更新应用程序 ==========
-echo 更新时间: %date% %time% >> "{log_path}"
-echo 源文件: "{update_file_path}" >> "{log_path}"
-echo 目标文件: "{current_exe_path}" >> "{log_path}"
-
-REM 预检查：验证源文件存在
-if not exist "{update_file_path}" (
-    echo 错误：源文件不存在！ >> "{log_path}"
-    echo 错误：源文件不存在！
-    timeout /t 5 /nobreak >nul
-    exit /b 1
-)
-
-REM 预检查：验证源文件大小
-for %%A in ("{update_file_path}") do set size=%%~zA
-if !size! LEQ 0 (
-    echo 错误：源文件为空！ >> "{log_path}"
-    echo 错误：源文件为空！
-    timeout /t 5 /nobreak >nul
-    exit /b 1
-)
-
-echo 源文件检查通过，大小：!size! 字节 >> "{log_path}"
-
-REM 等待原程序退出（最多等待30秒）
-echo 等待原程序退出...
-set wait_count=0
-:wait_exit
-timeout /t 1 /nobreak >nul
-set /a wait_count+=1
-
-REM 检查目标文件是否可访问（即原程序是否已退出）
-if exist "{current_exe_path}" (
-    REM 尝试重命名文件来测试是否被占用
-    ren "{current_exe_path}" "Sap_Operate_theme_backup.exe" >nul 2>&1
-    if !errorlevel! EQU 0 (
-        ren "Sap_Operate_theme_backup.exe" "{current_exe_path}" >nul 2>&1
-        echo 原程序已退出，文件可访问 >> "{log_path}"
-        goto file_replace
-    )
-
-    if !wait_count! GEQ 30 (
-        echo 警告：等待超时，强制继续更新 >> "{log_path}"
-        echo 警告：等待超时，强制继续更新
-        goto file_replace
-    )
-
-    echo 等待中...(!wait_count!/30秒) >> "{log_path}"
-    goto wait_exit
-) else (
-    echo 目标文件不存在，继续更新 >> "{log_path}"
-    goto file_replace
-)
-
-:file_replace
-echo 开始文件替换操作...
-
-REM 创建备份
-if exist "{current_exe_path}" (
-    echo 创建备份文件 >> "{log_path}"
-    copy "{current_exe_path}" "{current_exe_path}.backup" >nul 2>&1
-)
-
-REM 文件替换操作（带重试机制）
-set retry_count=0
-:max_retry
-echo 尝试复制文件 (第!retry_count!次) >> "{log_path}"
-
-REM 删除目标文件（如果存在）
-if exist "{current_exe_path}" (
-    del "{current_exe_path}" >nul 2>&1
-    if !errorlevel! NEQ 0 (
-        echo 删除目标文件失败，等待重试... >> "{log_path}"
-        timeout /t 2 /nobreak >nul
-        set /a retry_count+=1
-        if !retry_count! LSS 3 goto max_retry
-        echo 错误：删除目标文件失败，重试次数已用尽！ >> "{log_path}"
-        echo 错误：删除目标文件失败！
-        timeout /t 5 /nobreak >nul
-        exit /b 1
-    )
-)
-
-REM 复制新文件
-copy /Y "{update_file_path}" "{current_exe_path}" >nul 2>&1
-if !errorlevel! NEQ 0 (
-    echo 复制文件失败，等待重试... >> "{log_path}"
-    timeout /t 2 /nobreak >nul
-    set /a retry_count+=1
-    if !retry_count! LSS 3 goto max_retry
-    echo 错误：复制文件失败，重试次数已用尽！ >> "{log_path}"
-    echo 错误：复制文件失败！
-    timeout /t 5 /nobreak >nul
-    exit /b 1
-)
-
-echo 文件复制成功 >> "{log_path}"
-
-REM 验证复制结果
-if exist "{current_exe_path}" (
-    for %%A in ("{current_exe_path}") do set new_size=%%~zA
-    if !new_size! EQU !size! (
-        echo 文件验证成功，大小匹配：!new_size! 字节 >> "{log_path}"
-        echo 文件替换成功！
-    ) else (
-        echo 错误：文件大小不匹配！期望：!size!，实际：!new_size! >> "{log_path}"
-        echo 错误：文件大小不匹配！
-        timeout /t 5 /nobreak >nul
-        exit /b 1
-    )
-) else (
-    echo 错误：目标文件不存在！ >> "{log_path}"
-    echo 错误：目标文件不存在！
-    timeout /t 5 /nobreak >nul
-    exit /b 1
-)
-
-REM 等待1秒确保文件完全写入
-timeout /t 1 /nobreak >nul
-
-REM 启动新版本
-echo 启动新版本应用程序... >> "{log_path}"
-start "" "{current_exe_path}"
-
-REM 等待启动验证
+REM 等待主程序退出
 timeout /t 3 /nobreak >nul
 
-REM 检查新版本是否启动成功
-tasklist /FI "IMAGENAME eq Sap_Operate_theme.exe" 2>NUL | find /I "Sap_Operate_theme.exe" >NUL
-if !errorlevel! EQU 0 (
-    echo 新版本启动成功 >> "{log_path}"
-    echo 新版本启动成功！
-) else (
-    echo 警告：无法确认新版本启动状态 >> "{log_path}"
-    echo 警告：无法确认新版本启动状态
+REM 替换可执行文件（带错误检查）
+echo 正在替换文件...
+copy /Y "{update_file_path}" "{current_exe_path}"
+if %ERRORLEVEL% NEQ 0 (
+    echo 文件替换失败！
+    echo 更新文件: {update_file_path}
+    echo 目标文件: {current_exe_path}
+    pause
+    exit /b 1
 )
 
-REM 清理临时文件
-echo 清理临时文件... >> "{log_path}"
-del "{update_file_path}" >nul 2>&1
-del "%~f0" >nul 2>&1
+REM 验证文件是否存在
+if not exist "{current_exe_path}" (
+    echo 文件替换后不存在！
+    pause
+    exit /b 1
+)
 
-echo ========== 更新完成 ========== >> "{log_path}"
-echo 更新完成！新版本已启动。
-echo 详细日志：{log_path}
-timeout /t 5 /nobreak >nul
-exit /b 0
+echo 文件替换成功！
+
+REM 版本信息已通过配置文件更新，无需单独的版本文件
+
+REM 启动新版本（使用完整路径）
+echo 正在启动新版本...
+cd /d "{os.path.dirname(current_exe_path)}"
+start "" "{current_exe_path}"
+
+REM 清理临时文件
+echo 清理临时文件...
+del "{update_file_path}" 2>nul
+del "%~f0" 2>nul
+
+echo 更新完成！
+timeout /t 2 /nobreak >nul
 '''
 
             # 创建临时脚本文件
-            script_path = os.path.join(tempfile.gettempdir(), "enhanced_update_script.bat")
+            script_path = os.path.join(tempfile.gettempdir(), "pdf_update_script.bat")
             with open(script_path, 'w', encoding='utf-8') as f:
                 f.write(script_content)
-
-            # 清理旧的日志文件
-            if os.path.exists(log_path):
-                try:
-                    os.remove(log_path)
-                except Exception:
-                    pass
-
-            print(f"已创建增强更新脚本: {script_path}")
-            print(f"更新日志将保存到: {log_path}")
 
             # 启动更新脚本
             subprocess.Popen([script_path],
@@ -373,7 +505,6 @@ exit /b 0
                            encoding='utf-8')
 
             print("已安排延迟更新，应用程序将重启")
-            print("更新过程包含详细日志记录，如遇问题可查看日志文件")
             return True
 
         except Exception as e:

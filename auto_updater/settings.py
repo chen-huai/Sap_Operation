@@ -14,7 +14,7 @@ from dataclasses import dataclass, asdict
 @dataclass
 class UpdateSettings:
     """更新设置数据类"""
-    github_repo: str = "chen-huai/Sap_Operation"
+    github_repo: str = "chen-huai/Temu_PDF_Rename_APP"
     github_api_base: str = "https://api.github.com"
     update_check_interval_days: int = 30
     auto_check_enabled: bool = True

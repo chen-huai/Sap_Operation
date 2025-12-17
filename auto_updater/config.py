@@ -14,33 +14,15 @@ from datetime import datetime, timedelta
 from typing import Optional
 from packaging import version
 
-# 导入配置常量 - 修复相对导入问题
-try:
-    from .config_constants import (
-        APP_NAME, APP_EXECUTABLE, APP_EXECUTABLE_DEV, APP_EXECUTABLE_PROD,
-        GITHUB_OWNER, GITHUB_REPO, GITHUB_API_BASE,
-        CURRENT_VERSION, UPDATE_CHECK_INTERVAL_DAYS, AUTO_CHECK_ENABLED,
-        SHOW_VERSION_IN_FILENAME,
-        MAX_BACKUP_COUNT, DOWNLOAD_TIMEOUT, MAX_RETRIES, AUTO_RESTART,
-        REQUEST_HEADERS, DEFAULT_CONFIG, GITHUB_REPO_PATH,
-        GITHUB_RELEASES_URL, GITHUB_LATEST_RELEASE_URL
-    )
-except ImportError:
-    # 降级到绝对导入（用于测试）
-    import sys
-    import os
-    parent_dir = os.path.dirname(os.path.abspath(__file__))
-    sys.path.insert(0, parent_dir)
-
-    from config_constants import (
-        APP_NAME, APP_EXECUTABLE, APP_EXECUTABLE_DEV, APP_EXECUTABLE_PROD,
-        GITHUB_OWNER, GITHUB_REPO, GITHUB_API_BASE,
-        CURRENT_VERSION, UPDATE_CHECK_INTERVAL_DAYS, AUTO_CHECK_ENABLED,
-        SHOW_VERSION_IN_FILENAME,
-        MAX_BACKUP_COUNT, DOWNLOAD_TIMEOUT, MAX_RETRIES, AUTO_RESTART,
-        REQUEST_HEADERS, DEFAULT_CONFIG, GITHUB_REPO_PATH,
-        GITHUB_RELEASES_URL, GITHUB_LATEST_RELEASE_URL
-    )
+# 导入配置常量
+from .config_constants import (
+    APP_NAME, APP_EXECUTABLE, GITHUB_OWNER, GITHUB_REPO, GITHUB_API_BASE,
+    CURRENT_VERSION, UPDATE_CHECK_INTERVAL_DAYS, AUTO_CHECK_ENABLED,
+    MAX_BACKUP_COUNT, DOWNLOAD_TIMEOUT, MAX_RETRIES, AUTO_RESTART,
+    REQUEST_HEADERS, DEFAULT_CONFIG, GITHUB_REPO_PATH,
+    GITHUB_RELEASES_URL, GITHUB_LATEST_RELEASE_URL,
+    CHECK_TIMEOUT, CONNECTION_TIMEOUT, RETRY_DELAY
+)
 
 # 配置文件名（保持兼容性）
 UPDATE_STATE_FILE = "update_state.json"
@@ -148,7 +130,7 @@ class Config:
             else:
                 exec_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-            config_path = os.path.join(exec_dir, UPDATER_CONFIG_FILE)
+            config_path = os.path.join(exec_dir, DEFAULT_UPDATE_CONFIG_FILE)
             with open(config_path, 'w', encoding='utf-8') as f:
                 json.dump(self._config, f, indent=2, ensure_ascii=False)
             return True
@@ -219,13 +201,18 @@ class Config:
     def should_check_for_updates(self) -> bool:
         """
         检查是否应该进行更新检查（基于时间间隔）
+        开发环境下不限制检查频率，生产环境使用时间间隔
         :return: 是否应该检查更新
         """
+        # 开发环境下允许随时检查更新
+        if is_development_environment():
+            return True
+
+        # 生产环境使用时间间隔限制
         last_check = self.get_last_check_time()
         if last_check is None:
             return True
 
-        # 检查距离上次检查是否超过配置的间隔天数
         time_since_last_check = datetime.now() - last_check
         return time_since_last_check.days >= self.update_check_interval_days
 
@@ -306,9 +293,8 @@ UPDATE_CHECK_INTERVAL_DAYS = UPDATE_CHECK_INTERVAL_DAYS
 MAX_BACKUP_COUNT = MAX_BACKUP_COUNT
 DOWNLOAD_TIMEOUT = DOWNLOAD_TIMEOUT
 
-# 文件配置 - 使用统一的应用可执行文件名
-# 由于APP_EXECUTABLE_PROD和APP_EXECUTABLE_DEV的基础名都是Sap_Operate_theme，直接使用
-APP_NAME = "Sap_Operate_theme.exe"
+# 文件配置 - 直接使用配置常量
+APP_NAME = APP_EXECUTABLE
 UPDATE_CONFIG_FILE = DEFAULT_UPDATE_CONFIG_FILE  # 保持向后兼容
 BACKUP_DIR = "backup"  # 保持向后兼容
 
@@ -318,39 +304,38 @@ REQUEST_HEADERS = REQUEST_HEADERS
 # 版本配置 - 直接使用配置常量
 CURRENT_VERSION = CURRENT_VERSION
 
+def is_development_environment() -> bool:
+    """
+    检测是否为开发环境
+    :return: 是否为开发环境
+    """
+    return not getattr(sys, 'frozen', False)
+
+def is_production_environment() -> bool:
+    """
+    检测是否为生产环境
+    :return: 是否为生产环境
+    """
+    return getattr(sys, 'frozen', False)
+
+def get_environment_name() -> str:
+    """
+    获取当前环境名称
+    :return: 环境名称
+    """
+    return "development" if is_development_environment() else "production"
+
 def get_executable_dir():
     """
     获取可执行文件所在目录
-    修复开发环境路径问题：返回项目根目录而非auto_updater目录
+    自动适应开发和生产环境
     """
-    if getattr(sys, 'frozen', False):
-        # 生产环境：返回exe所在目录
+    if is_production_environment():
+        # 生产环境：返回可执行文件所在目录
         return os.path.dirname(sys.executable)
     else:
         # 开发环境：返回项目根目录（auto_updater的上级目录）
         return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
-def get_running_environment():
-    """
-    检测当前运行环境
-    :return: 'development', 'production', 或 'unknown'
-    """
-    if getattr(sys, 'frozen', False):
-        # 打包后的exe环境
-        return 'production'
-    else:
-        # Python源码环境，进一步检测是否为开发环境
-        project_root = get_executable_dir()
-        dev_file = os.path.join(project_root, APP_EXECUTABLE_DEV)
-        prod_file = os.path.join(project_root, APP_EXECUTABLE_PROD)
-
-        if os.path.exists(dev_file):
-            return 'development'
-        elif os.path.exists(prod_file):
-            return 'production'
-        else:
-            return 'unknown'
 
 
 def get_update_config_path():
@@ -370,17 +355,24 @@ def get_backup_dir():
 def get_app_executable_path():
     """
     获取应用程序可执行文件路径
-    支持开发环境和生产环境的自动适配
+    自动适应开发和生产环境，确保返回的文件路径存在
     """
     exec_dir = get_executable_dir()
-    env = get_running_environment()
 
-    if env == 'development':
-        # 开发环境：返回Python主文件路径
-        return os.path.join(exec_dir, APP_EXECUTABLE_DEV)
-    elif env == 'production':
-        # 生产环境：返回exe文件路径
-        return os.path.join(exec_dir, APP_EXECUTABLE_PROD)
+    if is_production_environment():
+        # 生产环境：返回可执行文件路径
+        return os.path.join(exec_dir, APP_NAME)
     else:
-        # 未知环境：尝试使用默认配置
-        return os.path.join(exec_dir, APP_EXECUTABLE)
+        # 开发环境：查找主Python文件
+        # 首先尝试主应用程序文件
+        main_app_path = os.path.join(os.path.dirname(exec_dir), "PDF_Rename_Operation.py")
+        if os.path.exists(main_app_path):
+            return main_app_path
+
+        # 如果主文件不存在，尝试当前目录下的Python文件
+        current_dir_app = os.path.join(exec_dir, "PDF_Rename_Operation.py")
+        if os.path.exists(current_dir_app):
+            return current_dir_app
+
+        # 最后回退到可执行文件名（用于开发环境测试）
+        return os.path.join(exec_dir, APP_NAME)

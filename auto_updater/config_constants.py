@@ -5,47 +5,68 @@
 """
 
 # 应用配置
-APP_NAME: str = "SAP操作工具"
-APP_EXECUTABLE: str = "Sap_Operate_theme.exe"
-APP_EXECUTABLE_DEV: str = "Sap_Operate_theme.py"  # 开发环境可执行文件
-APP_EXECUTABLE_PROD: str = "Sap_Operate_theme.exe"     # 生产环境可执行文件
+APP_NAME: str = "PDF重命名工具"
+APP_EXECUTABLE: str = "PDF_Rename_Operation.exe"
 
 # GitHub仓库配置
 GITHUB_OWNER: str = "chen-huai"
-GITHUB_REPO: str = "Sap_Operation"
+GITHUB_REPO: str = "Temu_PDF_Rename_APP"
 GITHUB_API_BASE: str = "https://api.github.com"
 
 # 版本配置
-CURRENT_VERSION: str = "0.1.0"
+CURRENT_VERSION: str = "4.0.3"
 UPDATE_CHECK_INTERVAL_DAYS: int = 30
-
-# 错误消息常量
-ERROR_DOWNLOAD_URL_FAILED: str = "获取下载链接失败，请检查网络连接或版本号"
-ERROR_DOWNLOAD_URL_TITLE: str = "获取下载链接失败"
-
-# 网络请求优化配置
-NETWORK_TIMEOUT_SHORT: int = 10    # 短超时：HEAD请求、连接测试
-NETWORK_TIMEOUT_MEDIUM: int = 20   # 中超时：文件大小获取
-NETWORK_TIMEOUT_LONG: int = 60     # 长超时：文件下载
-NETWORK_MAX_RETRIES: int = 3       # 最大重试次数
-NETWORK_RETRY_DELAY: float = 1.0   # 重试基础延迟（秒）
-
-# 文件大小缓存配置
-FILE_SIZE_CACHE_TTL: int = 300     # 缓存有效期（秒）
-AUTO_CHECK_ENABLED: bool = True
-SHOW_VERSION_IN_FILENAME: bool = False  # 控制下载文件名是否包含版本号
+AUTO_CHECK_ENABLED: bool = True  # 临时禁用自动更新，避免下载有问题的旧版本
 
 # 更新配置
 MAX_BACKUP_COUNT: int = 3
-DOWNLOAD_TIMEOUT: int = 300
+DOWNLOAD_TIMEOUT: int = 600  # 下载文件超时（10分钟）
 MAX_RETRIES: int = 3
 AUTO_RESTART: bool = True
 
-# 网络配置
-REQUEST_HEADERS: dict = {
-    "Accept": "application/vnd.github.v3+json",
-    "User-Agent": "Sap_Operation/1.0"
-}
+# 网络配置类
+class NetworkConfig:
+    """统一的网络配置管理"""
+
+    # 超时配置
+    TIMEOUTS = {
+        'check': 15,        # 检查更新超时（秒）
+        'download': 600,    # 下载文件超时（10分钟）
+        'connection': 10,   # 连接超时（秒）
+        'dns': 5           # DNS解析超时（秒）
+    }
+
+    # 重试配置
+    RETRY = {
+        'max_retries': 3,       # 最大重试次数
+        'base_delay': 2,        # 基础延迟时间（秒）
+        'max_delay': 30,        # 最大延迟时间（秒）
+        'api_retry_delay': 60   # API频率限制延迟（秒）
+    }
+
+    # 请求头配置
+    HEADERS = {
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "PDF-Rename-Tool-Updater/2.0.0",
+        "Connection": "keep-alive",
+        "Accept-Encoding": "gzip, deflate"
+    }
+
+    # 连接池配置
+    CONNECTION_POOL = {
+        'pool_connections': 10,  # 连接池大小
+        'pool_maxsize': 20,      # 每个连接池的最大连接数
+        'max_retries': 2,        # urllib3重试次数
+        'backoff_factor': 2      # 重试间隔因子
+    }
+
+# 保持向后兼容的常量
+CHECK_TIMEOUT: int = NetworkConfig.TIMEOUTS['check']
+CONNECTION_TIMEOUT: int = NetworkConfig.TIMEOUTS['connection']
+RETRY_DELAY: int = NetworkConfig.RETRY['base_delay']
+DOWNLOAD_TIMEOUT: int = NetworkConfig.TIMEOUTS['download']
+REQUEST_HEADERS: dict = NetworkConfig.HEADERS
+MAX_RETRIES: int = NetworkConfig.RETRY['max_retries']
 
 # 便利常量（兼容现有API）
 GITHUB_REPO_PATH: str = f"{GITHUB_OWNER}/{GITHUB_REPO}"

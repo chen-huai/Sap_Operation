@@ -1,0 +1,16 @@
+/build
+/dist
+/.idea
+/.vscode
+/.git
+/.claude
+/.env
+/backup
+/billing data
+/test
+*.spec
+*.json
+
+
+
+

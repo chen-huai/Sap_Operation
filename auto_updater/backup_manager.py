@@ -32,22 +32,28 @@ class BackupManager:
     def create_backup(self, backup_name: Optional[str] = None) -> Optional[str]:
         """
         创建应用程序备份
+        自动适应开发和生产环境
         :param backup_name: 备份名称（可选）
         :return: 备份文件路径，失败返回None
         """
         try:
-            # 检查源文件是否存在
+            # 获取源文件路径
             app_path = get_app_executable_path()
             if not os.path.exists(app_path):
                 raise BackupError(f"源文件不存在: {app_path}")
 
+            # 确定环境类型和备份文件扩展名
+            is_development = not app_path.endswith('.exe')
+            backup_ext = '.py' if is_development else '.exe'
+
             # 生成备份名称
             if not backup_name:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                backup_name = f"backup_{timestamp}"
+                env_prefix = "dev" if is_development else "prod"
+                backup_name = f"backup_{env_prefix}_{timestamp}"
 
             # 创建备份文件路径
-            backup_file = os.path.join(self.backup_dir, f"{backup_name}.exe")
+            backup_file = os.path.join(self.backup_dir, f"{backup_name}{backup_ext}")
 
             # 如果备份文件已存在，删除它
             if os.path.exists(backup_file):
@@ -62,9 +68,14 @@ class BackupManager:
                     os.remove(backup_file)
                 raise BackupError("备份文件创建失败")
 
+            # 开发环境下额外备份相关配置文件
+            if is_development:
+                self._backup_development_files(backup_name)
+
             # 清理旧备份
             self._cleanup_old_backups()
 
+            print(f"已创建{'开发环境' if is_development else '生产环境'}备份: {os.path.basename(backup_file)}")
             return backup_file
 
         except BackupError:
@@ -253,6 +264,34 @@ class BackupManager:
 
         except Exception:
             return []
+
+    def _backup_development_files(self, backup_name: str) -> None:
+        """
+        开发环境下额外备份相关文件
+        :param backup_name: 备份名称基础
+        """
+        try:
+            app_dir = os.path.dirname(get_app_executable_path())
+            dev_files_to_backup = [
+                'pdf_processor.py',
+                'PDF_Rename_Operation.py',
+                'PDF_Rename_UI.py',
+                '打包工具.py',
+                'PDF签名工具.py',
+                'version_manager.py',
+                'requirements.txt'
+            ]
+
+            for file_name in dev_files_to_backup:
+                file_path = os.path.join(app_dir, file_name)
+                if os.path.exists(file_path):
+                    backup_file_path = os.path.join(self.backup_dir, f"{backup_name}_{file_name}")
+                    if not os.path.exists(backup_file_path):
+                        shutil.copy2(file_path, backup_file_path)
+                        print(f"已备份开发文件: {file_name}")
+
+        except Exception as e:
+            print(f"备份开发文件时出现警告: {e}")
 
     def _cleanup_old_backups(self) -> bool:
         """
