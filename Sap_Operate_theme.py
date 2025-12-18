@@ -26,7 +26,8 @@ from Excel_Field_Mapper import excel_field_mapper
 from theme_manager_theme import ThemeManager
 from Revenue_Operate import *
 from auto_updater.config_constants import CURRENT_VERSION
-from auto_updater import AutoUpdater
+from auto_updater import AutoUpdater, UI_AVAILABLE
+import logging
 
 # 延迟导入qt_material以避免警告
 # qt_material 将在需要时由 ThemeManager 导入
@@ -89,7 +90,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.actionExit.triggered.connect(MyMainWindow.close)
         self.actionHelp.triggered.connect(self.showVersion)
         self.actionAuthor.triggered.connect(self.showAuthorMessage)
-        self.theme_manager.set_theme("blue")  # 设置默认主题
+        self.theme_manager.set_theme("default")  # 设置默认主题
+
+        # 设置自动更新功能
+        self.setup_auto_update()
         self.pushButton_11.clicked.connect(self.sapOperate)
         self.pushButton_12.clicked.connect(self.textBrowser.clear)
         self.pushButton_20.clicked.connect(self.textBrowser_2.clear)
@@ -176,6 +180,44 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def toggle_theme(self):
         self.theme_manager.set_random_theme()
         # 可以在这里添加其他需要在主题切换后更新的UI元素
+
+    def setup_auto_update(self):
+        """设置自动更新功能 - 标准集成方案"""
+        logger = logging.getLogger(__name__)
+        try:
+            logger.info("开始初始化自动更新功能...")
+
+            if UI_AVAILABLE:
+                # 初始化更新器
+                self.auto_updater = AutoUpdater(self)
+                logger.info("AutoUpdater实例创建成功")
+
+                # 设置更新UI - 集成到帮助菜单
+                success = self.auto_updater.setup_update_ui(
+                    self.menuBar(), "帮助(&H)"
+                )
+
+                if success:
+                    logger.info("自动更新功能集成成功")
+
+                    # 可选配置
+                    # self.auto_updater.enable_auto_check = True
+                    # self.auto_updater.check_interval = 24 * 3600
+
+                else:
+                    logger.warning("自动更新功能集成失败")
+                    self.auto_updater = None
+            else:
+                logger.warning("UI模块不可用，跳过自动更新功能")
+                self.auto_updater = None
+
+        except ImportError as e:
+            logger.error(f"导入自动更新模块失败: {e}")
+            self.auto_updater = None
+
+        except Exception as e:
+            logger.error(f"自动更新器初始化失败: {e}")
+            self.auto_updater = None
 
     def getConfig(self):
         # 初始化，获取或生成配置文件
@@ -548,7 +590,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         """启动时检查更新，不阻塞主线程"""
         try:
             if hasattr(self, 'auto_updater') and self.auto_updater:
-                self.auto_updater.handle_startup_check()
+                # 使用正确的API进行启动时更新检查
+                self.auto_updater.check_for_updates_with_ui(force_check=False)
             else:
                 print("自动更新器未初始化")
 
@@ -2988,6 +3031,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         except Exception as e:
             self.status_bar.showMessage("更新检查失败")
             QMessageBox.warning(self, "更新错误", f"启动更新流程失败：{str(e)}", QMessageBox.Yes)
+
+    def closeEvent(self, event):
+        """应用退出时清理资源"""
+        logger = logging.getLogger(__name__)
+        try:
+            # 清理自动更新器资源
+            if hasattr(self, 'auto_updater') and self.auto_updater:
+                self.auto_updater.cleanup()
+                logger.info("自动更新器资源已清理")
+
+            logger.info("应用程序退出")
+            event.accept()
+
+        except Exception as e:
+            logger.error(f"清理资源时出错: {e}")
+            event.accept()  # 确保应用能够正常退出
 
 
 if __name__ == "__main__":

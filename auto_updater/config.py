@@ -294,7 +294,6 @@ MAX_BACKUP_COUNT = MAX_BACKUP_COUNT
 DOWNLOAD_TIMEOUT = DOWNLOAD_TIMEOUT
 
 # 文件配置 - 直接使用配置常量
-APP_NAME = APP_EXECUTABLE
 UPDATE_CONFIG_FILE = DEFAULT_UPDATE_CONFIG_FILE  # 保持向后兼容
 BACKUP_DIR = "backup"  # 保持向后兼容
 
@@ -361,18 +360,18 @@ def get_app_executable_path():
 
     if is_production_environment():
         # 生产环境：返回可执行文件路径
-        return os.path.join(exec_dir, APP_NAME)
+        return os.path.join(exec_dir, APP_EXECUTABLE)
     else:
         # 开发环境：查找主Python文件
         # 首先尝试主应用程序文件
-        main_app_path = os.path.join(os.path.dirname(exec_dir), "PDF_Rename_Operation.py")
+        main_app_path = os.path.join(os.path.dirname(exec_dir), f"{APP_NAME}.py")
         if os.path.exists(main_app_path):
             return main_app_path
 
         # 如果主文件不存在，尝试当前目录下的Python文件
-        current_dir_app = os.path.join(exec_dir, "PDF_Rename_Operation.py")
+        current_dir_app = os.path.join(exec_dir, f"{APP_NAME}.py")
         if os.path.exists(current_dir_app):
             return current_dir_app
 
         # 最后回退到可执行文件名（用于开发环境测试）
-        return os.path.join(exec_dir, APP_NAME)
+        return os.path.join(exec_dir, APP_EXECUTABLE)
