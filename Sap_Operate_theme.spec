@@ -114,29 +114,64 @@ try:
 except Exception as e:
     print(f"[WARNING] 收集 numpy 二进制文件失败: {e}")
 
-# 特别处理 pandas
+# 特别处理 pandas（使用 collect_all 彻底收集，修复 DLL load failed 问题）
 try:
-    # 只收集必要的 pandas 数据，避免深度收集
-    from PyInstaller.utils.hooks import collect_data_files
-    pandas_datas = collect_data_files('pandas')
-    datas.extend(pandas_datas)
-    print(f"[OK] 收集 pandas 数据文件完成")
+    from PyInstaller.utils.hooks import collect_all
 
-    # 添加 pandas 隐藏导入
-    pandas_hidden = [
-        'pandas.core.dtypes',
-        'pandas.core.common',
-        'pandas.core.base',
-        'pandas.core.algorithms',
-        'pandas.core.frame',
-        'pandas.core.series',
-        'pandas.core.indexes',
+    # 使用 collect_all 收集 pandas 的所有依赖（数据、二进制、子模块）
+    # 这是解决 aggregations.pyd DLL 加载失败的关键
+    pandas_datas, pandas_binaries, pandas_hiddenimports = collect_all('pandas')
+
+    # 将收集到的内容添加到对应列表
+    datas.extend(pandas_datas)
+    binaries.extend(pandas_binaries)
+    hiddenimports.extend(pandas_hiddenimports)
+
+    print(f"[OK] 收集 pandas 完整依赖完成:")
+    print(f"  - 数据文件: {len(pandas_datas)} 个")
+    print(f"  - 二进制文件: {len(pandas_binaries)} 个")
+    print(f"  - 隐藏导入: {len(pandas_hiddenimports)} 个")
+
+    # 额外确保关键的 window 模块被包含
+    window_specific = [
+        'pandas._libs.window.aggregations',
+        'pandas._libs.window.indexers',
+        'pandas.core.window.ewm',
     ]
-    hiddenimports.extend(pandas_hidden)
-    print(f"[OK] 添加 pandas 隐藏导入完成")
+    for imp in window_specific:
+        if imp not in hiddenimports:
+            hiddenimports.append(imp)
+    print(f"[OK] 添加 pandas window 特定导入完成")
 
 except Exception as e:
-    print(f"[FAIL] 处理 pandas 失败: {e}")
+    print(f"[FAIL] 使用 collect_all 收集 pandas 失败: {e}")
+    print(f"[INFO] 尝试备用方案...")
+
+    # 备用方案：使用 collect_data_files + collect_submodules
+    try:
+        from PyInstaller.utils.hooks import collect_submodules, collect_data_files
+
+        pandas_window_modules = collect_submodules('pandas._libs.window')
+        hiddenimports.extend(pandas_window_modules)
+        print(f"[OK] 备用方案: 收集 pandas._libs.window 子模块完成 ({len(pandas_window_modules)} 个)")
+
+        pandas_datas = collect_data_files('pandas')
+        datas.extend(pandas_datas)
+        print(f"[OK] 备用方案: 收集 pandas 数据文件完成")
+
+        # 手动收集二进制文件
+        import pandas
+        pandas_libs_path = Path(pandas.__file__).parent / '_libs'
+
+        for root_dir in [pandas_libs_path, pandas_libs_path / 'tslibs', pandas_libs_path / 'window']:
+            if root_dir.exists():
+                for pyd_file in root_dir.glob('*.pyd'):
+                    dest = 'pandas/_libs' + str(root_dir.relative_to(pandas_libs_path)).replace('\\', '/')
+                    binaries.append((str(pyd_file), dest))
+                    print(f"  [添加] {pyd_file.name}")
+
+    except Exception as e2:
+        print(f"[FAIL] 备用方案也失败: {e2}")
 
 # 收集 PyQt5 相关
 print("收集 PyQt5 相关...")
