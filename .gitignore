@@ -9,7 +9,8 @@
 /billing data
 /test
 *.json
-
-
-
-
+/downloads
+*.exe
+__pycache__/
+*.pyc
+*.spec
