@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-请用中文回复
+请用中文回复，所有测试模块都放在test中
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
