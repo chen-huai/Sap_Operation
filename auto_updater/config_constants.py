@@ -5,16 +5,16 @@
 """
 
 # 应用配置
-APP_NAME: str = "PDF重命名工具"
-APP_EXECUTABLE: str = "PDF_Rename_Operation.exe"
+APP_NAME: str = "Sap_Operate_theme"
+APP_EXECUTABLE: str = "Sap_Operate_theme.exe"
 
 # GitHub仓库配置
 GITHUB_OWNER: str = "chen-huai"
-GITHUB_REPO: str = "Temu_PDF_Rename_APP"
+GITHUB_REPO: str = "Sap_Operation"
 GITHUB_API_BASE: str = "https://api.github.com"
 
 # 版本配置
-CURRENT_VERSION: str = "4.0.3"
+CURRENT_VERSION: str = "2.0.0"
 UPDATE_CHECK_INTERVAL_DAYS: int = 30
 AUTO_CHECK_ENABLED: bool = True  # 临时禁用自动更新，避免下载有问题的旧版本
 
