@@ -18,6 +18,7 @@ from PyQt5.QtGui import QIcon, QFontDatabase
 from Get_Data import *
 from File_Operate import *
 from PDF_Operate import *
+from PDF_Parser_Utils import extract_company_name, extract_revenue, extract_fapiao_no, parse_pdf_fields
 from Sap_Function import *
 from Sap_Operate_Ui import Ui_MainWindow
 from Data_Table import *
@@ -2275,23 +2276,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                 fileCon = pdfOperate.readPdf(pdfFile)
 
                                 for num, each in enumerate(fileCon):
-                                    if re.search(r'南德认证检测', each):
-                                        if 'Company Name'  not in msg:
-                                            msg['Company Name'] = each.split()[0]
-                                            if msg['Company Name'] == '购':
-                                                    msg['Company Name'] = each.split()[1].replace('名称：','')
-                                    elif re.search(r'小\s*写\s*）', each):
-                                        msg['Revenue'] = each.split('）')[2]
-                                    elif '制' in each:
-                                        msg['fapiao'] = str(each.split()[1])
-                                    elif re.search(inv_pattern, each):
-                                        text = re.findall(inv_pattern, each)
-                                        if text:
-                                            msg['Invoice No'] = int(text[0])
-                                    elif re.search(order_pattern, each):
-                                        text = re.findall(order_pattern, each)
-                                        if text:
-                                            msg['Order No'] = text[0]
+                                    # 使用统一的PDF字段解析函数 (优化后更简洁)
+                                    parse_pdf_fields(msg, each, inv_pattern, order_pattern)
 
                                 if 'Order No' not in msg:
                                     msg['Order No'] = ''
