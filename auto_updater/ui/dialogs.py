@@ -15,7 +15,8 @@ from PyQt5.QtCore import QThread, pyqtSignal, QTimer, Qt
 from PyQt5.QtGui import QFont
 
 from .resources import UpdateUIText, UpdateUIStyle
-from ..config import get_app_executable_path
+from ..config import get_app_executable_path, is_production_environment
+from ..config_constants import APP_EXECUTABLE, APP_NAME
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +112,7 @@ class UpdateProgressDialog(QDialog):
         self.setFixedSize(UpdateUIStyle.PROGRESS_DIALOG_SIZE)
         self.setModal(True)
         self.update_thread = None
+        self.auto_updater = None  # 保存auto_updater引用
 
         # 添加更新文件路径跟踪
         self.updated_executable_path = None
@@ -160,6 +162,9 @@ class UpdateProgressDialog(QDialog):
             auto_updater: AutoUpdater实例
         """
         try:
+            # ✅ 保存auto_updater引用
+            self.auto_updater = auto_updater
+
             self.status_label.setText(f"{UpdateUIText.UPDATING_TO_VERSION_MESSAGE} {version}...")
             self.progress_bar.setValue(0)
             self.cancel_btn.setEnabled(False)
@@ -286,79 +291,235 @@ class UpdateProgressDialog(QDialog):
 
         Returns:
             更新后的程序文件路径
+
+        逻辑说明:
+        - 优先级1: 延迟更新路径（下载目录中的新版本）
+        - 优先级2: 生产环境的exe完整路径
+        - 优先级3: 开发环境的exe或py文件
         """
         try:
-            exec_dir = os.path.dirname(get_app_executable_path())
+            is_prod = is_production_environment()
 
-            # 优先检查主程序目录下是否存在exe文件
-            exe_path = os.path.join(exec_dir, "PDF_Rename_Operation.exe")
-            if os.path.exists(exe_path):
-                logger.info(f"发现exe文件: {exe_path}")
-                return exe_path
+            logger.info(f"[路径查找] 环境: {'生产环境' if is_prod else '开发环境'}")
+            logger.info(f"[路径查找] 配置的exe文件名: {APP_EXECUTABLE}")
+            logger.info(f"[路径查找] 配置的应用名: {APP_NAME}")
 
-            # 检查其他可能的exe文件名
-            for exe_name in ["PDF_Rename_Operation.exe", "PDF重命名工具.exe"]:
-                exe_path = os.path.join(exec_dir, exe_name)
+            # ✅ 优先级1: 检查是否有延迟更新路径（下载目录中的新版本）
+            if self.auto_updater and hasattr(self.auto_updater, 'update_executor'):
+                delayed_path = self.auto_updater.update_executor.delayed_update_path
+                if delayed_path and os.path.exists(delayed_path):
+                    logger.info(f"[路径查找] ✓ 发现延迟更新路径")
+                    logger.info(f"[路径查找] 延迟更新路径: {delayed_path}")
+                    logger.info(f"[路径查找] 将启动下载目录中的新版本")
+                    return delayed_path
+
+            if is_prod:
+                # 生产环境:直接使用配置函数返回的完整路径
+                # 不要使用 dirname 再拼接,这样会导致路径错误
+                exe_path = get_app_executable_path()
+                exec_dir = os.path.dirname(exe_path)
+
+                logger.info(f"[生产环境] 完整exe路径: {exe_path}")
+                logger.info(f"[生产环境] 所在目录: {exec_dir}")
+
                 if os.path.exists(exe_path):
-                    logger.info(f"发现exe文件: {exe_path}")
+                    logger.info(f"[生产环境] ✓ exe文件存在")
+                    return exe_path
+                else:
+                    logger.warning(f"[生产环境] ✗ exe文件不存在,尝试目录查找")
+                    # 如果完整路径不存在,尝试在所在目录查找
+                    alt_path = os.path.join(exec_dir, APP_EXECUTABLE)
+                    if os.path.exists(alt_path):
+                        logger.info(f"[生产环境] ✓ 在目录中找到exe: {alt_path}")
+                        return alt_path
+                    else:
+                        logger.error(f"[生产环境] ✗ 未找到exe文件")
+                        return exe_path  # 返回原路径,让启动逻辑报告错误
+            else:
+                # 开发环境:优先查找exe文件(用于测试更新功能),否则使用py文件
+                exec_dir = os.path.dirname(get_app_executable_path())
+
+                logger.info(f"[开发环境] 执行目录: {exec_dir}")
+
+                # 优先查找exe文件(用于测试更新功能)
+                exe_path = os.path.join(exec_dir, APP_EXECUTABLE)
+                logger.info(f"[开发环境] 检查exe文件: {exe_path}")
+
+                if os.path.exists(exe_path):
+                    logger.info(f"[开发环境] ✓ 发现exe文件,将启动exe进行测试")
                     return exe_path
 
-            # 回退到原始程序路径（通常是Python文件）
-            app_path = get_app_executable_path()
-            logger.info(f"使用原始程序路径: {app_path}")
-            return app_path
+                # 没有exe文件,使用py文件
+                py_path = os.path.join(exec_dir, f"{APP_NAME}.py")
+                logger.info(f"[开发环境] exe文件不存在,检查py文件: {py_path}")
+
+                if os.path.exists(py_path):
+                    logger.info(f"[开发环境] ✓ 使用py文件: {py_path}")
+                    return py_path
+                else:
+                    logger.warning(f"[开发环境] ✗ py文件不存在,回退到默认路径")
+                    return get_app_executable_path()
 
         except Exception as e:
-            logger.warning(f"获取更新程序路径失败: {e}")
+            logger.error(f"[路径查找] 异常: {e}", exc_info=True)
+            logger.warning(f"[路径查找] 回退到默认路径")
             return get_app_executable_path()
 
     def _restart_application(self) -> None:
-        """重启应用程序"""
+        """
+        重启应用程序
+
+        启动流程:
+        1. 获取程序路径
+        2. 验证路径有效性
+        3. 根据文件类型启动
+        4. 退出当前应用
+        """
         try:
+            logger.info("=" * 60)
+            logger.info("[重启应用] 开始重启流程")
+            logger.info("=" * 60)
+
             # 关闭对话框
             self.accept()
 
             # 获取要启动的程序路径
             executable_path = self._get_updated_executable_path()
-            logger.info(f"重启应用程序: {executable_path}")
+            logger.info(f"[重启应用] 目标路径: {executable_path}")
 
-            # 验证文件存在且可执行
+            # 路径规范化
+            executable_path = os.path.normpath(executable_path)
+            logger.info(f"[重启应用] 规范化路径: {executable_path}")
+
+            # 验证1: 文件是否存在
             if not os.path.exists(executable_path):
-                logger.error(f"程序文件不存在: {executable_path}")
-                QMessageBox.critical(self, UpdateUIText.RESTART_FAILED_TITLE,
-                                   f"程序文件不存在: {executable_path}")
+                error_msg = f"程序文件不存在:\n{executable_path}"
+                logger.error(f"[重启应用] ✗ {error_msg}")
+                QMessageBox.critical(
+                    self,
+                    UpdateUIText.RESTART_FAILED_TITLE,
+                    error_msg
+                )
                 return
 
-            # 重启应用
+            # 验证2: 文件大小是否有效(至少1KB)
+            file_size = os.path.getsize(executable_path)
+            logger.info(f"[重启应用] 文件大小: {file_size} bytes ({file_size/1024:.2f} KB)")
+
+            if file_size < 1024:
+                error_msg = f"程序文件无效(文件过小):\n{executable_path}\n大小: {file_size} bytes"
+                logger.error(f"[重启应用] ✗ {error_msg}")
+                QMessageBox.critical(
+                    self,
+                    UpdateUIText.RESTART_FAILED_TITLE,
+                    error_msg
+                )
+                return
+
+            # 验证3: 工作目录是否存在
+            working_dir = os.path.dirname(executable_path)
+            if not os.path.exists(working_dir):
+                error_msg = f"工作目录不存在:\n{working_dir}"
+                logger.error(f"[重启应用] ✗ {error_msg}")
+                QMessageBox.critical(
+                    self,
+                    UpdateUIText.RESTART_FAILED_TITLE,
+                    error_msg
+                )
+                return
+
+            logger.info(f"[重启应用] ✓ 文件验证通过")
+            logger.info(f"[重启应用] 工作目录: {working_dir}")
+
+            # 启动参数准备
+            startup_info = {
+                'env': os.environ.copy(),
+                'cwd': working_dir
+            }
+            logger.info(f"[重启应用] 环境变量已复制")
+            logger.info(f"[重启应用] 工作目录已设置")
+
+            # 根据文件类型启动
             if executable_path.endswith('.exe'):
-                # 启动exe文件（无论开发还是生产环境）
-                logger.info(f"启动exe文件: {executable_path}")
-                subprocess.Popen([executable_path],
-                               env=os.environ.copy(),
-                               cwd=os.path.dirname(executable_path),
-                               encoding='utf-8')
+                # 启动exe文件 - Windows环境使用特殊处理
+                logger.info(f"[重启应用] 启动类型: EXE文件")
+                logger.info(f"[重启应用] 启动命令: {executable_path}")
+
+                try:
+                    # Windows下使用shell=True启动exe更可靠
+                    # 这样可以正确处理路径中的空格和特殊字符
+                    if sys.platform == 'win32':
+                        logger.info(f"[重启应用] 使用Windows shell启动")
+                        # 使用shell启动,路径会自动处理空格
+                        process = subprocess.Popen(
+                            f'"{executable_path}"',  # 路径加引号处理空格
+                            shell=True,
+                            cwd=working_dir,
+                            env=os.environ.copy()
+                        )
+                    else:
+                        # 非Windows环境使用常规方式
+                        process = subprocess.Popen(
+                            [executable_path],
+                            cwd=working_dir,
+                            env=os.environ.copy()
+                        )
+
+                    logger.info(f"[重启应用] ✓ 进程已启动, PID: {process.pid}")
+
+                except FileNotFoundError:
+                    # 如果shell启动失败,尝试使用os.startfile
+                    logger.warning(f"[重启应用] shell启动失败,尝试os.startfile")
+                    try:
+                        import ctypes
+                        ctypes.windll.shell32.ShellExecuteW(None, "open", executable_path, None, working_dir, 1)
+                        logger.info(f"[重启应用] ✓ 通过ShellExecuteW启动")
+                        # 使用ShellExecuteW无法获取PID,所以跳过
+                    except Exception as shell_error:
+                        logger.error(f"[重启应用] ✗ ShellExecuteW启动失败: {shell_error}")
+                        raise
+
             elif executable_path.endswith('.py'):
                 # 启动Python文件
-                logger.info(f"启动Python文件: {executable_path}")
-                subprocess.Popen([sys.executable, executable_path],
-                               env=os.environ.copy(),
-                               cwd=os.path.dirname(executable_path),
-                               encoding='utf-8')
-            else:
-                # 其他类型文件，直接启动
-                logger.info(f"启动其他文件: {executable_path}")
-                subprocess.Popen([executable_path],
-                               env=os.environ.copy(),
-                               cwd=os.path.dirname(executable_path),
-                               encoding='utf-8')
+                logger.info(f"[重启应用] 启动类型: Python文件")
+                logger.info(f"[重启应用] Python解释器: {sys.executable}")
+                logger.info(f"[重启应用] 启动命令: {sys.executable} {executable_path}")
 
-            # 退出当前应用
-            QApplication.quit()
+                process = subprocess.Popen(
+                    [sys.executable, executable_path],
+                    cwd=working_dir,
+                    env=os.environ.copy()
+                )
+
+                logger.info(f"[重启应用] ✓ 进程已启动, PID: {process.pid}")
+
+            else:
+                # 其他类型文件,直接启动
+                logger.warning(f"[重启应用] 启动类型: 未知文件类型")
+                logger.info(f"[重启应用] 启动命令: {executable_path}")
+
+                process = subprocess.Popen(
+                    [executable_path],
+                    cwd=working_dir,
+                    env=os.environ.copy()
+                )
+
+                logger.info(f"[重启应用] ✓ 进程已启动, PID: {process.pid}")
+
+            logger.info("=" * 60)
+            logger.info("[重启应用] 启动成功,准备退出当前应用")
+            logger.info("=" * 60)
+
+            # 延迟100ms后退出当前应用(确保新进程已启动)
+            QTimer.singleShot(100, QApplication.quit)
 
         except Exception as e:
-            logger.error(f"重启应用程序失败: {e}")
-            QMessageBox.critical(self, UpdateUIText.RESTART_FAILED_TITLE,
-                               f"{UpdateUIText.RESTART_FAILED_MESSAGE}: {str(e)}")
+            logger.error(f"[重启应用] ✗ 重启失败: {e}", exc_info=True)
+            QMessageBox.critical(
+                self,
+                UpdateUIText.RESTART_FAILED_TITLE,
+                f"{UpdateUIText.RESTART_FAILED_MESSAGE}:\n{str(e)}"
+            )
             self.reject()
 
     def cancel_update(self) -> None:

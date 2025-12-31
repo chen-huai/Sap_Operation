@@ -30,6 +30,7 @@ class UpdateExecutor:
     def __init__(self):
         self.config = get_config()
         self.backup_manager = BackupManager()
+        self.delayed_update_path = None  # 延迟更新的新版本路径
 
     def execute_update(self, update_file_path: str, new_version: str) -> bool:
         """
@@ -440,75 +441,99 @@ class UpdateExecutor:
     def _schedule_delayed_update(self, update_file_path: str, current_exe_path: str, new_version: str) -> bool:
         """
         安排延迟更新（使用批处理脚本）
-        :param update_file_path: 更新文件路径
+
+        工作原理:
+        1. 创建批处理脚本（在后台完成文件替换）
+        2. 保存新版本路径，供UI重启使用
+        3. 旧程序退出
+        4. UI启动下载目录中的新版本
+        5. 批处理脚本在后台完成文件替换（为下次启动准备）
+
+        :param update_file_path: 更新文件路径（下载目录中的新版本）
         :param current_exe_path: 当前可执行文件路径
         :param new_version: 新版本号
         :return: 是否成功安排延迟更新
         """
         try:
-            # 创建更新脚本（增强错误处理和路径验证）
+            import time
+            from .config_constants import APP_NAME
+
+            # ✅ 关键修复：保存新版本路径，供UI重启使用
+            self.delayed_update_path = update_file_path
+            print(f"[延迟更新] ✓ 保存新版本路径供重启使用: {update_file_path}")
+
+            # 生成唯一的脚本文件名
+            timestamp = int(time.time())
+            script_name = f"{APP_NAME}_update_{timestamp}.bat"
+            script_path = os.path.join(tempfile.gettempdir(), script_name)
+
+            print(f"[延迟更新] 创建更新脚本: {script_path}")
+            print(f"[延迟更新] 更新文件: {update_file_path}")
+            print(f"[延迟更新] 目标路径: {current_exe_path}")
+            print(f"[延迟更新] 新版本: {new_version}")
+
+            # 创建后台批处理脚本（用于完成文件替换，为下次启动准备）
             script_content = f'''@echo off
+REM ============================================
+REM  后台文件替换脚本
+REM  版本: {new_version}
+REM  生成时间: {time.strftime("%Y-%m-%d %H:%M:%S")}
+REM  说明: 此脚本在后台等待，然后完成文件替换
+REM ============================================
 chcp 65001 >nul
-echo 正在更新应用程序...
-echo 更新文件: {update_file_path}
-echo 目标路径: {current_exe_path}
-echo.
 
-REM 等待主程序退出
-timeout /t 3 /nobreak >nul
+echo [{time.strftime("%H:%M:%S")}] 后台脚本启动
+echo [{time.strftime("%H:%M:%S")}] 等待程序退出...
 
-REM 替换可执行文件（带错误检查）
-echo 正在替换文件...
+REM 等待旧程序退出和新程序启动
+timeout /t 5 /nobreak >nul
+
+echo [{time.strftime("%H:%M:%S")}] 开始文件替换...
+
+REM 尝试替换文件
 copy /Y "{update_file_path}" "{current_exe_path}"
-if %ERRORLEVEL% NEQ 0 (
-    echo 文件替换失败！
-    echo 更新文件: {update_file_path}
-    echo 目标文件: {current_exe_path}
-    pause
-    exit /b 1
+if %ERRORLEVEL% EQU 0 (
+    echo [{time.strftime("%H:%M:%S")}] ✓ 文件替换成功
+    echo [{time.strftime("%H:%M:%S")}] 下次启动将使用新版本
+) else (
+    echo [{time.strftime("%H:%M:%S")}] ✗ 文件替换失败，错误代码: %ERRORLEVEL%
 )
 
-REM 验证文件是否存在
-if not exist "{current_exe_path}" (
-    echo 文件替换后不存在！
-    pause
-    exit /b 1
-)
-
-echo 文件替换成功！
-
-REM 版本信息已通过配置文件更新，无需单独的版本文件
-
-REM 启动新版本（使用完整路径）
-echo 正在启动新版本...
-cd /d "{os.path.dirname(current_exe_path)}"
-start "" "{current_exe_path}"
-
-REM 清理临时文件
-echo 清理临时文件...
+REM 清理下载文件
 del "{update_file_path}" 2>nul
+
+REM 删除自己
 del "%~f0" 2>nul
 
-echo 更新完成！
-timeout /t 2 /nobreak >nul
+echo [{time.strftime("%H:%M:%S")}] 后台脚本退出
 '''
 
-            # 创建临时脚本文件
-            script_path = os.path.join(tempfile.gettempdir(), "pdf_update_script.bat")
+            # 写入脚本文件
             with open(script_path, 'w', encoding='utf-8') as f:
                 f.write(script_content)
 
-            # 启动更新脚本
-            subprocess.Popen([script_path],
-                           creationflags=subprocess.DETACHED_PROCESS,
-                           env=os.environ.copy(),
-                           encoding='utf-8')
+            print(f"[延迟更新] ✓ 脚本创建成功: {script_path}")
+            print(f"[延迟更新] 脚本大小: {os.path.getsize(script_path)} bytes")
 
-            print("已安排延迟更新，应用程序将重启")
+            # 启动更新脚本(分离进程,在后台运行)
+            subprocess.Popen(
+                [script_path],
+                creationflags=subprocess.DETACHED_PROCESS,
+                env=os.environ.copy(),
+                encoding='utf-8'
+            )
+
+            print(f"[延迟更新] ✓ 后台脚本已启动")
+            print(f"[延迟更新] 新版本路径: {update_file_path}")
+            print(f"[延迟更新] UI将启动此路径的新版本")
+            print(f"[延迟更新] 后台脚本将完成文件替换（为下次启动准备）")
+
             return True
 
         except Exception as e:
-            raise UpdateExecutionError(f"安排延迟更新失败: {str(e)}")
+            error_msg = f"安排延迟更新失败: {str(e)}"
+            print(f"[延迟更新] ✗ {error_msg}")
+            raise UpdateExecutionError(error_msg)
 
     def restart_application(self) -> bool:
         """
