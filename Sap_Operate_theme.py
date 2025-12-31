@@ -3036,6 +3036,32 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
 
 if __name__ == "__main__":
+    # ================================================================
+    # 步骤1: 自动完成更新（如果是从下载目录启动的新版本）
+    # ================================================================
+    try:
+        from auto_updater.auto_complete import auto_complete_update_if_needed
+
+        def update_callback(success, message):
+            """更新完成回调函数"""
+            if success:
+                print(f"✓ 后台更新完成: {message}")
+                print(f"✓ 下次启动将使用主目录的程序")
+                # 可选：显示更新成功通知
+            else:
+                print(f"⚠ 后台更新: {message}")
+
+        # 如果是从下载目录启动的新版本，会自动在后台完成文件替换
+        # 这个调用会在后台线程运行，不会阻塞程序启动
+        auto_complete_update_if_needed(update_callback)
+
+    except Exception as e:
+        # 如果自动完成功能不可用，仅记录错误，不影响程序启动
+        print(f"自动完成更新检查失败: {e}")
+
+    # ================================================================
+    # 步骤2: 正常启动应用程序
+    # ================================================================
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     app = QApplication(sys.argv)
     myWin = MyMainWindow()

@@ -27,10 +27,37 @@ class UpdateExecutionError(Exception):
 class UpdateExecutor:
     """更新执行器"""
 
+    # 类变量：持久化存储延迟更新路径
+    _delayed_update_path = None
+
     def __init__(self):
         self.config = get_config()
         self.backup_manager = BackupManager()
-        self.delayed_update_path = None  # 延迟更新的新版本路径
+
+        # 导入两阶段更新器和自动完成器
+        try:
+            from .two_phase_updater import TwoPhaseUpdater
+            self.two_phase_updater = TwoPhaseUpdater()
+        except ImportError:
+            self.two_phase_updater = None
+            print("[更新器] 两阶段更新器不可用")
+
+        try:
+            from .auto_complete import AutoCompleter
+            self.auto_completer = AutoCompleter()
+        except ImportError:
+            self.auto_completer = None
+            print("[更新器] 自动完成器不可用")
+
+    @property
+    def delayed_update_path(self):
+        """获取延迟更新路径"""
+        return UpdateExecutor._delayed_update_path
+
+    @delayed_update_path.setter
+    def delayed_update_path(self, value):
+        """设置延迟更新路径"""
+        UpdateExecutor._delayed_update_path = value
 
     def execute_update(self, update_file_path: str, new_version: str) -> bool:
         """
@@ -440,14 +467,11 @@ class UpdateExecutor:
 
     def _schedule_delayed_update(self, update_file_path: str, current_exe_path: str, new_version: str) -> bool:
         """
-        安排延迟更新（使用批处理脚本）
+        安排延迟更新（改进的两阶段更新方案）
 
-        工作原理:
-        1. 创建批处理脚本（在后台完成文件替换）
-        2. 保存新版本路径，供UI重启使用
-        3. 旧程序退出
-        4. UI启动下载目录中的新版本
-        5. 批处理脚本在后台完成文件替换（为下次启动准备）
+        工作原理：
+        阶段1: 创建待更新标记 → 保存新版本路径到文件 → 旧程序退出 → UI启动新版本
+        阶段2: 新版本启动后 → 从文件读取路径 → 启动新版本 → 自动完成文件替换
 
         :param update_file_path: 更新文件路径（下载目录中的新版本）
         :param current_exe_path: 当前可执行文件路径
@@ -455,67 +479,85 @@ class UpdateExecutor:
         :return: 是否成功安排延迟更新
         """
         try:
+            print(f"[两阶段更新] ========== 开始阶段1 ==========")
+            print(f"[两阶段更新] 新版本路径: {update_file_path}")
+            print(f"[两阶段更新] 目标路径: {current_exe_path}")
+            print(f"[两阶段更新] 版本号: {new_version}")
+
+            # ✅ 保存到类变量（供当前进程使用）
+            self.delayed_update_path = update_file_path
+
+            # ✅ 创建待更新标记（持久化到文件，重启后可读取）
+            if self.two_phase_updater:
+                success = self.two_phase_updater.create_pending_update(
+                    update_file_path,
+                    new_version
+                )
+
+                if success:
+                    print(f"[两阶段更新] ✓ 待更新标记已创建")
+                    print(f"[两阶段更新] ✓ 标记文件: {self.two_phase_updater.pending_marker_path}")
+                    print(f"[两阶段更新] ✓ 新版本路径已保存到标记文件")
+                    print(f"[两阶段更新] 阶段1完成，等待程序重启...")
+                    print(f"[两阶段更新] ")
+                    print(f"[两阶段更新] 更新流程:")
+                    print(f"[两阶段更新] 1. UI将启动新版本: {update_file_path}")
+                    print(f"[两阶段更新] 2. 新版本启动后，从标记文件读取路径")
+                    print(f"[两阶段更新] 3. 启动新版本（从 downloads 目录）")
+                    print(f"[两阶段更新] 4. 新版本自动检测并完成文件替换")
+                    print(f"[两阶段更新] 5. 替换完成后，下次启动使用主目录exe")
+                    print(f"[两阶段更新] ========== 阶段1完成 ==========")
+                else:
+                    raise UpdateExecutionError("创建待更新标记失败")
+            else:
+                # 降级方案：如果两阶段更新器不可用，使用原来的批处理脚本方案
+                print(f"[两阶段更新] ⚠ 两阶段更新器不可用，使用批处理脚本方案")
+                return self._schedule_delayed_update_fallback(update_file_path, current_exe_path, new_version)
+
+            return True
+
+        except Exception as e:
+            error_msg = f"安排延迟更新失败: {str(e)}"
+            print(f"[两阶段更新] ✗ {error_msg}")
+            raise UpdateExecutionError(error_msg)
+
+    def _schedule_delayed_update_fallback(self, update_file_path: str, current_exe_path: str, new_version: str) -> bool:
+        """
+        降级方案：使用批处理脚本（如果两阶段更新器不可用）
+
+        这个方法保留原来的批处理脚本逻辑作为备用方案
+        """
+        try:
             import time
             from .config_constants import APP_NAME
 
-            # ✅ 关键修复：保存新版本路径，供UI重启使用
-            self.delayed_update_path = update_file_path
-            print(f"[延迟更新] ✓ 保存新版本路径供重启使用: {update_file_path}")
+            print(f"[批处理更新] 创建批处理脚本（降级方案）")
 
             # 生成唯一的脚本文件名
             timestamp = int(time.time())
             script_name = f"{APP_NAME}_update_{timestamp}.bat"
             script_path = os.path.join(tempfile.gettempdir(), script_name)
 
-            print(f"[延迟更新] 创建更新脚本: {script_path}")
-            print(f"[延迟更新] 更新文件: {update_file_path}")
-            print(f"[延迟更新] 目标路径: {current_exe_path}")
-            print(f"[延迟更新] 新版本: {new_version}")
-
-            # 创建后台批处理脚本（用于完成文件替换，为下次启动准备）
+            # 创建简化的批处理脚本
             script_content = f'''@echo off
-REM ============================================
-REM  后台文件替换脚本
-REM  版本: {new_version}
-REM  生成时间: {time.strftime("%Y-%m-%d %H:%M:%S")}
-REM  说明: 此脚本在后台等待，然后完成文件替换
-REM ============================================
 chcp 65001 >nul
-
-echo [{time.strftime("%H:%M:%S")}] 后台脚本启动
-echo [{time.strftime("%H:%M:%S")}] 等待程序退出...
-
-REM 等待旧程序退出和新程序启动
+echo 后台更新脚本启动
+echo 等待程序退出...
 timeout /t 5 /nobreak >nul
-
-echo [{time.strftime("%H:%M:%S")}] 开始文件替换...
-
-REM 尝试替换文件
+echo 开始文件替换...
 copy /Y "{update_file_path}" "{current_exe_path}"
 if %ERRORLEVEL% EQU 0 (
-    echo [{time.strftime("%H:%M:%S")}] ✓ 文件替换成功
-    echo [{time.strftime("%H:%M:%S")}] 下次启动将使用新版本
+    echo 文件替换成功
 ) else (
-    echo [{time.strftime("%H:%M:%S")}] ✗ 文件替换失败，错误代码: %ERRORLEVEL%
+    echo 文件替换失败
 )
-
-REM 清理下载文件
-del "{update_file_path}" 2>nul
-
-REM 删除自己
 del "%~f0" 2>nul
-
-echo [{time.strftime("%H:%M:%S")}] 后台脚本退出
 '''
 
-            # 写入脚本文件
             with open(script_path, 'w', encoding='utf-8') as f:
                 f.write(script_content)
 
-            print(f"[延迟更新] ✓ 脚本创建成功: {script_path}")
-            print(f"[延迟更新] 脚本大小: {os.path.getsize(script_path)} bytes")
-
-            # 启动更新脚本(分离进程,在后台运行)
+            # 启动更新脚本
             subprocess.Popen(
                 [script_path],
                 creationflags=subprocess.DETACHED_PROCESS,
@@ -523,17 +565,11 @@ echo [{time.strftime("%H:%M:%S")}] 后台脚本退出
                 encoding='utf-8'
             )
 
-            print(f"[延迟更新] ✓ 后台脚本已启动")
-            print(f"[延迟更新] 新版本路径: {update_file_path}")
-            print(f"[延迟更新] UI将启动此路径的新版本")
-            print(f"[延迟更新] 后台脚本将完成文件替换（为下次启动准备）")
-
+            print(f"[批处理更新] ✓ 脚本已启动: {script_path}")
             return True
 
         except Exception as e:
-            error_msg = f"安排延迟更新失败: {str(e)}"
-            print(f"[延迟更新] ✗ {error_msg}")
-            raise UpdateExecutionError(error_msg)
+            raise UpdateExecutionError(f"创建批处理脚本失败: {str(e)}")
 
     def restart_application(self) -> bool:
         """

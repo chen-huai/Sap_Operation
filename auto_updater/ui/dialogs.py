@@ -293,9 +293,10 @@ class UpdateProgressDialog(QDialog):
             更新后的程序文件路径
 
         逻辑说明:
-        - 优先级1: 延迟更新路径（下载目录中的新版本）
-        - 优先级2: 生产环境的exe完整路径
-        - 优先级3: 开发环境的exe或py文件
+        - 优先级1: 从待更新标记读取延迟更新路径（持久化，重启后可用）
+        - 优先级2: 从类变量读取延迟更新路径（当前进程）
+        - 优先级3: 生产环境的exe完整路径
+        - 优先级4: 开发环境的exe或py文件
         """
         try:
             is_prod = is_production_environment()
@@ -304,11 +305,28 @@ class UpdateProgressDialog(QDialog):
             logger.info(f"[路径查找] 配置的exe文件名: {APP_EXECUTABLE}")
             logger.info(f"[路径查找] 配置的应用名: {APP_NAME}")
 
-            # ✅ 优先级1: 检查是否有延迟更新路径（下载目录中的新版本）
+            # ✅ 优先级1: 从待更新标记文件读取延迟更新路径
+            try:
+                from .two_phase_updater import TwoPhaseUpdater
+                two_phase = TwoPhaseUpdater()
+
+                if two_phase.has_pending_update():
+                    pending_info = two_phase.get_pending_update_info()
+                    if pending_info and "source_file" in pending_info:
+                        delayed_path = pending_info["source_file"]
+                        if os.path.exists(delayed_path):
+                            logger.info(f"[路径查找] ✓ 从标记文件读取延迟更新路径")
+                            logger.info(f"[路径查找] 延迟更新路径: {delayed_path}")
+                            logger.info(f"[路径查找] 将启动下载目录中的新版本")
+                            return delayed_path
+            except Exception as e:
+                logger.warning(f"[路径查找] 从标记文件读取失败: {e}")
+
+            # ✅ 优先级2: 检查类变量中的延迟更新路径
             if self.auto_updater and hasattr(self.auto_updater, 'update_executor'):
                 delayed_path = self.auto_updater.update_executor.delayed_update_path
                 if delayed_path and os.path.exists(delayed_path):
-                    logger.info(f"[路径查找] ✓ 发现延迟更新路径")
+                    logger.info(f"[路径查找] ✓ 发现延迟更新路径（类变量）")
                     logger.info(f"[路径查找] 延迟更新路径: {delayed_path}")
                     logger.info(f"[路径查找] 将启动下载目录中的新版本")
                     return delayed_path
