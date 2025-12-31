@@ -30,8 +30,41 @@ class AutoCompleter:
 
     def __init__(self):
         self.exec_dir = get_executable_dir()
-        self.marker_path = os.path.join(self.exec_dir, self.PENDING_UPDATE_MARKER)
+        # 标记文件可能位于当前目录或父目录
+        # 因为从 downloads 目录启动时，标记在主目录中
+        self.marker_path = self._find_marker_file()
         self.is_running_from_download = self._check_if_running_from_download()
+
+    def _find_marker_file(self) -> str:
+        """
+        查找标记文件
+
+        标记文件可能在：
+        1. 当前目录（如果从主目录启动）
+        2. 父目录（如果从 downloads 目录启动）
+
+        Returns:
+            标记文件路径（如果存在）或默认路径
+        """
+        current_dir = self.exec_dir
+
+        # 尝试当前目录
+        marker_in_current = os.path.join(current_dir, self.PENDING_UPDATE_MARKER)
+        if os.path.exists(marker_in_current):
+            logger.info(f"[自动完成更新] 在当前目录找到标记文件: {marker_in_current}")
+            return marker_in_current
+
+        # 尝试父目录（处理从 downloads 子目录启动的情况）
+        parent_dir = os.path.dirname(current_dir)
+        if parent_dir and parent_dir != current_dir:  # 确保有父目录
+            marker_in_parent = os.path.join(parent_dir, self.PENDING_UPDATE_MARKER)
+            if os.path.exists(marker_in_parent):
+                logger.info(f"[自动完成更新] 在父目录找到标记文件: {marker_in_parent}")
+                return marker_in_parent
+
+        # 都找不到，返回当前目录的路径（用于创建新标记）
+        logger.info(f"[自动完成更新] 使用默认标记路径: {marker_in_current}")
+        return marker_in_current
 
     def _check_if_running_from_download(self) -> bool:
         """
@@ -42,9 +75,27 @@ class AutoCompleter:
         """
         try:
             current_path = get_app_executable_path()
-            download_dir = os.path.join(self.exec_dir, "downloads")
-            return download_dir in current_path
-        except Exception:
+
+            # 方法1：直接检查路径中是否包含 "downloads" 目录
+            # 这样无论 exec_dir 是什么，都能正确检测
+            if "downloads" in current_path.lower():
+                logger.info(f"[自动完成更新] 当前路径包含downloads: {current_path}")
+                return True
+
+            # 方法2：检查是否与待更新标记中的 source_file 一致
+            pending_info = self.get_pending_update_info()
+            if pending_info and "source_file" in pending_info:
+                source_file = pending_info["source_file"]
+                # 规范化路径后比较（处理大小写和路径分隔符）
+                if os.path.normcase(os.path.normpath(current_path)) == os.path.normcase(os.path.normpath(source_file)):
+                    logger.info(f"[自动完成更新] 当前运行文件与待更新源文件一致")
+                    return True
+
+            logger.info(f"[自动完成更新] 不是从下载目录运行: {current_path}")
+            return False
+
+        except Exception as e:
+            logger.warning(f"[自动完成更新] 检测运行目录失败: {e}")
             return False
 
     def has_pending_update(self) -> bool:
