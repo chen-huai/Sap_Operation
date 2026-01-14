@@ -959,22 +959,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
             # CS的Item1000-Cost
             revenueData['chmCsCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * (
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['planCostRate'] * 0.5 * (
                         1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
                 '.%sf' % guiData['significantDigits'])
             # CHM的Item1000-Cost
             revenueData['chmLabCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * guiData[
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['planCostRate'] * 0.5 * guiData[
                     'chmCostRate'] /
                 guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
             # CS的Item2000-Cost
             revenueData['phyCsCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * (
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['planCostRate'] * 0.5 * (
                         1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
                 '.%sf' % guiData['significantDigits'])
             # PHY的Item2000-Cost
             revenueData['phyLabCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.5 * guiData[
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['planCostRate'] * 0.5 * guiData[
                     'phyCostRate'] /
                 guiData['phyHourlyRate'], '.%sf' % guiData['significantDigits'])
 
@@ -1000,22 +1000,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
             # CS的Item1000-Cost
             revenueData['chmCsCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.8 * (
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['planCostRate'] * 0.8 * (
                         1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
                 '.%sf' % guiData['significantDigits'])
             # CHM的Item1000-Cost
             revenueData['chmLabCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.8 * guiData[
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['planCostRate'] * 0.8 * guiData[
                     'chmCostRate'] /
                 guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
             # CS的Item2000-Cost
             revenueData['phyCsCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.2 * (
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['planCostRate'] * 0.2 * (
                         1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
                 '.%sf' % guiData['significantDigits'])
             # PHY的Item2000-Cost
             revenueData['phyLabCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.2 * guiData[
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['planCostRate'] * 0.2 * guiData[
                     'phyCostRate'] /
                 guiData['phyHourlyRate'], '.%sf' % guiData['significantDigits'])
 
@@ -1040,22 +1040,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
             # CS的Item1000-Cost
             revenueData['chmCsCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.2 * (
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['planCostRate'] * 0.2 * (
                         1 - guiData['chmCostRate']) / guiData['csHourlyRate'],
                 '.%sf' % guiData['significantDigits'])
             # CHM的Item1000-Cost
             revenueData['chmLabCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.2 * guiData[
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['planCostRate'] * 0.2 * guiData[
                     'chmCostRate'] /
                 guiData['chmHourlyRate'], '.%sf' % guiData['significantDigits'])
             # CS的Item2000-Cost
             revenueData['phyCsCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.8 * (
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['planCostRate'] * 0.8 * (
                         1 - guiData['phyCostRate']) / guiData['csHourlyRate'],
                 '.%sf' % guiData['significantDigits'])
             # PHY的Item2000-Cost
             revenueData['phyLabCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * 0.8 * guiData[
+                (revenueData['revenueForCny']  - guiData['cost']) * guiData['planCostRate'] * 0.8 * guiData[
                     'phyCostRate'] /
                 guiData['phyHourlyRate'], '.%sf' % guiData['significantDigits'])
         else:
@@ -1076,11 +1076,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 revenueData['labHourlyRate'] = guiData['phyHourlyRate']
 
             revenueData['csCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * (
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['planCostRate'] * (
                         1 - revenueData['labCostRate']) / guiData[
                     'csHourlyRate'], '.%sf' % guiData['significantDigits'])
             revenueData['labCostAccounting'] = format(
-                (revenueData['revenueForCny'] * guiData['planCostRate'] - guiData['cost']) * revenueData[
+                (revenueData['revenueForCny'] - guiData['cost']) * guiData['planCostRate'] * revenueData[
                     'labCostRate'] / revenueData['labHourlyRate'],
                 '.%sf' % guiData['significantDigits'])
         return revenueData
