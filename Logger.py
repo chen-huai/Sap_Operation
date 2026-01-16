@@ -44,6 +44,11 @@ class Logger:
         """
         保存日志到Excel文件
         """
+        # 转换 datetime 列为字符串，避免类型冲突
+        datetime_cols = self.log_df.select_dtypes(include=['datetime64']).columns
+        if len(datetime_cols) > 0:
+            self.log_df[datetime_cols] = self.log_df[datetime_cols].astype(str)
+
         try:
             self.log_df.to_excel(self.log_file, index=False, merge_cells=False)
             print(f"Log saved successfully to {self.log_file}")

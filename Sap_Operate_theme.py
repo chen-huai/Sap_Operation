@@ -1123,7 +1123,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             # 如果新方法失败，回退到原方法
             print(f"统一计算方法失败，使用原方法: {e}")
             return self.getRevenueData(guiData)
-    
 
     
     def _convertResultToRevenueData(self, result, guiData, configContent):
@@ -1559,7 +1558,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         logFile.loc[logIndex, 'Remark'] = logMsg['Remark']
                         logFile.loc[logIndex, 'Proforma No.'] = logMsg['Proforma No.']
                         nowDate = datetime.datetime.today()
-                        logFile.loc[logIndex, 'Update Time'] = nowDate
+                        logFile.loc[logIndex, 'Update Time'] = nowDate.strftime('%Y-%m-%d %H:%M:%S')
                         logDataFile = logFile.to_excel('%s' % logDataPath, merge_cells=False)
                         self.lineEdit_9.setText(logDataPath)
                         if n < len(fileDataList['Amount']) - 1:

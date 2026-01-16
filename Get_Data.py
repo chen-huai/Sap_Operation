@@ -10,6 +10,18 @@ class Get_Data():
         # self.getIndexNumForHead()
         # self.getFileDataList()
 
+    @staticmethod
+    def _convert_datetime_to_str(fileData):
+        """
+        转换 DataFrame 中的 datetime 列为字符串，避免保存时类型冲突
+        :param fileData: pandas DataFrame
+        :return: 转换后的 DataFrame
+        """
+        datetime_cols = fileData.select_dtypes(include=['datetime64']).columns
+        if len(datetime_cols) > 0:
+            fileData[datetime_cols] = fileData[datetime_cols].astype(str)
+        return fileData
+
     def getFileData(self, fileDataUrl):
         self.fileDataUrl = fileDataUrl
         fileType = self.fileDataUrl.split(".")[-1]
@@ -24,6 +36,7 @@ class Get_Data():
         height, width = self.fileData.shape
 
         self.fileData = excel_field_mapper.transform_dataframe(self.fileData)
+        self.fileData = self._convert_datetime_to_str(self.fileData)
         return self.fileData
 
     def getFileTableData(self, fileDataUrl):
@@ -35,6 +48,7 @@ class Get_Data():
             self.fileData = pd.read_csv(self.fileDataUrl)
         height, width = self.fileData.shape
 
+        self.fileData = self._convert_datetime_to_str(self.fileData)
         return self.fileData
 
     def getFileMoreSheetData(self, fileDataUrl, sheet_name=[]):
@@ -44,6 +58,7 @@ class Get_Data():
         self.fileData = pd.read_excel(self.fileDataUrl, sheet_name=sheet_name)
         self.fileData = pd.concat(self.fileData.values(), ignore_index=True)
         self.fileData.dropna(subset=['Final Invoice No.'], inplace=True)
+        self.fileData = self._convert_datetime_to_str(self.fileData)
         return self.fileData
 
     def getMergeFileData(self, fileDataUrl):
@@ -58,6 +73,7 @@ class Get_Data():
             self.fileData = pd.read_csv(self.fileDataUrl, dtype='str')
             # self.fileData = pd.read_csv(self.fileDataUrl, keep_default_na=False)
         height, width = self.fileData.shape
+        self.fileData = self._convert_datetime_to_str(self.fileData)
         return self.fileData
     def getHeaderData(self):
         self.headData = list(self.fileData.head())

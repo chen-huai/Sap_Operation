@@ -18,7 +18,7 @@ class MyTableWindow(QMainWindow, Ui_TableWindow):
 
     def createTable(self, df):
         self.df = df
-        self.df = self.df.astype(str)
+        self.df = self.df.astype(str).replace('nan', '')
         self.df_rows = self.df.shape[0]
         self.df_cols = self.df.shape[1]
         self.tableWidget.setRowCount(self.df_rows)
@@ -30,7 +30,7 @@ class MyTableWindow(QMainWindow, Ui_TableWindow):
         # self.tabletWidget.
         for i in range(self.df_rows):
             for j in range(self.df_cols):
-                self.tableWidget.setItem(i, j, QTableWidgetItem(self.df.iloc[i, j]))
+                self.tableWidget.setItem(i, j, QTableWidgetItem(str(self.df.iloc[i, j])))
         # 第1列不允许编辑
         self.tableWidget.setItemDelegateForColumn(0, EmptyDelegate(self))
         # 行颜色
