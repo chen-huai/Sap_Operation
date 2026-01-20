@@ -1421,7 +1421,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 delColums = ['Text', 'Long Text', 'Proforma No.']
                 for col in delColums:
                     if col in combineFile.fileData.columns:
-                        combineFile.fileData = combineFile.fileData.drop(columns=col, axis=1)
+                        combineFile.fileData = combineFile.fileData.drop(columns=col)
                 onData = mergekeyFieldsList
                 mergeData = pd.merge(combineFile.fileData, logFile.fileData, on=onData, how='outer', indicator=True)
                 mergeData.sort_values(by=['Order No.'], axis=0, ascending=[True], inplace=True)

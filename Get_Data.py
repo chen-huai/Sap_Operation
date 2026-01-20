@@ -131,7 +131,7 @@ class Get_Data():
         return self.projectNoList, self.csList, self.salesList, self.currencyList, self.partnerCodeList, self.materialCodeList,self.sapNoList, self.amountList, self.amountWithVATList, self.exchangeRateList,self.costList
 
     def deleteTheColumn(self, deleteColumnList):
-        self.fileData.drop(labels=deleteColumnList, axis=1, inplace=True)
+        self.fileData.drop(columns=deleteColumnList, inplace=True)
         return self.fileData
 
     def mergeData(self, data1, data2, onData):
