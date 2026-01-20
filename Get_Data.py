@@ -23,14 +23,26 @@ class Get_Data():
         return fileData
 
     def getFileData(self, fileDataUrl):
+        """
+        读取文件数据并处理类型转换
+        修复：强制 Client Contact Name 相关列在读取时为字符串类型，避免 float64 类型错误
+        """
         self.fileDataUrl = fileDataUrl
         fileType = self.fileDataUrl.split(".")[-1]
+
+        # 定义需要强制为字符串类型的列（Client Contact Name 的所有可能列名变体）
+        contact_columns = [
+            'Client Contact Name', 'client_contact_name', 'contact',
+            'Customer contact', 'contact_name', 'Client Contact', '客户联系人名称'
+        ]
+        dtype_dict = {col: 'str' for col in contact_columns}
+
         if fileType == 'xlsx':
-            self.fileData = pd.read_excel(self.fileDataUrl)
+            self.fileData = pd.read_excel(self.fileDataUrl, dtype=dtype_dict)
             # self.fileData = pd.read_excel(self.fileDataUrl, dtype='str')
             # self.fileData = pd.read_excel(self.fileDataUrl, keep_default_na=False)
         elif fileType == 'csv':
-            self.fileData = pd.read_csv(self.fileDataUrl)
+            self.fileData = pd.read_csv(self.fileDataUrl, dtype=dtype_dict)
             # self.fileData = pd.read_csv(self.fileDataUrl, dtype='str')
             # self.fileData = pd.read_csv(self.fileDataUrl, keep_default_na=False)
         height, width = self.fileData.shape
@@ -40,22 +52,46 @@ class Get_Data():
         return self.fileData
 
     def getFileTableData(self, fileDataUrl):
+        """
+        读取文件数据用于表格显示
+        修复：强制 Client Contact Name 相关列在读取时为字符串类型
+        """
         self.fileDataUrl = fileDataUrl
         fileType = self.fileDataUrl.split(".")[-1]
+
+        # 定义需要强制为字符串类型的列
+        contact_columns = [
+            'Client Contact Name', 'client_contact_name', 'contact',
+            'Customer contact', 'contact_name', 'Client Contact', '客户联系人名称'
+        ]
+        dtype_dict = {col: 'str' for col in contact_columns}
+
         if fileType == 'xlsx':
-            self.fileData = pd.read_excel(self.fileDataUrl)
+            self.fileData = pd.read_excel(self.fileDataUrl, dtype=dtype_dict)
         elif fileType == 'csv':
-            self.fileData = pd.read_csv(self.fileDataUrl)
+            self.fileData = pd.read_csv(self.fileDataUrl, dtype=dtype_dict)
         height, width = self.fileData.shape
 
         self.fileData = self._convert_datetime_to_str(self.fileData)
         return self.fileData
 
     def getFileMoreSheetData(self, fileDataUrl, sheet_name=[]):
+        """
+        读取多sheet Excel文件并合并
+        修复：强制 Client Contact Name 相关列在读取时为字符串类型
+        """
         if sheet_name==[]:
             sheet_name = None
         self.fileDataUrl = fileDataUrl
-        self.fileData = pd.read_excel(self.fileDataUrl, sheet_name=sheet_name)
+
+        # 定义需要强制为字符串类型的列
+        contact_columns = [
+            'Client Contact Name', 'client_contact_name', 'contact',
+            'Customer contact', 'contact_name', 'Client Contact', '客户联系人名称'
+        ]
+        dtype_dict = {col: 'str' for col in contact_columns}
+
+        self.fileData = pd.read_excel(self.fileDataUrl, sheet_name=sheet_name, dtype=dtype_dict)
         self.fileData = pd.concat(self.fileData.values(), ignore_index=True)
         self.fileData.dropna(subset=['Final Invoice No.'], inplace=True)
         self.fileData = self._convert_datetime_to_str(self.fileData)
