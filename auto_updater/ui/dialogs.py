@@ -680,12 +680,17 @@ class AboutDialog(QDialog):
             self.update_status_label.setText(f"{UpdateUIText.CHECK_UPDATE_STATUS_ERROR_MESSAGE}: {str(e)}")
 
     def _perform_status_check(self) -> None:
-        """执行更新状态检查"""
+        """
+        执行更新状态检查（手动检查）
+
+        这是关于对话框中的手动检查，需要强制检查更新
+        """
         try:
             if not self.auto_updater:
                 return
 
-            has_update, remote_version, local_version, error = self.auto_updater.check_for_updates()
+            # 手动检查：强制检查，无视间隔限制
+            has_update, remote_version, local_version, error = self.auto_updater.check_for_updates(force_check=True)
 
             if error:
                 self.update_status_label.setText(UpdateUIText.CANNOT_CHECK_UPDATE_STATUS_MESSAGE)
@@ -719,10 +724,15 @@ class AboutDialog(QDialog):
             QMessageBox.warning(self, UpdateUIText.ERROR_TITLE, f"{UpdateUIText.OPEN_GITHUB_ERROR_MESSAGE}: {str(e)}")
 
     def _view_release_notes(self) -> None:
-        """查看更新日志"""
+        """
+        查看更新日志（手动检查）
+
+        这是用户主动点击查看更新日志，需要强制检查更新
+        """
         try:
             if self.auto_updater:
-                has_update, remote_version, local_version, error = self.auto_updater.check_for_updates()
+                # 手动检查：强制检查，无视间隔限制
+                has_update, remote_version, local_version, error = self.auto_updater.check_for_updates(force_check=True)
 
                 if error:
                     QMessageBox.warning(self, UpdateUIText.ERROR_TITLE, f"{UpdateUIText.GET_RELEASE_NOTES_ERROR_MESSAGE}: {error}")

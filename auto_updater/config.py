@@ -198,23 +198,27 @@ class Config:
             print(f"读取上次检查时间失败: {e}")
         return None
 
-    def should_check_for_updates(self) -> bool:
+    def should_check_for_updates(self) -> tuple:
         """
         检查是否应该进行更新检查（基于时间间隔）
         开发环境下不限制检查频率，生产环境使用时间间隔
-        :return: 是否应该检查更新
+        :return: (是否应该检查更新, 原因说明)
         """
         # 开发环境下允许随时检查更新
         if is_development_environment():
-            return True
+            return True, "开发环境"
 
         # 生产环境使用时间间隔限制
         last_check = self.get_last_check_time()
         if last_check is None:
-            return True
+            return True, "首次检查"
 
         time_since_last_check = datetime.now() - last_check
-        return time_since_last_check.days >= self.update_check_interval_days
+        if time_since_last_check.days >= self.update_check_interval_days:
+            return True, "间隔已到"
+        else:
+            remaining_days = self.update_check_interval_days - time_since_last_check.days
+            return False, f"间隔未到（剩余{remaining_days}天）"
 
     def update_last_check_time(self) -> bool:
         """

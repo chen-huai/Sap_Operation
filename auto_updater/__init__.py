@@ -58,10 +58,11 @@ class AutoUpdater:
         # UI管理器（延迟初始化）
         self._ui_manager = None
 
-    def check_for_updates(self, force_check=False) -> tuple:
+    def check_for_updates(self, force_check=False, is_silent=False) -> tuple:
         """
         检查更新
         :param force_check: 是否强制检查（忽略时间间隔）
+        :param is_silent: 是否静默模式（不返回间隔错误信息，用于启动检查）
         :return: (是否有更新, 远程版本, 本地版本, 错误信息)
         """
         try:
@@ -72,16 +73,24 @@ class AutoUpdater:
                 print(f"[开发环境] 开始检查更新，本地版本: {local_version}")
                 if force_check:
                     print("[开发环境] 强制检查模式")
+                if is_silent:
+                    print("[开发环境] 静默模式")
 
             # 检查是否应该进行更新检查
-            if not force_check and not self.config.should_check_for_updates():
-                if is_development_environment():
-                    # 开发环境下不应该到达这里，因为should_check_for_updates总是返回True
-                    # 这只是保险措施
-                    print("[开发环境] 意外触发了时间间隔检查")
-                    return False, None, local_version, "开发环境检查限制"
-                else:
-                    return False, None, local_version, f"距离上次检查时间过短（间隔{self.config.update_check_interval_days}天）"
+            if not force_check:
+                should_check, reason = self.config.should_check_for_updates()
+                if not should_check:
+                    if is_development_environment():
+                        # 开发环境下不应该到达这里，因为should_check_for_updates总是返回True
+                        # 这只是保险措施
+                        print("[开发环境] 意外触发了时间间隔检查")
+                        return False, None, local_version, "开发环境检查限制"
+                    else:
+                        # 静默模式下不返回间隔错误信息
+                        if is_silent:
+                            return False, None, local_version, None
+                        else:
+                            return False, None, local_version, f"距离上次检查时间过短（间隔{self.config.update_check_interval_days}天）"
 
             # 获取远程版本信息
             release_info = self.github_client.get_latest_release()

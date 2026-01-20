@@ -317,10 +317,19 @@ class UpdateUIManager(QObject):
             logger.error(f"启动更新检查设置失败: {e}")
 
     def _perform_startup_check(self) -> None:
-        """执行启动更新检查"""
-        try:
-            has_update, remote_version, local_version, error = self.auto_updater.check_for_updates()
+        """
+        执行启动更新检查（静默模式）
 
+        启动检查特点：
+        - 使用 is_silent=True，不返回间隔错误信息
+        - 只在有真正更新时才提示用户
+        - 完全忽略"间隔过短"等情况，保持静默
+        """
+        try:
+            # 静默模式：间隔未到时不返回错误信息
+            has_update, remote_version, local_version, error = self.auto_updater.check_for_updates(is_silent=True)
+
+            # 只有在有更新且无错误时才提示用户
             if has_update and error is None:
                 reply = QMessageBox.question(
                     self.parent,
@@ -335,8 +344,14 @@ class UpdateUIManager(QObject):
                 if reply == QMessageBox.Yes:
                     self.start_update_process(remote_version)
 
+            # 静默忽略所有其他情况：
+            # - 无更新（has_update=False）
+            # - 间隔未到（error=None, has_update=False）
+            # - 真正的错误（error不为None），但也静默处理避免打扰用户
+
         except Exception as e:
-            logger.error(f"启动更新检查异常: {e}")
+            # 启动检查异常也静默处理，避免打扰用户
+            logger.debug(f"启动更新检查异常（静默）: {e}")
 
     def _find_or_create_menu(self, menu_bar: QMenuBar, title: str) -> QMenu:
         """
