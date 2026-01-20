@@ -1804,7 +1804,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     fillNanColumnKey = {'Material Code': ["PHY Material Code", "CHM Material Code"]}
                     newData.fillNanColumn(fillNanColumnKey)
                 # 将联系人空值填上
-                newData.fileData['Client Contact Name'].fillna("XXXXXX", inplace=True)
+                newData.fileData['Client Contact Name'] = newData.fileData['Client Contact Name'].fillna("XXXXXX")
                 # 单个数据保留原始数据
                 if self.checkBox_17.isChecked():
                     newData.fileData = myWin.addRowMsg(newData.fileData)

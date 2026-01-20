@@ -136,7 +136,7 @@ class Get_Data():
     def fillNanColumn(self,fillNanColumnKey):
         for filledKey in fillNanColumnKey:
             for fillKey in fillNanColumnKey[filledKey]:
-                self.fileData[filledKey].fillna(self.fileData[fillKey], inplace=True)
+                self.fileData[filledKey] = self.fileData[filledKey].fillna(self.fileData[fillKey])
         # self.fileData["Material Code"].fillna(self.fileData["PHY Material Code"], inplace=True)
         # self.fileData["Material Code"].fillna(self.fileData["CHM Material Code"], inplace=True)
         return self.fileData
