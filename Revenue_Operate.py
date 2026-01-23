@@ -17,7 +17,7 @@ class RevenueAllocator:
         :return: 文件路径
         """
         month_str = date.strftime("%Y%m")
-        return f"{path}\\hours_{month_str}.csv"
+        return os.path.join(path, f"hours_{month_str}.csv")
 
     def _load_hours_data(self, date, path):
         """
@@ -145,12 +145,16 @@ class RevenueAllocator:
         amount_with_vat = revenueData.get('Tax-inclusive amount', 0)
         amount = float(amount_with_vat) / 1.06
         if amount_with_vat != 0:
-            act_revenue = float(revenueData['Tax-inclusive amount']) * float(revenueData['Rate']) / 1.06
+            # 安全获取Rate字段，避免KeyError和除零错误
+            rate_value = revenueData.get('Rate', 1) or 1
+            rate = float(rate_value) if rate_value != 0 else 1
+            act_revenue = float(revenueData['Tax-inclusive amount']) * rate / 1.06
         else:
             # 当没有含税金额时直接使用Revenue
             act_revenue = float(revenueData['Revenue'])
 
-        base = (act_revenue - float(revenueData['Total Subcon Cost']) / 1.06) * float(
+        untaxed_cost = float(revenueData['Total Subcon Cost']) / 1.06
+        base = (act_revenue - untaxed_cost) * float(
             configContent.get('Plan_Cost_Parameter'))
         material_code = revenueData.get('Material Code', '')
         primary_cs = revenueData.get('Primary CS', '')  # 获取Primary CS字段
@@ -182,9 +186,9 @@ class RevenueAllocator:
 
             # 计算并格式化金额和工时
             business_dept_1000_revenue = round(base * (1 - lab_cost), 2)
-            business_dept_1000_act_revenue = round(act_revenue * (1 - lab_cost), 2),
+            business_dept_1000_act_revenue = round((act_revenue - untaxed_cost) * (1 - lab_cost), 2)
             lab_1000_revenue = round(base * lab_cost, 2)
-            lab_1000_act_revenue = round(act_revenue * lab_rate, 2),
+            lab_1000_act_revenue = round((act_revenue - untaxed_cost) * lab_cost, 2)
             business_dept_1000_hours = round((base * (1 - lab_cost)) / business_dept_rate, significant_digits)
             lab_1000_hours = round((base * lab_cost) / lab_rate, significant_digits)
 
@@ -225,13 +229,14 @@ class RevenueAllocator:
             item_1000_amount = amount * proportion_1000
             item_2000_amount = amount * proportion_2000
             business_dept_1000_revenue = round(base * proportion_1000 * (1 - lab_1000_cost), 2)
-            business_dept_1000_act_revenue = round(act_revenue * proportion_1000 * (1 - lab_1000_cost), 2),
+            business_dept_1000_act_revenue = round((act_revenue - untaxed_cost) * proportion_1000 * (1 - lab_1000_cost), 2)
             lab_1000_revenue = round(base * proportion_1000 * lab_1000_cost, 2)
-            lab_1000_act_revenue = round(act_revenue * proportion_1000 * lab_1000_cost, 2),
+            #
+            lab_1000_act_revenue = round((act_revenue - untaxed_cost) * proportion_1000 * lab_1000_cost, 2)
             business_dept_2000_revenue = round(base * proportion_2000 * (1 - lab_2000_cost), 2)
-            business_dept_2000_act_revenue = round(act_revenue * proportion_2000 * (1 - lab_2000_cost), 2),
+            business_dept_2000_act_revenue = round((act_revenue - untaxed_cost) * proportion_2000 * (1 - lab_2000_cost), 2)
             lab_2000_revenue = round(base * proportion_2000 * lab_2000_cost, 2)
-            lab_2000_act_revenue = round(act_revenue * proportion_2000 * lab_2000_cost, 2),
+            lab_2000_act_revenue = round((act_revenue - untaxed_cost) * proportion_2000 * lab_2000_cost, 2)
             business_dept_1000_hours = round((base * proportion_1000 * (1 - lab_1000_cost)) / business_dept_rate,
                                              significant_digits)
             lab_1000_hours = round((base * proportion_1000 * lab_1000_cost) / lab_1000_rate, significant_digits)
@@ -311,7 +316,6 @@ class RevenueAllocator:
     # 新增工作日生成方法
     def generate_work_days(self, start_date, end_date):
         """生成有效工作日列表（自动排除节假日和周末）"""
-        from chinese_calendar import is_holiday
         work_days = []
         current_day = start_date
         while current_day <= end_date:

@@ -334,7 +334,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ['PHY_Cost_Center', '48601294', 'PHY成本中心'],
             ['计划成本', '数值', '备注'],
             ['Plan_Cost_Parameter', 0.9, '实际的90%，预留10%利润'],
-            ['Significant_Digits', 0, '保留几位有效数值'],
+            ['Significant_Digits', 2, '保留几位小数'],
             ['实验室成本比例', '数值', '备注'],
             ['CHM_Cost_Parameter', 0.3, '给到CHM30%'],
             ['PHY_Cost_Parameter', 0.3, '给到PHY30%'],
@@ -1102,12 +1102,16 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             
             # 创建分配器实例
             allocator = RevenueAllocator()
-            
+            # 将未税的cost，更新为含税的cost，与直接获取order的Excel保持一致
+            if self.checkBox_27.isChecked():
+                cost = guiData.get('cost', 0) * 1.06
+            else:
+                cost = guiData.get('cost', 0)
             # 转换 GUI 数据为 Revenue_Operate 格式
             revenueDataForAllocation = {
                 'Order Number': guiData.get('orderNo', ''),
                 'Material Code': guiData.get('materialCode', ''),
-                'Total Subcon Cost': guiData.get('cost', 0),
+                'Total Subcon Cost': cost,
                 'Primary CS': guiData.get('csName', ''),
                 'Tax-inclusive amount': guiData.get('amountVat', ''),
                 'Rate': guiData.get('exchangeRate', ''),
@@ -1142,46 +1146,67 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         
         # 直接引用 result 中的计算结果
         # 根据实验室分配情况映射数据
-        
-        # CHM 相关数据
-        if result.get('lab_1000') == 'CHM':
-            # CHM 在 Item1000 中
-            revenueData['chmCost'] = format(result.get('lab_1000_act_revenue', 0), '.2f')
-            revenueData['chmRe'] = format(result.get('business_dept_1000_act_revenue', 0), '.2f')
-            revenueData['chmCsCostAccounting'] = format(result.get('business_dept_1000_hours', 0), f'.{significant_digits}f')
-            revenueData['chmLabCostAccounting'] = format(result.get('lab_1000_hours', 0), f'.{significant_digits}f')
-        elif result.get('lab_2000') == 'CHM':
-            # CHM 在 Item2000 中
-            revenueData['chmCost'] = format(result.get('lab_2000_act_revenue', 0) , '.2f')
-            revenueData['chmRe'] = format(result.get('business_dept_2000_act_revenue', 0), '.2f')
-            revenueData['chmCsCostAccounting'] = format(result.get('business_dept_2000_hours', 0), f'.{significant_digits}f')
-            revenueData['chmLabCostAccounting'] = format(result.get('lab_2000_hours', 0), f'.{significant_digits}f')
+
+        # 情况1: 配置不存在
+        if guiData['materialCode'] not in configContent:
+            revenueData['csCostAccounting'] = format(result.get('business_dept_1000_hours', 0),
+                                                        f'.{significant_digits}f')
+            revenueData['labCostAccounting'] = format(result.get('lab_1000_hours', 0), f'.{significant_digits}f')
+            if 'T75' in guiData['materialCode']:
+                revenueData['labCostRate'] = guiData['chmCostRate']
+                revenueData['labHourlyRate'] = guiData['chmHourlyRate']
+                revenueData['chmCost'] = format(result.get('lab_1000_act_revenue', 0), '.2f')
+                revenueData['chmRe'] = format(result.get('item_1000_amount', 0), '.2f')
+                revenueData['phyCost'] = format(0, '.2f')
+                revenueData['phyRe'] = format(0, '.2f')
+            else:
+                revenueData['labCostRate'] = guiData['phyCostRate']
+                revenueData['labHourlyRate'] = guiData['phyHourlyRate']
+                revenueData['chmCost'] = format(0, '.2f')
+                revenueData['chmRe'] = format(0, '.2f')
+                revenueData['phyCost'] = format(result.get('lab_1000_act_revenue', 0), '.2f')
+                revenueData['phyRe'] = format(result.get('item_1000_amount', 0), '.2f')
+
         else:
-            # CHM 没有分配
-            revenueData['chmCost'] = '0.00'
-            revenueData['chmRe'] = '0.00'
-            revenueData['chmCsCostAccounting'] = '0'
-            revenueData['chmLabCostAccounting'] = '0'
-        
-        # PHY 相关数据
-        if result.get('lab_1000') == 'PHY':
-            # PHY 在 Item1000 中
-            revenueData['phyCost'] = format(result.get('lab_1000_act_revenue', 0) * guiData['exchangeRate'], '.2f')
-            revenueData['phyRe'] = format(result.get('business_dept_1000_act_revenue', 0), '.2f')
-            revenueData['phyCsCostAccounting'] = format(result.get('business_dept_1000_hours', 0), f'.{significant_digits}f')
-            revenueData['phyLabCostAccounting'] = format(result.get('lab_1000_hours', 0), f'.{significant_digits}f')
-        elif result.get('lab_2000') == 'PHY':
-            # PHY 在 Item2000 中
-            revenueData['phyCost'] = format(result.get('lab_2000_act_revenue', 0) * guiData['exchangeRate'], '.2f')
-            revenueData['phyRe'] = format(result.get('business_dept_2000_act_revenue', 0), '.2f')
-            revenueData['phyCsCostAccounting'] = format(result.get('business_dept_2000_hours', 0), f'.{significant_digits}f')
-            revenueData['phyLabCostAccounting'] = format(result.get('lab_2000_hours', 0), f'.{significant_digits}f')
-        else:
-            # PHY 没有分配
-            revenueData['phyCost'] = '0.00'
-            revenueData['phyRe'] = '0.00'
-            revenueData['phyCsCostAccounting'] = '0'
-            revenueData['phyLabCostAccounting'] = '0'
+            # CHM 相关数据
+            if result.get('lab_1000') == 'CHM':
+                # CHM 在 Item1000 中
+                revenueData['chmCost'] = format(result.get('lab_1000_act_revenue', 0), '.2f')
+                revenueData['chmRe'] = format(result.get('item_1000_amount', 0), '.2f')
+                revenueData['chmCsCostAccounting'] = format(result.get('business_dept_1000_hours', 0), f'.{significant_digits}f')
+                revenueData['chmLabCostAccounting'] = format(result.get('lab_1000_hours', 0), f'.{significant_digits}f')
+            elif result.get('lab_2000') == 'CHM':
+                # CHM 在 Item2000 中
+                revenueData['chmCost'] = format(result.get('lab_2000_act_revenue', 0) , '.2f')
+                revenueData['chmRe'] = format(result.get('item_2000_amount', 0), '.2f')
+                revenueData['chmCsCostAccounting'] = format(result.get('business_dept_2000_hours', 0), f'.{significant_digits}f')
+                revenueData['chmLabCostAccounting'] = format(result.get('lab_2000_hours', 0), f'.{significant_digits}f')
+            else:
+                # CHM 没有分配
+                revenueData['chmCost'] = '0.00'
+                revenueData['chmRe'] = '0.00'
+                revenueData['chmCsCostAccounting'] = '0'
+                revenueData['chmLabCostAccounting'] = '0'
+
+            # PHY 相关数据
+            if result.get('lab_1000') == 'PHY':
+                # PHY 在 Item1000 中
+                revenueData['phyCost'] = format(result.get('lab_1000_act_revenue', 0), '.2f')
+                revenueData['phyRe'] = format(result.get('item_1000_amount', 0), '.2f')
+                revenueData['phyCsCostAccounting'] = format(result.get('business_dept_1000_hours', 0), f'.{significant_digits}f')
+                revenueData['phyLabCostAccounting'] = format(result.get('lab_1000_hours', 0), f'.{significant_digits}f')
+            elif result.get('lab_2000') == 'PHY':
+                # PHY 在 Item2000 中
+                revenueData['phyCost'] = format(result.get('lab_2000_act_revenue', 0), '.2f')
+                revenueData['phyRe'] = format(result.get('item_2000_amount', 0), '.2f')
+                revenueData['phyCsCostAccounting'] = format(result.get('business_dept_2000_hours', 0), f'.{significant_digits}f')
+                revenueData['phyLabCostAccounting'] = format(result.get('lab_2000_hours', 0), f'.{significant_digits}f')
+            else:
+                # PHY 没有分配
+                revenueData['phyCost'] = '0.00'
+                revenueData['phyRe'] = '0.00'
+                revenueData['phyCsCostAccounting'] = '0'
+                revenueData['phyLabCostAccounting'] = '0'
         
         return revenueData
 
