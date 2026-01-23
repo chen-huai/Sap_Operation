@@ -14,7 +14,7 @@ GITHUB_REPO: str = "Sap_Operation"
 GITHUB_API_BASE: str = "https://api.github.com"
 
 # 版本配置
-CURRENT_VERSION: str = "2.0.6"  # 修复 pandas 打包问题（pandas 降级到 2.2.2，添加 C 扩展模块）
+CURRENT_VERSION: str = "2.0.7"  # 修复 pandas 打包问题（pandas 降级到 2.2.2，添加 C 扩展模块）
 UPDATE_CHECK_INTERVAL_DAYS: int = 30
 AUTO_CHECK_ENABLED: bool = True
 

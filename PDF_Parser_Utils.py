@@ -12,6 +12,11 @@ PDF解析工具模块
     # 批量解析PDF行
     msg = {}
     parse_pdf_fields(msg, '购 名称：XXX公司 销 名称：南德认证检测...', inv_pattern, order_pattern)
+
+更新日志:
+    - 2026-01-23: 修正extract_revenue()正则表达式,优化"（小写）"格式含税金额提取
+      * 匹配模式: (?:价税)?合计（大写）... （小写）¥XXXX
+      * 提升对复杂发票格式的兼容性
 """
 
 import re
@@ -32,9 +37,9 @@ _COMPANY_PATTERNS = [
     re.compile(r'购\s+名称\s*[:：]\s*(.+?)\s+销\s+名称'),
 ]
 
-# 金额提取模式
-_REVENUE_PATTERN_1 = re.compile(r'(?:价税)?合计\s*[\(（]?小写[\)）]?\s*([¥¥￥]\s*[\d,]+\.?\d*)')
-_REVENUE_PATTERN_2 = re.compile(r'[¥¥￥]\s*([\d,]+\.?\d*)')
+# 金额提取模式 - 优化匹配"（小写）"格式
+_REVENUE_PATTERN_1 = re.compile(r'[\(（]小写[\)）]\s*[¥￥]\s*([\d,]+\.?\d*)')
+_REVENUE_PATTERN_2 = re.compile(r'[¥￥]\s*([\d,]+\.?\d*)')
 
 # 发票号提取模式
 _FAPIAO_PATTERN_1 = re.compile(r'发票号码\s*[:：]\s*([A-Z0-9]+)')
@@ -109,15 +114,15 @@ def extract_revenue(text: str) -> Optional[str]:
         '¥1,234.56'
     """
     # 使用预编译的正则表达式 (性能优化)
-    # 模式1: 匹配"价税合计（小写）"或"合计（小写）"后的金额
+    # 模式1: 匹配"（小写）"后的金额（含税金额）
     match1 = _REVENUE_PATTERN_1.search(text)
     if match1:
-        return match1.group(1).replace(' ', '')
+        return '¥' + match1.group(1).replace(' ', '')
 
-    # 模式2: 直接匹配货币符号和金额
-    match2 = _REVENUE_PATTERN_2.search(text)
-    if match2:
-        return '¥' + match2.group(1)
+    # # 模式2: 直接匹配货币符号和金额
+    # match2 = _REVENUE_PATTERN_2.search(text)
+    # if match2:
+    #     return '¥' + match2.group(1).replace(' ', '')
 
     # 模式3: 兼容旧的split()逻辑 - 提取')'后的第三部分
     if '）' in text or ')' in text:
