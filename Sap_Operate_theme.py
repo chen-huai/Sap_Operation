@@ -1156,17 +1156,15 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 revenueData['labCostRate'] = guiData['chmCostRate']
                 revenueData['labHourlyRate'] = guiData['chmHourlyRate']
                 revenueData['chmCost'] = format(result.get('lab_1000_act_revenue', 0), '.2f')
-                revenueData['chmRe'] = format(result.get('item_1000_amount', 0), '.2f')
-                revenueData['phyCost'] = format(0, '.2f')
-                revenueData['phyRe'] = format(0, '.2f')
+                revenueData['chmRe'] = revenueData['phyRe'] =  format(result.get('item_1000_amount', 0), '.2f')
+                revenueData['phyCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['phyCostRate'] , '.2f')
+
             else:
                 revenueData['labCostRate'] = guiData['phyCostRate']
                 revenueData['labHourlyRate'] = guiData['phyHourlyRate']
-                revenueData['chmCost'] = format(0, '.2f')
-                revenueData['chmRe'] = format(0, '.2f')
+                revenueData['chmCost'] = format((revenueData['revenueForCny'] - guiData['cost']) * guiData['chmCostRate'] , '.2f')
+                revenueData['phyRe'] = revenueData['chmRe'] = format(result.get('item_1000_amount', 0), '.2f')
                 revenueData['phyCost'] = format(result.get('lab_1000_act_revenue', 0), '.2f')
-                revenueData['phyRe'] = format(result.get('item_1000_amount', 0), '.2f')
-
         else:
             # CHM 相关数据
             if result.get('lab_1000') == 'CHM':
