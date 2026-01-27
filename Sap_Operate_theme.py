@@ -151,14 +151,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.status_bar = self.statusBar()
         self.update_status_bar()
 
-        # 初始化自动更新器
-        self.auto_updater = AutoUpdater(parent=self)
-
         # 性能优化：初始化更新控制变量
         self._last_update_time = 0
 
-        # 连接Update菜单项信号
-        self.actionUpdate.triggered.connect(self.handle_manual_update)
+        # 注意：actionUpdate信号由setup_auto_update()中的setup_update_ui()自动连接
+        # 无需手动连接，避免重复触发
 
         # 异步检查更新（不阻塞主线程）
         from PyQt5.QtCore import QTimer
@@ -592,7 +589,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         try:
             if hasattr(self, 'auto_updater') and self.auto_updater:
                 # 使用正确的API进行启动时更新检查
-                self.auto_updater.check_for_updates_with_ui(force_check=False)
+                self.auto_updater.check_for_updates_with_ui(force_check=True)
             else:
                 print("自动更新器未初始化")
 
@@ -3017,28 +3014,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             # error_msg = f"处理过程中出现错误: {str(e)}"
             # logger.error(error_msg)
             # QMessageBox.critical(self, "错误", error_msg)
-
-    def handle_manual_update(self):
-        """处理手动更新检查"""
-        try:
-            # 显示检查中状态
-            self.status_bar.showMessage("正在检查更新...")
-
-            # 调用auto_updater的异步更新对话框
-            if hasattr(self, 'auto_updater') and self.auto_updater:
-                # 优先使用异步版本
-                if self.auto_updater.is_async_supported():
-                    print("使用异步下载模式")
-                    self.auto_updater.show_update_dialog_async()
-                else:
-                    print("使用同步下载模式")
-                    self.auto_updater.show_update_dialog()
-            else:
-                self.status_bar.showMessage("自动更新器未初始化")
-
-        except Exception as e:
-            self.status_bar.showMessage("更新检查失败")
-            QMessageBox.warning(self, "更新错误", f"启动更新流程失败：{str(e)}", QMessageBox.Yes)
 
     def closeEvent(self, event):
         """应用退出时清理资源"""

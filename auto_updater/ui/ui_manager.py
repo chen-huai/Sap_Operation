@@ -107,7 +107,8 @@ class UpdateUIManager(QObject):
             if existing_update_action:
                 # 使用现有的actionUpdate对象，连接我们的功能
                 self._update_action = existing_update_action
-                self._update_action.triggered.connect(self.check_for_updates_with_ui)
+                # 使用lambda强制传递force_check=True，确保手动更新时跳过频率检查
+                self._update_action.triggered.connect(lambda: self.check_for_updates_with_ui(force_check=True))
                 self._update_action.setStatusTip(UpdateUIText.UPDATE_MENU_TOOLTIP)
                 logger.debug("使用现有actionUpdate对象并连接信号")
             else:
@@ -119,7 +120,8 @@ class UpdateUIManager(QObject):
 
                 self._update_action = QAction(UpdateUIText.UPDATE_MENU_TEXT, self.parent)
                 self._update_action.setObjectName("actionUpdate")
-                self._update_action.triggered.connect(self.check_for_updates_with_ui)
+                # 使用lambda强制传递force_check=True，确保手动更新时跳过频率检查
+                self._update_action.triggered.connect(lambda: self.check_for_updates_with_ui(force_check=True))
                 self._update_action.setStatusTip(UpdateUIText.UPDATE_MENU_TOOLTIP)
                 help_menu.addAction(self._update_action)
 
