@@ -5,6 +5,7 @@
 """
 
 # 应用配置
+SOFTWARE_ID: str = "sap_operation_tool"  # 软件唯一标识，用于多软件状态隔离
 APP_NAME: str = "Sap_Operate_theme"
 APP_EXECUTABLE: str = "Sap_Operate_theme.exe"
 
@@ -76,6 +77,7 @@ GITHUB_LATEST_RELEASE_URL: str = f"{GITHUB_RELEASES_URL}/latest"
 # 默认配置字典（保持JSON格式兼容）
 DEFAULT_CONFIG: dict = {
     "app": {
+        "software_id": SOFTWARE_ID,
         "name": APP_NAME,
         "executable": APP_EXECUTABLE
     },
@@ -116,7 +118,7 @@ def validate_config() -> bool:
     try:
         # 验证必要常量
         required_constants = [
-            APP_NAME, APP_EXECUTABLE, GITHUB_OWNER, GITHUB_REPO,
+            SOFTWARE_ID, APP_NAME, APP_EXECUTABLE, GITHUB_OWNER, GITHUB_REPO,
             GITHUB_API_BASE, CURRENT_VERSION, REQUEST_HEADERS
         ]
 

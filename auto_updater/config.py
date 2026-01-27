@@ -9,14 +9,18 @@
 import os
 import sys
 import json
+import logging
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional
 from packaging import version
 
+# 初始化日志记录器
+logger = logging.getLogger(__name__)
+
 # 导入配置常量
 from .config_constants import (
-    APP_NAME, APP_EXECUTABLE, GITHUB_OWNER, GITHUB_REPO, GITHUB_API_BASE,
+    SOFTWARE_ID, APP_NAME, APP_EXECUTABLE, GITHUB_OWNER, GITHUB_REPO, GITHUB_API_BASE,
     CURRENT_VERSION, UPDATE_CHECK_INTERVAL_DAYS, AUTO_CHECK_ENABLED,
     MAX_BACKUP_COUNT, DOWNLOAD_TIMEOUT, MAX_RETRIES, AUTO_RESTART,
     REQUEST_HEADERS, DEFAULT_CONFIG, GITHUB_REPO_PATH,
@@ -116,7 +120,7 @@ class Config:
             self._save_config()
             return True
         except Exception as e:
-            print(f"更新版本号失败: {e}")
+            logger.error(f"更新版本号失败: {e}")
             return False
 
     def _save_config(self) -> bool:
@@ -135,7 +139,7 @@ class Config:
                 json.dump(self._config, f, indent=2, ensure_ascii=False)
             return True
         except Exception as e:
-            print(f"保存配置文件失败: {e}")
+            logger.error(f"保存配置文件失败: {e}")
             return False
 
     def _parse_version(self, version_str: str):
@@ -159,7 +163,7 @@ class Config:
             v2 = self._parse_version(version2)
 
             if v1 is None or v2 is None:
-                print(f"版本比较失败: 无效的版本号")
+                logger.warning(f"版本比较失败: 无效的版本号")
                 return 0
 
             if v1 < v2:
@@ -169,7 +173,7 @@ class Config:
             else:
                 return 0
         except Exception as e:
-            print(f"版本比较失败: {e}")
+            logger.error(f"版本比较失败: {e}")
             return 0
 
     def is_newer_version(self, remote_version: str, local_version: str = None) -> bool:
@@ -195,7 +199,7 @@ class Config:
             if last_check_str:
                 return datetime.fromisoformat(last_check_str)
         except Exception as e:
-            print(f"读取上次检查时间失败: {e}")
+            logger.error(f"读取上次检查时间失败: {e}")
         return None
 
     def should_check_for_updates(self) -> tuple:
@@ -231,42 +235,110 @@ class Config:
             self._save_state(state)
             return True
         except Exception as e:
-            print(f"更新检查时间失败: {e}")
+            logger.error(f"更新检查时间失败: {e}")
             return False
 
-    def _load_state(self) -> dict:
-        """加载状态文件"""
-        try:
-            if getattr(sys, 'frozen', False):
-                exec_dir = os.path.dirname(sys.executable)
-            else:
-                exec_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    def _get_state_path(self) -> str:
+        """
+        获取状态文件的完整路径
+        :return: 状态文件路径
+        """
+        exec_dir = get_executable_dir()
+        return os.path.join(exec_dir, UPDATE_STATE_FILE)
 
-            state_path = os.path.join(exec_dir, UPDATE_STATE_FILE)
-            if os.path.exists(state_path):
-                with open(state_path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            else:
+    def _load_state(self) -> dict:
+        """
+        加载状态文件，返回当前软件的状态数据
+        支持新格式（按软件ID隔离）和旧格式（自动迁移）
+        :return: 当前软件的状态数据字典
+        """
+        try:
+            state_path = self._get_state_path()
+            if not os.path.exists(state_path):
                 return {}
-        except Exception as e:
-            print(f"加载状态文件失败: {e}")
+
+            with open(state_path, 'r', encoding='utf-8') as f:
+                full_state = json.load(f)
+
+            # 检测是否为新格式（包含 SOFTWARE_ID 键）
+            if SOFTWARE_ID in full_state:
+                # 新格式：返回当前软件的状态
+                return full_state.get(SOFTWARE_ID, {})
+            else:
+                # 旧格式：自动迁移
+                logger.info("检测到旧格式状态文件，正在迁移到新格式...")
+                migrated_state = self._migrate_legacy_state(full_state)
+                return migrated_state.get(SOFTWARE_ID, {})
+
+        except (FileNotFoundError, json.JSONDecodeError, IOError, OSError) as e:
+            logger.error(f"加载状态文件失败: {e}")
             return {}
 
     def _save_state(self, state: dict) -> bool:
-        """保存状态文件"""
+        """
+        保存状态文件，更新当前软件的状态数据
+        :param state: 当前软件的状态数据
+        :return: 是否保存成功
+        """
         try:
-            if getattr(sys, 'frozen', False):
-                exec_dir = os.path.dirname(sys.executable)
-            else:
-                exec_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            state_path = self._get_state_path()
 
-            state_path = os.path.join(exec_dir, UPDATE_STATE_FILE)
+            # 读取现有完整状态（包含所有软件的数据）
+            full_state = {}
+            if os.path.exists(state_path):
+                try:
+                    with open(state_path, 'r', encoding='utf-8') as f:
+                        full_state = json.load(f)
+                except Exception:
+                    # 文件损坏，使用空字典
+                    full_state = {}
+
+            # 更新当前软件的状态数据
+            full_state[SOFTWARE_ID] = state
+
+            # 保存完整状态
             with open(state_path, 'w', encoding='utf-8') as f:
-                json.dump(state, f, indent=2, ensure_ascii=False)
+                json.dump(full_state, f, indent=2, ensure_ascii=False)
             return True
-        except Exception as e:
-            print(f"保存状态文件失败: {e}")
+        except (json.JSONDecodeError, IOError, OSError) as e:
+            logger.error(f"保存状态文件失败: {e}")
             return False
+
+    def _migrate_legacy_state(self, legacy_state: dict) -> dict:
+        """
+        将旧格式状态迁移到新格式
+        迁移前会自动备份旧文件
+        :param legacy_state: 旧格式状态数据
+        :return: 新格式状态数据
+        """
+        try:
+            state_path = self._get_state_path()
+
+            # 创建备份文件（在覆盖前）
+            backup_path = f"{state_path}.bak"
+            try:
+                import shutil
+                shutil.copy2(state_path, backup_path)
+                logger.info(f"已创建旧状态文件备份: {backup_path}")
+            except Exception as backup_error:
+                logger.warning(f"创建备份文件失败: {backup_error}，继续迁移...")
+
+            # 创建新格式结构
+            new_state = {
+                SOFTWARE_ID: legacy_state
+            }
+
+            # 保存新格式
+            with open(state_path, 'w', encoding='utf-8') as f:
+                json.dump(new_state, f, indent=2, ensure_ascii=False)
+
+            logger.info(f"状态文件迁移成功：旧格式 -> 新格式（软件ID: {SOFTWARE_ID}）")
+            return new_state
+
+        except (IOError, OSError) as e:
+            logger.error(f"迁移状态文件失败: {e}")
+            # 返回新格式作为降级方案
+            return {SOFTWARE_ID: legacy_state}
 
 # 全局配置实例
 _config = None
