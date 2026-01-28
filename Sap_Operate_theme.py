@@ -343,12 +343,20 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ['430_Item_1000', 0.8, '430分配规则'],
             ['430_Item_2000', 0.2, '430分配规则'],
             # 新增特殊MC规则
-            ['T20-430-A2', 'PHY_1000/CHM_2000', '1000/2000对应的lab'],
+            ['T20-430-A2', 'PHY_1000/CHM_2000', '1000/2000对应的lab，强制1000设置在前，2000在后'],
             ['T20-430-A2_mc', 'T20-430-00/T75-430-00', '1000/2000对应的mc'],
-            ['T75-441-A2', 'CHM_1000/PHY_2000', '1000/2000对应的lab'],
+            ['T75-441-A2', 'CHM_1000/PHY_2000', '1000/2000对应的lab，强制1000设置在前，2000在后'],
             ['T75-441-A2_mc', 'T75-441-00/T20-441-00', '1000/2000对应的mc'],
-            ['T75-405-A2', 'CHM_1000/PHY_2000', '1000/2000对应的lab'],
+            ['T75-405-A2', 'CHM_1000/PHY_2000', '1000/2000对应的lab，强制1000设置在前，2000在后'],
             ['T75-405-A2_mc', 'T75-405-00/T20-405-00', '1000/2000对应的mc'],
+            ['T75-405-D2', 'CHM_1000/PHY_2000', '1000/2000对应的lab，计算hour后强制都转为1000'],
+            ['T75-405-D2_mc', 'T75-405-D2/T75-405-D2', '1000/2000对应的mc'],
+            ['T75-405-D3', 'CHM_1000/PHY_2000', '1000/2000对应的lab，计算hour后强制都转为1000'],
+            ['T75-405-D3_mc', 'T75-405-D3/T75-405-D3', '1000/2000对应的mc'],
+            ['T75-441-D2', 'CHM_1000/PHY_2000', '1000/2000对应的lab，计算hour后强制都转为1000'],
+            ['T75-441-D2_mc', 'T75-441-D2/T75-441-D2', '1000/2000对应的mc'],
+            ['T75-441-D3', 'CHM_1000/PHY_2000', '1000/2000对应的lab，计算hour后强制都转为1000'],
+            ['T75-441-D3_mc', 'T75-441-D3/T75-441-D3', '1000/2000对应的mc'],
             # 新增公共参数
             ['Max_Hour', 8, '最大工作时长'],
             ['Hours_Combine_Key', "Order Number;Material Code;Primary CS",'以;分隔，数据透视字段'],
@@ -2594,6 +2602,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             
             # 创建结果DataFrame
             result_df = pd.DataFrame(all_results)
+            # material_code包含D2或D3，更新字段item=1000
+            mask = result_df['material_code'].str.contains(r'D[23]', case=False, na=False, regex=True)
+            result_df.loc[mask, 'item'] = '1000'
             
             # 生成输出文件名
             current_time = datetime.datetime.now().strftime('%Y-%m-%d %H.%M.%S')
