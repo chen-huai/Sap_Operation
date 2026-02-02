@@ -2275,10 +2275,25 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 try:
                     pdfOperate = PDF_Operate
                     adminGuiData = MyMainWindow.getAdminGuiData(self)
+                    billing_dict = {}  # 初始化字典，避免未定义警告
                     self.textBrowser_3.append('导出文件夹：%s' % configContent['Ele_Invoice_Files_Export_URL'])
                     self.textBrowser_3.append('导出文件名称：')
                     if self.checkBox_25.isChecked():
                         billing_df = myWin.getBillingListData()
+                        # 性能优化：预先创建 Billing List 字典映射，避免循环中重复扫描 DataFrame
+                        # 一次性类型转换，避免每次查询都重新转换
+                        billing_df['Final Invoice No.'] = billing_df['Final Invoice No.'].astype('int64')
+                        # 创建字典映射：{invoice_no: {cs, odmRe, customerName}}
+                        billing_dict = {}
+                        for _, row in billing_df.iterrows():
+                            invoice_no = row['Final Invoice No.']
+                            billing_dict[invoice_no] = {
+                                'CS': row['CS'],
+                                'odmRe': row['求和项:Amount with VAT'],
+                                'CustomerName': row['Customer Name']
+                            }
+                        self.textBrowser_3.append(f'✓ 已加载 Billing List 索引：{len(billing_dict)} 条记录')
+                        self.textBrowser_3.append('----------------------------------')
                     i = 1
 
                     # 构造正则表达式
@@ -2311,21 +2326,23 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                 if 'Invoice No' not in msg:
                                     msg['Invoice No'] = re.findall(inv_pattern,fileUrl)[0]
                                 if self.checkBox_25.isChecked():
-                                    # pandas中有int32和int64的格式区别
-                                    cs = list(
-                                        billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['CS'])
-                                    odmRe = list(
-                                        billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['求和项:Amount with VAT'])
-                                    customerName = list(
-                                        billing_df[billing_df['Final Invoice No.'].astype('int64') == int(msg['Invoice No'])]['Customer Name'])
-                                    if cs == []:
+                                    # 性能优化：使用字典查询替代 DataFrame 扫描，O(1) 复杂度
+                                    try:
+                                        invoice_no = int(msg['Invoice No'])
+                                        invoice_data = billing_dict.get(invoice_no)
+                                        if invoice_data is None:
+                                            msg['CS'] = ''
+                                            msg['odmRe'] = 0.00
+                                            msg['Customer Name'] = ''
+                                        else:
+                                            msg['CS'] = invoice_data['CS']
+                                            msg['odmRe'] = invoice_data['odmRe']
+                                            msg['Customer Name'] = invoice_data['CustomerName']
+                                    except (ValueError, KeyError):
+                                        # Invoice No 格式错误或缺失
                                         msg['CS'] = ''
                                         msg['odmRe'] = 0.00
                                         msg['Customer Name'] = ''
-                                    else:
-                                        msg['CS'] = cs[0]
-                                        msg['odmRe'] = odmRe[0]
-                                        msg['Customer Name'] = customerName[0]
                                 else:
                                     msg['CS'] = ''
                                     msg['odmRe'] = 0.00
