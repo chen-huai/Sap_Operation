@@ -488,7 +488,101 @@ class Sap():
         res['msg'] = ''
         try:
             if guiData['planCostCheck'] or revenueData['revenueForCny'] >= 35000:
-                if 'A2' in guiData['materialCode']:
+                # D2/D3特殊处理：CS两值相加，LAB分两行填写
+                if 'D2' in guiData['materialCode'] or 'D3' in guiData['materialCode']:
+                    self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
+                    if revenueData['revenueForCny'] >= 1000:
+                        # 定位到material
+                        self.session.findById(
+                            "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").setFocus()
+                        self.session.findById(
+                            "wnd[0]/usr/tabsTAXI_TABSTRIP_OVERVIEW/tabpT\\02/ssubSUBSCREEN_BODY:SAPMV45A:4415/subSUBSCREEN_TC:SAPMV45A:4902/tblSAPMV45ATCTRL_U_ERF_GUTLAST/ctxtRV45A-MABNR[1,0]").caretPosition = 10
+                        self.session.findById("wnd[0]/mbar/menu[3]/menu[7]").select()
+                        self.session.findById("wnd[1]/usr/btnSPOP-VAROPTION1").press()
+                        self.session.findById("wnd[1]/tbar[0]/btn[0]").press()
+
+                        # CS字段：chmCsCostAccounting + phyCsCostAccounting
+                        if guiData['csCheck']:
+                            cs_total = round(float(revenueData['chmCsCostAccounting']) + float(revenueData['phyCsCostAccounting']), 0)
+                            if cs_total > 0:
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,0]").text = "E"
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,0]").text = guiData['csCostCenter']
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,0]").text = "T01AST"
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").text = cs_total
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").setFocus()
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,0]").caretPosition = 20
+                                self.session.findById("wnd[0]").sendVKey(0)
+
+                        # LAB第1行：CHM
+                        if guiData['chmCheck']:
+                            chm_lab = round(float(revenueData['chmLabCostAccounting']), 0)
+                            if chm_lab > 0:
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,1]").text = "E"
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,1]").text = guiData['chmCostCenter']
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,1]").text = "T01AST"
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").text = chm_lab
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").setFocus()
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,1]").caretPosition = 20
+                                self.session.findById("wnd[0]").sendVKey(0)
+
+                        # LAB第2行：PHY
+                        if guiData['phyCheck']:
+                            phy_lab = round(float(revenueData['phyLabCostAccounting']), 0)
+                            if phy_lab > 0:
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,2]").text = "E"
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,2]").text = guiData['phyCostCenter']
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,2]").text = "T01AST"
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,2]").text = phy_lab
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,2]").setFocus()
+                                self.session.findById(
+                                    "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,2]").caretPosition = 20
+                                self.session.findById("wnd[0]").sendVKey(0)
+
+                        # FREMDL外币成本
+                        if guiData['cost'] > 0:
+                            # 动态计算行号
+                            n = 0
+                            if guiData['csCheck']:
+                                n += 1
+                            if guiData['chmCheck']:
+                                n += 1
+                            if guiData['phyCheck']:
+                                n += 1
+                            self.session.findById(
+                                "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-TYPPS[2,%s]" % n).text = "E"
+                            self.session.findById(
+                                "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK2[3,%s]" % n).text = guiData['csCostCenter']
+                            self.session.findById(
+                                "wnd[0]/usr/tblSAPLKKDI1301_TC/ctxtRK70L-HERK3[4,%s]" % n).text = "FREMDL"
+                            self.session.findById(
+                                "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).text = format(guiData['cost'], '.2f')
+                            self.session.findById(
+                                "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).setFocus()
+                            self.session.findById(
+                                "wnd[0]/usr/tblSAPLKKDI1301_TC/txtRK70L-MENGE[6,%s]" % n).caretPosition = 20
+                            self.session.findById("wnd[0]").sendVKey(0)
+
+                        # 保存并返回
+                        self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
+                        self.session.findById("wnd[1]/usr/btnSPOP-OPTION1").press()
+                elif 'A2' in guiData['materialCode']:
                     self.session.findById("wnd[0]/tbar[0]/btn[3]").press()
                     if revenueData['revenueForCny'] >= 1000:
                         if '430' in guiData['materialCode']:
