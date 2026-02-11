@@ -2099,7 +2099,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                         res = fileCon[fileNum].split(' ')
                                         for each in res:
                                             if re.search(r'\d{2}.\d{3}.\d{2}.\d{4,5}', each):
-                                                msg['Project No'] = each
+                                                msg['Project No'] = re.findall(r'\d{2}.\d{3}.\d{2}.\d{4,5}..*$', each)[0]
                                             elif re.search(
                                                     r'%s\d{%s}' % (guiData['invoiceStsrtNum'], int(guiData['invoiceBits']) - len(str(guiData['invoiceStsrtNum']))),
                                                     each) and msg['Invoice No'] == '':
@@ -2114,7 +2114,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                     elif 'Client Contact Name' in fileCon[fileNum] or 'ClientContactName' in fileCon[fileNum]:
                                         msg['Client Contact Name'] = fileCon[fileNum].replace('Client Contact Name:', '').replace('ClientContactName:', '').replace('/', '&')
                                     fileNum += 1
-
+                                if 'Project No' not in msg:
+                                    msg['Project No'] =''
                                 if 'Client Contact Name' not in msg:
                                     msg['Client Contact Name'] = ''
                                 if self.checkBox_25.isChecked():
